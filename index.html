@@ -1,0 +1,32 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <div id="dataAreaWrapper">
+      <fieldset>
+          <legend>Upload your CSV File</legend>
+              <input type="file" name="File Upload" id="csvFileInput" accept=".csv" />
+     </fieldset>
+     <div id="rawData">
+       <p>Currently loaded task estimate data.</p>
+       <table>
+         <tr>
+           <th>Task</th>
+           <th>Max</th>
+           <th>Min</th>
+           <th>Confidence</th>
+         </tr>
+       </table>
+     </div>
+   </div>
+    <!-- jQuery and jQuery UI -->
+    <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <script src="/js/jquery.csv.js"></script>
+
+    <!-- Requirements for d3 viz-->
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script src="js/simulation.js"></script>
+  </body>
+</html>
