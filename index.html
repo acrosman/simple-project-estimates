@@ -6,8 +6,8 @@
       <fieldset>
           <legend>Upload your CSV File</legend>
               <input type="file" name="File Upload" id="csvFileInput" accept=".csv" />
-     </fieldset>
-     <div id="rawData">
+      </fieldset>
+      <div id="rawData">
        <p>Currently loaded task estimate data.</p>
        <table>
          <tr>
@@ -17,8 +17,24 @@
            <th>Confidence</th>
          </tr>
        </table>
-     </div>
-   </div>
+      </div>
+    </div>
+    <div id="simulationAreaWrapper">
+      <hr>
+      <label for="simulationPasses">Number of times to run the simulation:</label>
+      <input type="number" min="100" max="1000000" step="100" id="simulationPasses" value="1000">
+      <br>
+      <input type="button" value="Run Simulation" id="startSimulationButton">
+      <div id="simulationResultsWrapper">
+        <table>
+          <tr>
+            <th>Pass</th>
+            <th>Total Hours</th>
+          </tr>
+        </table>
+        <div id="simulationAverage"></div>
+      </div>
+    </div>
     <!-- jQuery and jQuery UI -->
     <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
     <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
