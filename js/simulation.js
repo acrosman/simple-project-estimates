@@ -68,7 +68,16 @@ $(document).ready(function() {
     }
     var sum = times.reduce(function(a, b) { return a + b; });
     var avg = sum / times.length;
+    var median = getMedian(times);
+    var max = Math.max(times);
+    var min = Math.min(times);
     $("#simulationAverage").html('Average Time: ' + avg);
+    $("#simulationMedian").html('Median Time: ' + median);
+    $("#simulationMax").html('Max Time: ' + max);
+    $("#simulationMin").html('Min Time: ' + min);
+
+    var histogram = d3.histogram(times);
+
   }
 
   function getRandom(min, max) {
@@ -76,5 +85,18 @@ $(document).ready(function() {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
+
+  function getMedian(data) {
+    var m = data.sort(function(a, b) {
+        return a - b;
+    });
+
+    var middle = Math.floor((m.length - 1) / 2); // NB: operator precedence
+    if (m.length % 2) {
+        return m[middle];
+    } else {
+        return (m[middle] + m[middle + 1]) / 2.0;
+    }
+}
 
 });
