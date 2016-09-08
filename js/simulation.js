@@ -59,7 +59,7 @@ $(document).ready(function() {
     for(var i = 0; i < passes; i++) {
       var time = 0;
       $.each(data, function(index, row) {
-        time += getRandom(row.Min, row.Max);
+        time += generateEstimate(row.Min, row.Max, row.Confidence);
       });
       times.push(time);
       cells = "<td>" + i + "</td>\n";
@@ -76,7 +76,28 @@ $(document).ready(function() {
     $("#simulationMax").html('Max Time: ' + max);
     $("#simulationMin").html('Min Time: ' + min);
 
-    var histogram = d3.histogram(times);
+    //var histogram = d3.histogram(times);
+
+    //d3.select('#histoGram').append("svg");
+
+  }
+
+  function generateEstimate(min, max, confidence){
+    var base = getRandom(1,1000);
+    var boundry = confidence * 1000;
+    var midBoundry = Math.floor((1000 - boundry)/2);
+    var range = max - min + 1;
+
+    if (base < boundry) {
+      return (base % range) + min;
+    }
+
+    if (base < midBoundry) {
+      return (base % min);
+    }
+
+    return (base % max) + max;
+
 
   }
 

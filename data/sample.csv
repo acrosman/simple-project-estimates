@@ -1,5 +1,5 @@
 Task,Max,Min,Confidence
-Setup,5,2,90.00%
-Page,2,1,90.00%
-Blog Post,2,1,90.00%
-Blog Lists,4,2,80.00%
+Setup,5,2,.90
+Page,2,1,.90
+Blog Post,2,1,.90
+Blog Lists,4,2,.80
