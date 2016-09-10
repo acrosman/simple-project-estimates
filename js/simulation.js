@@ -166,8 +166,8 @@ $(document).ready(function() {
     // whitespace on either side of the bars in units of MPG
     var binmargin = .2;
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
-    var width = 450 - margin.left - margin.right;
-    var height = 250 - margin.top - margin.bottom;
+    var width = 800 - margin.left - margin.right;
+    var height = 500 - margin.top - margin.bottom;
 
     // Set the limits of the x axis
     var xmin = minbin - 1
