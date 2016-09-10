@@ -37,7 +37,7 @@ $(document).ready(function() {
         var csvData = event.target.result;
         data = $.csv.toObjects(csvData);
         if (data && data.length > 1) {
-          $.each(data, function(index, row){
+          $.each(data, function(index, row) {
             cells = "<td>" + row.Task; + "</td>/n";
               cells += "<td>" + row.Max; + "</td>/n";
             cells += "<td>" + row.Min; + "</td>/n";
@@ -91,7 +91,7 @@ $(document).ready(function() {
 
   }
 
-  function generateEstimate(minimum, maximum, confidence){
+  function generateEstimate(minimum, maximum, confidence) {
     var max = parseInt(maximum);
     var min = parseInt(minimum);
     var base = getRandom(1,1000);
@@ -121,6 +121,7 @@ $(document).ready(function() {
     var minbin = min;
     var maxbin = max;
     var numbins = maxbin - minbin;
+    var maxval = Math.max(...list);
 
     // whitespace on either side of the bars in units of MPG
     var binmargin = .2;
@@ -143,7 +144,7 @@ $(document).ready(function() {
 	  .range([0, width]);
 
     var y = d3.scale.linear()
-	  .domain([0, max])
+	  .domain([0, maxval])
 	  .range([height, 0]);
 
     var xAxis = d3.svg.axis()
