@@ -69,20 +69,21 @@ $(document).ready(function() {
     var sum = times.reduce(function(a, b) { return a + b; });
     var avg = sum / times.length;
     var median = getMedian(times);
-    var max = Math.max(times);
-    var min = Math.min(times);
+    var max = times[times.length -1];
+    var min = times[0];
     $("#simulationAverage").html('Average Time: ' + avg);
     $("#simulationMedian").html('Median Time: ' + median);
     $("#simulationMax").html('Max Time: ' + max);
     $("#simulationMin").html('Min Time: ' + min);
 
-    //var histogram = d3.histogram(times);
-
-    //d3.select('#histoGram').append("svg");
+    // build histogram from times array
+    buildHistogram(times, min, max);
 
   }
 
-  function generateEstimate(min, max, confidence){
+  function generateEstimate(minimum, maximum, confidence){
+    var max = parseInt(maximum);
+    var min = parseInt(minimum);
     var base = getRandom(1,1000);
     var boundry = confidence * 1000;
     var midBoundry = Math.floor((1000 - boundry)/2);
@@ -97,7 +98,6 @@ $(document).ready(function() {
     }
 
     return (base % max) + max;
-
 
   }
 
@@ -118,6 +118,91 @@ $(document).ready(function() {
     } else {
         return (m[middle] + m[middle + 1]) / 2.0;
     }
-}
+  }
 
+  function buildHistogram(list, min, max) {
+    var minbin = min;
+    var maxbin = max;
+    var numbins = maxbin - minbin;
+
+    // whitespace on either side of the bars in units of MPG
+    var binmargin = .2;
+    var margin = {top: 10, right: 30, bottom: 50, left: 60};
+    var width = 450 - margin.left - margin.right;
+    var height = 250 - margin.top - margin.bottom;
+
+    // Set the limits of the x axis
+    var xmin = minbin - 1
+    var xmax = maxbin + 1
+
+    // This scale is for determining the widths of the histogram bars
+    var x = d3.scale.linear()
+	  .domain([0, (xmax - xmin)])
+	  .range([0, width]);
+
+    // Scale for the placement of the bars
+    var x2 = d3.scale.linear()
+	  .domain([xmin, xmax])
+	  .range([0, width]);
+
+    var y = d3.scale.linear()
+	  .domain([0, max])
+	  .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+	  .scale(x2)
+	  .orient("bottom");
+    var yAxis = d3.svg.axis()
+	  .scale(y)
+	  .ticks(8)
+	  .orient("left");
+
+    // put the graph in the "mpg" div
+    var svg = d3.select("#histoGram").append("svg")
+	  .attr("width", width + margin.left + margin.right)
+	  .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	  .attr("transform", "translate(" + margin.left + "," +
+						margin.top + ")");
+
+    // set up the bars
+    var bar = svg.selectAll(".bar")
+	  .data(list)
+	  .enter().append("g")
+	  .attr("class", "bar")
+	  .attr("transform", function(d, i) { return "translate(" +
+	       x2(i + minbin) + "," + y(d) + ")"; });
+
+    // add rectangles of correct size at correct location
+    bar.append("rect")
+	  .attr("x", x(binmargin))
+	  .attr("width", x( 2 * binmargin))
+	  .attr("height",  function(d) { return height - y(d); });
+
+    // add the x axis and x-label
+    svg.append("g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(0," + height + ")")
+	  .call(xAxis);
+    svg.append("text")
+	  .attr("class", "xlabel")
+	  .attr("text-anchor", "middle")
+	  .attr("x", width / 2)
+	  .attr("y", height + margin.bottom)
+	  .text("Hours");
+
+    // add the y axis and y-label
+    svg.append("g")
+	  .attr("class", "y axis")
+	  .attr("transform", "translate(0,0)")
+	  .call(yAxis);
+    svg.append("text")
+	  .attr("class", "ylabel")
+	  .attr("y", 0 - margin.left) // x and y switched due to rotation
+	  .attr("x", 0 - (height / 2))
+	  .attr("dy", "1em")
+	  .attr("transform", "rotate(-90)")
+	  .style("text-anchor", "middle")
+	  .text("Frequency");
+  }
 });
