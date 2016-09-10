@@ -53,26 +53,29 @@ $(document).ready(function() {
   }
 
   function runSimulation(evt) {
-    var passes = $('#simulationPasses').val();
-    var times = [];
+    var passes = parseInt($('#simulationPasses').val());
+    var times = new Array(passes).fill(0);
+    var min = -1;
+    var max = 0;
     $('#simulationResultsWrapper').show();
     for(var i = 0; i < passes; i++) {
       var time = 0;
       $.each(data, function(index, row) {
         time += generateEstimate(row.Min, row.Max, row.Confidence);
       });
-      times.push(time);
+      times[time]++;
+      if (time < min || min == -1) { min = time; }
+      if (time > max) { max = time;}
       cells = "<td>" + i + "</td>\n";
       cells += "<td>" + time + "</td>\n";
       $('#simulationResultsWrapper table').append("<tr>" + cells + "</tr>");
     }
-    var sum = times.reduce(function(a, b) { return a + b; });
-    var avg = sum / times.length;
-    var median = getMedian(times);
-    var max = times[times.length -1];
-    var min = times[0];
+    var sums = times.map(function(value, index) {
+      return value * index;
+    });
+    var sum = sums.reduce(function(a, b) { return a + b; });
+    var avg = sum / sums.length;
     $("#simulationAverage").html('Average Time: ' + avg);
-    $("#simulationMedian").html('Median Time: ' + median);
     $("#simulationMax").html('Max Time: ' + max);
     $("#simulationMin").html('Min Time: ' + min);
 
@@ -105,19 +108,6 @@ $(document).ready(function() {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  function getMedian(data) {
-    var m = data.sort(function(a, b) {
-        return a - b;
-    });
-
-    var middle = Math.floor((m.length - 1) / 2); // NB: operator precedence
-    if (m.length % 2) {
-        return m[middle];
-    } else {
-        return (m[middle] + m[middle + 1]) / 2.0;
-    }
   }
 
   function buildHistogram(list, min, max) {
