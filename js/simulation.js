@@ -81,7 +81,7 @@ $(document).ready(function() {
       return value * index;
     });
     var sum = sums.reduce(function(a, b) { return a + b; });
-    var avg = sum / sums.length;
+    var avg = sum / passes;
     var median = getMedian(times);
     $("#simulationAverage").html('Average Time: ' + avg);
     $("#simulationMedian").html('Median Time: ' + median);
