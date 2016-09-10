@@ -39,7 +39,7 @@ $(document).ready(function() {
         if (data && data.length > 1) {
           $.each(data, function(index, row) {
             cells = "<td>" + row.Task; + "</td>/n";
-              cells += "<td>" + row.Max; + "</td>/n";
+            cells += "<td>" + row.Max; + "</td>/n";
             cells += "<td>" + row.Min; + "</td>/n";
             cells += "<td>" + row.Confidence; + "</td>/n";
             $('#rawData table').append("<tr>" + cells+ "</tr>");
@@ -54,17 +54,20 @@ $(document).ready(function() {
 
   function runSimulation(evt) {
     var passes = parseInt($('#simulationPasses').val());
-    var times = new Array(passes).fill(0);
+    var upperbound = calculateUpperBound(data);
+    var times = new Array(upperbound).fill(0);
     var min = -1;
     var max = 0;
 
     // Clear any existing displays
     $("#simulationAverage").html('');
+    $("#simulationMedian").html('');
     $("#simulationMax").html('');
     $("#simulationMin").html('');
     $("#histoGram").html('');
     $('#simulationResultsWrapper').show();
 
+    // Run the simulation.
     for(var i = 0; i < passes; i++) {
       var time = 0;
       $.each(data, function(index, row) {
@@ -79,7 +82,9 @@ $(document).ready(function() {
     });
     var sum = sums.reduce(function(a, b) { return a + b; });
     var avg = sum / sums.length;
+    var median = getMedian(times);
     $("#simulationAverage").html('Average Time: ' + avg);
+    $("#simulationMedian").html('Median Time: ' + median);
     $("#simulationMax").html('Max Time: ' + max);
     $("#simulationMin").html('Min Time: ' + min);
 
@@ -87,10 +92,22 @@ $(document).ready(function() {
     var trimmed = times.filter(function(e, i){
       return (i > min && i < max);
     });
-    buildHistogram(trimmed, min, max);
+    buildHistogram(trimmed, min, max, median);
 
   }
 
+  // Calculate the longest time the simulator may come up with.
+  function calculateUpperBound(tasks){
+    var total = 0;
+    $.each(tasks, function(index, row){
+      total += parseInt(row.Max) * 2;
+    });
+    return total;
+  }
+
+  // Does the estimate for one task. It picks a random number between min and
+  // max confidence % of the time. If the number is outside the range, it has
+  // an even chance of being between 0-min, or max and max *2.
   function generateEstimate(minimum, maximum, confidence) {
     var max = parseInt(maximum);
     var min = parseInt(minimum);
@@ -111,13 +128,36 @@ $(document).ready(function() {
 
   }
 
+  // Get a random number is a given range.
   function getRandom(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  function buildHistogram(list, min, max) {
+  // Calculates the median value for all times run during a series of simulations.
+  function getMedian(data) {
+
+    var m = [];
+    $.each(data, function(index, value){
+      next_set = new Array(value).fill(index);
+      m.splice(0,0, ...next_set);
+    });
+
+    m.sort(function(a, b) {
+        return a - b;
+    });
+
+    var middle = Math.floor((m.length - 1) / 2); // NB: operator precedence
+    if (m.length % 2) {
+        return m[middle];
+    } else {
+        return (m[middle] + m[middle + 1]) / 2.0;
+    }
+  }
+
+  // Builds the histogram graph.
+  function buildHistogram(list, min, max, median) {
     var minbin = min;
     var maxbin = max;
     var numbins = maxbin - minbin;
@@ -167,7 +207,7 @@ $(document).ready(function() {
     var bar = svg.selectAll(".bar")
 	  .data(list)
 	  .enter().append("g")
-	  .attr("class", "bar")
+    .attr("class", "bar")
 	  .attr("transform", function(d, i) { return "translate(" +
 	       x2(i + minbin) + "," + y(d) + ")"; });
 

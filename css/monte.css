@@ -6,3 +6,7 @@
   fill: #fff;
   font: 10px sans-serif;
 }
+
+.bar .median rect {
+  fill: red;
+}
