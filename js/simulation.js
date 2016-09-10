@@ -57,7 +57,14 @@ $(document).ready(function() {
     var times = new Array(passes).fill(0);
     var min = -1;
     var max = 0;
+
+    // Clear any existing displays
+    $("#simulationAverage").html('');
+    $("#simulationMax").html('');
+    $("#simulationMin").html('');
+    $("#histoGram").html('');
     $('#simulationResultsWrapper').show();
+
     for(var i = 0; i < passes; i++) {
       var time = 0;
       $.each(data, function(index, row) {
@@ -66,9 +73,6 @@ $(document).ready(function() {
       times[time]++;
       if (time < min || min == -1) { min = time; }
       if (time > max) { max = time;}
-      cells = "<td>" + i + "</td>\n";
-      cells += "<td>" + time + "</td>\n";
-      $('#simulationResultsWrapper table').append("<tr>" + cells + "</tr>");
     }
     var sums = times.map(function(value, index) {
       return value * index;
@@ -80,7 +84,10 @@ $(document).ready(function() {
     $("#simulationMin").html('Min Time: ' + min);
 
     // build histogram from times array
-    buildHistogram(times, min, max);
+    var trimmed = times.filter(function(e, i){
+      return (i > min && i < max);
+    });
+    buildHistogram(trimmed, min, max);
 
   }
 
