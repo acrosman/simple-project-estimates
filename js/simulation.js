@@ -35,7 +35,7 @@ $(document).ready(function() {
 
       reader.onload = function(event) {
         var csvData = event.target.result;
-        var   data = $.csv.toObjects(csvData);
+        data = $.csv.toObjects(csvData);
         if (data && data.length > 1) {
           $.each(data, function(index, row) {
             cells = "<td>" + row.Task; + "</td>/n";
