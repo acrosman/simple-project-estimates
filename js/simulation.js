@@ -35,7 +35,7 @@ $(document).ready(function() {
 
       reader.onload = function(event) {
         var csvData = event.target.result;
-        data = $.csv.toObjects(csvData);
+        var   data = $.csv.toObjects(csvData);
         if (data && data.length > 1) {
           $.each(data, function(index, row) {
             cells = "<td>" + row.Task; + "</td>/n";
@@ -175,72 +175,72 @@ $(document).ready(function() {
 
     // This scale is for determining the widths of the histogram bars
     var x = d3.scale.linear()
-	  .domain([0, (xmax - xmin)])
-	  .range([0, width]);
+      .domain([0, (xmax - xmin)])
+      .range([0, width]);
 
     // Scale for the placement of the bars
     var x2 = d3.scale.linear()
-	  .domain([xmin, xmax])
-	  .range([0, width]);
+      .domain([xmin, xmax])
+      .range([0, width]);
 
     var y = d3.scale.linear()
-	  .domain([0, maxval])
-	  .range([height, 0]);
+      .domain([0, maxval])
+      .range([height, 0]);
 
     var xAxis = d3.svg.axis()
-	  .scale(x2)
-	  .orient("bottom");
+      .scale(x2)
+      .orient("bottom");
     var yAxis = d3.svg.axis()
-	  .scale(y)
-	  .ticks(8)
-	  .orient("left");
+      .scale(y)
+      .ticks(8)
+      .orient("left");
 
     // put the graph in the "mpg" div
     var svg = d3.select("#histoGram").append("svg")
-	  .attr("width", width + margin.left + margin.right)
-	  .attr("height", height + margin.top + margin.bottom)
-	  .append("g")
-	  .attr("transform", "translate(" + margin.left + "," +
-						margin.top + ")");
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," +
+        margin.top + ")");
 
     // set up the bars
     var bar = svg.selectAll(".bar")
-	  .data(list)
-	  .enter().append("g")
-    .attr("class", "bar")
-	  .attr("transform", function(d, i) { return "translate(" +
-	       x2(i + minbin) + "," + y(d) + ")"; });
+      .data(list)
+      .enter().append("g")
+      .attr("class", "bar")
+      .attr("transform", function(d, i) { return "translate(" +
+        x2(i + minbin) + "," + y(d) + ")"; });
 
     // add rectangles of correct size at correct location
     bar.append("rect")
-	  .attr("x", x(binmargin))
-	  .attr("width", x( 2 * binmargin))
-	  .attr("height",  function(d) { return height - y(d); });
+      .attr("x", x(binmargin))
+      .attr("width", x( 2 * binmargin))
+      .attr("height",  function(d) { return height - y(d); });
 
     // add the x axis and x-label
     svg.append("g")
-	  .attr("class", "x axis")
-	  .attr("transform", "translate(0," + height + ")")
-	  .call(xAxis);
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
     svg.append("text")
-	  .attr("class", "xlabel")
-	  .attr("text-anchor", "middle")
-	  .attr("x", width / 2)
-	  .attr("y", height + margin.bottom)
-	  .text("Hours");
+      .attr("class", "xlabel")
+      .attr("text-anchor", "middle")
+      .attr("x", width / 2)
+      .attr("y", height + margin.bottom)
+      .text("Hours");
 
     // add the y axis and y-label
     svg.append("g")
-	  .attr("class", "y axis")
-	  .attr("transform", "translate(0,0)")
-	  .call(yAxis);
+      .attr("class", "y axis")
+      .attr("transform", "translate(0,0)")
+      .call(yAxis);
     svg.append("text")
-	  .attr("class", "ylabel")
-	  .attr("y", 0 - margin.left) // x and y switched due to rotation
-	  .attr("x", 0 - (height / 2))
-	  .attr("dy", "1em")
-	  .attr("transform", "rotate(-90)")
-	  .style("text-anchor", "middle")
-	  .text("Frequency");
+      .attr("class", "ylabel")
+      .attr("y", 0 - margin.left) // x and y switched due to rotation
+      .attr("x", 0 - (height / 2))
+      .attr("dy", "1em")
+      .attr("transform", "rotate(-90)")
+      .style("text-anchor", "middle")
+      .text("Frequency");
   }
 });
