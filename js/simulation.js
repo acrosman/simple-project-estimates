@@ -26,7 +26,7 @@ $(document).ready(function() {
     row.Task = $('#taskNameInput').val();
     row.Min = $('#minInput').val();
     row.Max = $('#maxInput').val();
-    row.Confidence = $('#confidenceInput').val();
+    row.Confidence = parseFloat($('#confidenceInput').val())/100.0 ;
     addTaskRow(row);
     data.push(row);
     $('#simulationAreaWrapper').show();
@@ -71,7 +71,7 @@ $(document).ready(function() {
     var cells = "<td>" + row.Task; + "</td>/n";
     cells += "<td>" + row.Max; + "</td>/n";
     cells += "<td>" + row.Min; + "</td>/n";
-    cells += "<td>" + row.Confidence; + "</td>/n";
+    cells += "<td>" + row.Confidence; + "%</td>/n";
     $('#rawData table').append('<tr class="data">' + cells+ "</tr>");
   }
 
