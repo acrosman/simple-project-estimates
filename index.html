@@ -8,6 +8,19 @@
           <legend>Upload your CSV File</legend>
               <input type="file" name="File Upload" id="csvFileInput" accept=".csv" />
       </fieldset>
+      <div class="separator">- or -</div>
+      <fieldset>
+        <legend>Add data by hand:</legend>
+        <label for="Task Name">Task Name</label>
+        <input type="text" name="Task Name" id="taskNameInput" />
+        <label for="Min Time">Min Time</label>
+        <input type="number" name="Min Hours" id="minInput" />
+        <label for="Max Time">Max Time</label>
+        <input type="number" name="Max Hours" id="maxInput" />
+        <label for="Confidence">Confidence</label>
+        <input type="number" name="Confidence" id="confidenceInput" />
+        <input type="button" name="addTaskBtn" id="addTaskBtn" value="Add Task"/>
+      </fieldset>
       <div id="rawData">
        <p>Currently loaded task estimate data.</p>
        <table>
@@ -21,6 +34,7 @@
       </div>
     </div>
     <div id="simulationAreaWrapper">
+      <input type="reset" name="reset" id="resetBtn" value="Reset"/>
       <hr>
       <label for="simulationPasses">Number of times to run the simulation:</label>
       <input type="number" min="1000" max="9999999" step="100" id="simulationPasses" value="1000">

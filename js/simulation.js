@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  var data = null;
+  var data = [];
   // https://cmatskas.com/importing-csv-files-using-jquery-and-html5/
   // http://evanplaice.github.io/jquery-csv/examples/basic-usage.html
   // https://github.com/evanplaice/jquery-csv/
@@ -9,6 +9,8 @@ $(document).ready(function() {
   $('#startSimulationButton').click(runSimulation);
   $('#simulationResultsWrapper').hide();
   $('#simulationAreaWrapper').hide();
+  $('#addTaskBtn').click(addRowEvent);
+  $('#resetBtn').click(dataResetEvent);
 
   // Method that checks that the browser supports the HTML5 File API
   function browserSupportFileUpload() {
@@ -17,6 +19,23 @@ $(document).ready(function() {
       isCompatible = true;
     }
     return isCompatible;
+  }
+
+  function addRowEvent() {
+    var row = {};
+    row.Task = $('#taskNameInput').val();
+    row.Min = $('#minInput').val();
+    row.Max = $('#maxInput').val();
+    row.Confidence = $('#confidenceInput').val();
+    addTaskRow(row);
+    data.push(row);
+    $('#simulationAreaWrapper').show();
+  }
+
+  function dataResetEvent() {
+    data = [];
+    $('#rawData table tr.data').remove();
+    $('#simulationAreaWrapper').hide();
   }
 
   // Method that reads and processes the selected file
@@ -38,11 +57,7 @@ $(document).ready(function() {
         data = $.csv.toObjects(csvData);
         if (data && data.length > 1) {
           $.each(data, function(index, row) {
-            cells = "<td>" + row.Task; + "</td>/n";
-            cells += "<td>" + row.Max; + "</td>/n";
-            cells += "<td>" + row.Min; + "</td>/n";
-            cells += "<td>" + row.Confidence; + "</td>/n";
-            $('#rawData table').append("<tr>" + cells+ "</tr>");
+            addTaskRow(row);
           });
           $('#simulationAreaWrapper').show();
         } else {
@@ -50,6 +65,14 @@ $(document).ready(function() {
         }
       };
     }
+  }
+
+  function addTaskRow(row) {
+    var cells = "<td>" + row.Task; + "</td>/n";
+    cells += "<td>" + row.Max; + "</td>/n";
+    cells += "<td>" + row.Min; + "</td>/n";
+    cells += "<td>" + row.Confidence; + "</td>/n";
+    $('#rawData table').append('<tr class="data">' + cells+ "</tr>");
   }
 
   function runSimulation(evt) {
