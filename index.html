@@ -38,14 +38,16 @@
       <input type="reset" name="reset" id="resetBtn" value="Reset"/>
       <hr>
       <label for="simulationPasses">Number of times to run the simulation:</label>
-      <input type="number" min="1000" max="9999999" step="100" id="simulationPasses" value="1000">
+      <input type="number" min="1000" max="9999999" step="100" id="simulationPasses" value="100000">
       <br>
       <input type="button" value="Run Simulation" id="startSimulationButton">
       <div id="simulationResultsWrapper">
-        <div id="simulationAverage"></div>
+        <div id="simulationRunningTime"></div>
         <div id="simulationMedian"></div>
+        <div id="simulationAverage"></div>
         <div id="simulationMax"></div>
         <div id="simulationMin"></div>
+        <div id="simulationStandDev"></div>
         <div id="histoGram"></div>
       </div>
     </div>

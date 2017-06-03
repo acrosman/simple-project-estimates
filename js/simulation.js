@@ -79,8 +79,12 @@ $(document).ready(function() {
     var passes = parseInt($('#simulationPasses').val());
     var upperbound = calculateUpperBound(data);
     var times = new Array(upperbound).fill(0);
+    var estimates = new Array();
     var min = -1;
     var max = 0;
+    var runningTime = 0;
+    var startTime = 0;
+    var endTime = 0;
 
     // Clear any existing displays
     $("#simulationAverage").html('');
@@ -91,31 +95,40 @@ $(document).ready(function() {
     $('#simulationResultsWrapper').show();
 
     // Run the simulation.
+    var startTime = Date.now();
     for(var i = 0; i < passes; i++) {
       var time = 0;
       $.each(data, function(index, row) {
         time += generateEstimate(row.Min, row.Max, row.Confidence);
       });
       times[time]++;
+      estimates.push(time);
       if (time < min || min == -1) { min = time; }
       if (time > max) { max = time;}
     }
+    endTime = Date.now();
+
+    // Calculate and display the results.
+    runningTime = endTime - startTime;
     var sums = times.map(function(value, index) {
       return value * index;
     });
     var sum = sums.reduce(function(a, b) { return a + b; });
     var avg = sum / passes;
     var median = getMedian(times);
-    $("#simulationAverage").html('Average Time: ' + avg);
-    $("#simulationMedian").html('Median Time: ' + median);
-    $("#simulationMax").html('Max Time: ' + max);
-    $("#simulationMin").html('Min Time: ' + min);
+    var sd = getStandardDeviation(estimates);
+    $("#simulationAverage").html('Average Project Total Time: ' + avg);
+    $("#simulationMedian").html('Median Project Total Time: ' + median);
+    $("#simulationMax").html('Max Project Total Time: ' + max);
+    $("#simulationMin").html('Min Project Total Time: ' + min);
+    $("#simulationRunningTime").html('Simulation Running Time (ms): ' + runningTime);
+    $("#simulationStandDev").html('Standard Deviation: ' + sd);
 
     // build histogram from times array
     var trimmed = times.filter(function(e, i){
       return (i > min && i < max);
     });
-    buildHistogram(trimmed, min, max, median);
+    buildHistogram(trimmed, min, max, median, sd);
 
   }
 
@@ -171,7 +184,7 @@ $(document).ready(function() {
         return a - b;
     });
 
-    var middle = Math.floor((m.length - 1) / 2); // NB: operator precedence
+    var middle = Math.floor((m.length - 1) / 2);
     if (m.length % 2) {
         return m[middle];
     } else {
@@ -179,14 +192,31 @@ $(document).ready(function() {
     }
   }
 
+  // Calculates the standard deviation of the result list.
+  // Hat tip: https://stackoverflow.com/a/41781242/24215
+  function getStandardDeviation(numberArray) {
+    // Calculate the average.
+    var sum = numberArray.reduce(function(a, b) { return a + b; });
+    var avg = sum / numberArray.length;
+
+    // Calculate the standard deviation itself.
+    var sdPrep = 0;
+    for(var key in numberArray) {
+      sdPrep += Math.pow((parseFloat(numberArray[key]) - avg),2);
+    }
+    return Math.sqrt(sdPrep/numberArray.length);
+  }
+
   // Builds the histogram graph.
-  function buildHistogram(list, min, max, median) {
+  function buildHistogram(list, min, max, median, stdDev) {
     var minbin = min;
     var maxbin = max;
+    var stdDevOffset = Math.floor(stdDev);
     var numbins = maxbin - minbin;
     var maxval = Math.max(...list);
+    var medianIndex = Math.floor(median - min);
 
-    // whitespace on either side of the bars in units of MPG
+    // whitespace on either side of the bars
     var binmargin = .2;
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
     var width = 800 - margin.left - margin.right;
@@ -218,7 +248,7 @@ $(document).ready(function() {
       .ticks(8)
       .orient("left");
 
-    // put the graph in the "mpg" div
+    // Put the graph in the histogram div.
     var svg = d3.select("#histoGram").append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
@@ -226,21 +256,29 @@ $(document).ready(function() {
       .attr("transform", "translate(" + margin.left + "," +
         margin.top + ")");
 
-    // set up the bars
+    // Set up the bars.
     var bar = svg.selectAll(".bar")
       .data(list)
       .enter().append("g")
-      .attr("class", "bar")
+      .attr("class", function(d, i){
+        if (i == medianIndex) {
+          return "bar median";
+        } else if (i > medianIndex - stdDevOffset && i < medianIndex + stdDevOffset) {
+          return "bar stdDev";
+        } else {
+          return "bar";
+        }
+      })
       .attr("transform", function(d, i) { return "translate(" +
         x2(i + minbin) + "," + y(d) + ")"; });
 
-    // add rectangles of correct size at correct location
+    // Add rectangles of correct size at correct location.
     bar.append("rect")
       .attr("x", x(binmargin))
       .attr("width", x( 2 * binmargin))
       .attr("height",  function(d) { return height - y(d); });
 
-    // add the x axis and x-label
+    // Add the x axis and x-label.
     svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
@@ -252,14 +290,14 @@ $(document).ready(function() {
       .attr("y", height + margin.bottom)
       .text("Hours");
 
-    // add the y axis and y-label
+    // Add the y axis and y-label.
     svg.append("g")
       .attr("class", "y axis")
       .attr("transform", "translate(0,0)")
       .call(yAxis);
     svg.append("text")
       .attr("class", "ylabel")
-      .attr("y", 0 - margin.left) // x and y switched due to rotation
+      .attr("y", 0 - margin.left) // x and y switched due to rotation.
       .attr("x", 0 - (height / 2))
       .attr("dy", "1em")
       .attr("transform", "rotate(-90)")
