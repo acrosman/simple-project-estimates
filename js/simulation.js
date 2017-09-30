@@ -152,15 +152,21 @@ $(document).ready(function() {
     var midBoundry = Math.floor((1000 - boundry)/2);
     var range = max - min + 1;
 
+    // Confidence in an estimate implies both likelyhood of being right and
+    // likelyhood of being close.  The less confidence in the estimate the
+    // higher the risk of the project going way over time. For every 10% drop
+    // in overrun grows by 100% of max estimate.
+    var maxOverrunFactor = Math.floor((1000 - boundry)/100);
+
     if (base < boundry) {
       return (base % range) + min;
     }
 
-    if (base < midBoundry) {
+    if ((base - boundry) < midBoundry) {
       return (base % min);
     }
 
-    return (base % max) + max;
+    return getRandom(max, (max * maxOverrunFactor));
 
   }
 
