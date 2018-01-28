@@ -118,12 +118,15 @@ $(document).ready(function() {
     var avg = sum / passes;
     var median = getMedian(times);
     var sd = getStandardDeviation(estimates);
+    var likelyMin = Math.round(median - sd);
+    var likelyMax = Math.round(median + sd);
     $("#simulationAverage").html('Average Project Total Time: ' + avg);
     $("#simulationMedian").html('Median Project Total Time: ' + median);
     $("#simulationMax").html('Max Project Total Time: ' + max);
     $("#simulationMin").html('Min Project Total Time: ' + min);
     $("#simulationRunningTime").html('Simulation Running Time (ms): ' + runningTime);
     $("#simulationStandDev").html('Standard Deviation: ' + sd);
+    $("#simulationStandRange").html('Projected Range: ' + likelyMin + " - " + likelyMax);
 
     // Trim the array to just hold cells in the range of results.
     // If limit graph is set, just show two standard deviations on the graph.
