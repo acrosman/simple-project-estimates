@@ -77,6 +77,7 @@ $(document).ready(function() {
 
   function runSimulation(evt) {
     var passes = parseInt($('#simulationPasses').val());
+    var limitGraph = $('#limitGraph').is(':checked');
     var upperbound = calculateUpperBound(data);
     var times = new Array(upperbound).fill(0);
     var estimates = new Array();
@@ -124,11 +125,19 @@ $(document).ready(function() {
     $("#simulationRunningTime").html('Simulation Running Time (ms): ' + runningTime);
     $("#simulationStandDev").html('Standard Deviation: ' + sd);
 
-    // build histogram from times array
-    var trimmed = times.filter(function(e, i){
-      return (i > min && i < max);
+    // Trim the array to just hold cells in the range of results.
+    // If limit graph is set, just show two standard deviations on the graph.
+    var upper = max;
+    var lower = min;
+    if (limitGraph) {
+      upper = median + (sd * 2) < max ? median + (sd * 2) : max;
+      lower = median - (sd * 2) > min ? median - (sd * 2) : min;
+    }
+    var trimmed = times.filter(function (e, i){
+      return (i > lower && i < upper);
     });
-    buildHistogram(trimmed, min, max, median, sd);
+
+    buildHistogram(trimmed, lower, upper, median, sd);
 
   }
 
