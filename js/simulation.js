@@ -122,11 +122,11 @@ $(document).ready(function() {
     var likelyMax = Math.round(median + sd);
     $("#simulationAverage").html('Average Project Total Time: ' + avg);
     $("#simulationMedian").html('Median Project Total Time: ' + median);
-    $("#simulationMax").html('Max Project Total Time: ' + max);
-    $("#simulationMin").html('Min Project Total Time: ' + min);
+    $("#simulationMax").html('Worst Case Project Total Time: ' + max);
+    $("#simulationMin").html('Best Case Project Total Time: ' + min);
     $("#simulationRunningTime").html('Simulation Running Time (ms): ' + runningTime);
+    $("#simulationStandRange").html('Projected Likey Range: ' + likelyMin + " - " + likelyMax);
     $("#simulationStandDev").html('Standard Deviation: ' + sd);
-    $("#simulationStandRange").html('Projected Range: ' + likelyMin + " - " + likelyMax);
 
     // Trim the array to just hold cells in the range of results.
     // If limit graph is set, just show two standard deviations on the graph.
@@ -155,7 +155,11 @@ $(document).ready(function() {
 
   // Does the estimate for one task. It picks a random number between min and
   // max confidence % of the time. If the number is outside the range, it has
-  // an even chance of being between 0-min, or max and max *2.
+  // an even chance of being between 0-min, or above max. Since confidence in
+  // an estimate implies both likelyhood of being right and likelyhood of being
+  // close.  The less confidence in the estimate the higher the risk of the
+  // project going way over time. For every 10% drop in overrun grows by 100%
+  // of max estimate.
   function generateEstimate(minimum, maximum, confidence) {
     var max = parseInt(maximum);
     var min = parseInt(minimum);
@@ -164,10 +168,6 @@ $(document).ready(function() {
     var midBoundry = Math.floor((1000 - boundry)/2);
     var range = max - min + 1;
 
-    // Confidence in an estimate implies both likelyhood of being right and
-    // likelyhood of being close.  The less confidence in the estimate the
-    // higher the risk of the project going way over time. For every 10% drop
-    // in overrun grows by 100% of max estimate.
     var maxOverrunFactor = Math.floor((1000 - boundry)/100);
 
     if (base < boundry) {
