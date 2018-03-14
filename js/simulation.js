@@ -147,10 +147,23 @@ $(document).ready(function() {
   // Calculate the longest time the simulator may come up with.
   function calculateUpperBound(tasks){
     var total = 0;
-    $.each(tasks, function(index, row){
-      total += parseInt(row.Max) * 2;
+
+    $.each(tasks, function(index, row) {
+      total += taskUpperBound(row.Max, row.Confidence);
     });
     return total;
+  }
+
+  // Calculates the upper bound for a specific task record. Because developers
+  // are known to underestimate, the idea here is the less confidence they have
+  // in their estimate the more risk that it could go much higher than expected.
+  // So for every 10% drop in confidence we add the max estimate on again.
+  // 90% leaves the uppoer bound at max estimate.
+  // 80% gives us max * 2.
+  // 70% max * 3.
+  // And so on.
+  function taskUpperBound(max_estimate, confidence) {
+    return max_estimate * Math.abs(Math.floor(10 - (confidence * 10)));
   }
 
   // Does the estimate for one task. It picks a random number between min and
@@ -167,18 +180,20 @@ $(document).ready(function() {
     var boundry = confidence * 1000;
     var midBoundry = Math.floor((1000 - boundry)/2);
     var range = max - min + 1;
-
-    var maxOverrunFactor = Math.floor((1000 - boundry)/100);
+    var maxOverrun = taskUpperBound(max, confidence);
+    var total = 0;
 
     if (base < boundry) {
-      return (base % range) + min;
+      total = (base % range) + min;
+    }
+    else if ((base - boundry) < midBoundry) {
+      total = min == 0 ? 0 : base % min;
+    }
+    else {
+      total = getRandom(max, maxOverrun);
     }
 
-    if ((base - boundry) < midBoundry) {
-      return (base % min);
-    }
-
-    return getRandom(max, (max * maxOverrunFactor));
+    return total;
 
   }
 
