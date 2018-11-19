@@ -9,5 +9,3 @@ The rows follow suit, providing a name for each task, the max number of hours es
 `Setup,5,2,.90`
 
 The project leverages D3 for the histogram, and jquery.css.js to load the file.
-
-There is a branch for converting this to an electron app in addition to being a web page.
