@@ -6,7 +6,16 @@ $(document).ready(function() {
 
   // The event listener for the file upload
   $('#csvFileInput').change(upload);
-  $('#startSimulationButton').click(runSimulation);
+  $('#startSimulationButton').click(() => {
+      $('#startSimulationButton i').addClass('fa-spinner');
+      $('#startSimulationButton').startLoading();
+      // Not the best solution but using setTimeout() to force the browser to repaint the UI
+      setTimeout(runSimulation, 100);
+      setTimeout(() => {
+        $('#startSimulationButton').stopLoading();
+        $('#startSimulationButton i').removeClass('fa-spinner');
+      }, 100);
+  });
   $('#simulationResultsWrapper').hide();
   $('#simulationAreaWrapper').hide();
   $('#addTaskBtn').click(addRowEvent);
@@ -141,7 +150,6 @@ $(document).ready(function() {
     });
 
     buildHistogram(trimmed, lower, upper, median, sd);
-
   }
 
   // Calculate the longest time the simulator may come up with.
