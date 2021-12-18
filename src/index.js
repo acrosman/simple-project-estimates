@@ -2,13 +2,65 @@ import './style.css';
 import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
 
-function createTextElement(wrapperTag, text, classList) {
+/**
+ * Create a text element with it's internal text node.
+ * @param {string} wrapperTag Tag name
+ * @param {string} text Tag content
+ * @param {array} classList List of classes.
+ * @returns HTMLElement
+ */
+function createTextElement(wrapperTag, text, classList = []) {
   const el = document.createElement(wrapperTag);
   el.appendChild(document.createTextNode(text));
   el.classList.add(...classList);
+  return el;
+}
+
+/**
+ * Create a labeled input.
+ * @param {string} labelText Text for input label.
+ * @param {*} inputAttributes A collection of attributes to set on the input.
+ * @param {boolean} labelFirst when true, puts the label before the input and vice versa.
+ * @returns HTMLElement
+ */
+function createLabeledInput(labelText, inputAttributes, labelFirst = true) {
+  const wrapper = document.createElement('div');
+  const fldLabl = createTextElement('label', labelText);
+  fldLabl.htmlFor = inputAttributes.name;
+  const field = document.createElement('input');
+  Object.assign(field, inputAttributes);
+
+  if (labelFirst) {
+    wrapper.appendChild(fldLabl);
+    wrapper.appendChild(field);
+  } else {
+    wrapper.appendChild(field);
+    wrapper.appendChild(fldLabl);
+  }
+  return wrapper;
+}
+
+/**
+ * Creates an HTML div with the ID and classes set.
+ * @param {*} id The id for the div
+ * @param {*} classList list of classes to add.
+ * @returns HTMLElement
+ */
+function createDivWithIdAndClasses(id, classList = []) {
+  const el = document.createElement('div');
+  el.id = id;
+  el.classList.add(...[]);
+
   return el
 }
 
+/**
+ * Creates an input field for a specific input control
+ * @param {string} label
+ * @param {string} fieldValue
+ * @param {string} fieldType
+ * @returns HTMLElement
+ */
 function generateDataField(label, fieldValue, fieldType) {
   const cell = document.createElement('div');
   cell.classList.add('td');
@@ -25,6 +77,16 @@ function generateDataField(label, fieldValue, fieldType) {
   return cell;
 }
 
+/**
+ * Generates a row for the data input.
+ * @param {*} rowId
+ * @param {*} taskName
+ * @param {*} minTime
+ * @param {*} maxTime
+ * @param {*} confidence
+ * @param {*} hourlyCost
+ * @returns HTMLElement
+ */
 function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCost) {
   const row = document.createElement('div');
   row.classList.add('tr', 'data-row');
@@ -47,6 +109,11 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
   return row;
 }
 
+/**
+ * Creates the table of data for feeding the simulator.
+ * @param {*} data
+ * @returns HTMLElement
+ */
 function createEntryTable(data = []) {
   const wrapper = document.createElement('div');
   wrapper.classList.add('wrapper-entry-table', 'section');
@@ -81,6 +148,10 @@ function createEntryTable(data = []) {
   return wrapper;
 }
 
+/**
+ * Setup the Main application UI
+ * @returns HTMLElement
+ */
 function setupUi() {
   const mainElement = document.createElement('div');
 
@@ -140,9 +211,63 @@ function setupUi() {
   dataEntryDiv.appendChild(dataEntryTable);
   dataWrapper.append(dataEntryDiv);
 
+  // == Create Output Region ==
+  const simWrapper = document.createElement('div');
+  simWrapper.classList.add('section', 'container');
+  simWrapper.id = 'simulationAreaWrapper';
+  const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation'])
+
+  const simControls = document.createElement('div');
+  simControls.classList.add('section', 'controls-simulation');
+
+  const simCountFldAttr = {
+    type: 'number',
+    min: '1000',
+    max: '9999999',
+    step: '1000',
+    id: 'simulationPasses',
+    value: '100000',
+    name: 'Simulation Passes'
+  };
+  const simCountCtl = createLabeledInput('Number of times to run the simulation:', simCountFldAttr, true);
+
+  const simLimitFldAttr = {
+    type: 'checkbox',
+    value: '1',
+    id: 'LimitGraph',
+  };
+  const simLimitCtl = createLabeledInput('Limit graph outliers', simLimitFldAttr, false);
+
+  const simRun = document.createElement('input');
+  simRun.type = 'button';
+  simRun.id = 'startSimulationButton';
+  simRun.value = 'Run Simulation';
+
+  simControls.appendChild(simCountCtl);
+  simControls.appendChild(simLimitCtl);
+  simControls.appendChild(simRun);
+
+  // Simulation Results elements
+  const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
+  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationRunningTime", ['simulation-result', 'text']));
+  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationMedian", ['simulation-result', 'text']));
+  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationAverage", ['simulation-result', 'text']));
+  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationStandRange", ['simulation-result', 'text']));
+  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationMax", ['simulation-result', 'text']));
+  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationMin", ['simulation-result', 'text']));
+  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationStandDev", ['simulation-result', 'text']));
+  simResultWrapper.appendChild(createDivWithIdAndClasses("histoGram", ['simulation-result', 'graph']));
+
+  // Add simulator elements to wrapper.
+  simWrapper.appendChild(simHeader);
+  simWrapper.appendChild(simControls);
+  simWrapper.appendChild(simResultWrapper);
+
+
   // Add all elements to the main application wrapper.
   mainElement.appendChild(headerDiv);
   mainElement.appendChild(dataWrapper);
+  mainElement.appendChild(simWrapper);
 
   return mainElement;
 }
