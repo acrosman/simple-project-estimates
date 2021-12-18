@@ -3,6 +3,11 @@ import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
 
 // ============= Interface Behaviors ================
+
+/**
+ * Click Event Handler for the clear row button.
+ * @param {Event} event Fired event.
+ */
 function rowClearClickHandler(event) {
   event.preventDefault();
   const thisRowId = event.target.dataset.rowId;
@@ -11,6 +16,19 @@ function rowClearClickHandler(event) {
   for (let control of cells) {
     control.value = '';
   }
+}
+
+/**
+ * Click event handler for add task button.
+ * @param {Event} event fired event
+ */
+function addTaskClickHandler(event) {
+  const table = document.querySelector('#DataEntryTable');
+  const currentRowId = parseInt(table.dataset.currentMaxRow) + 1;
+
+  const newRow = generateDataRow(currentRowId, '', '', '', '', '');
+  table.appendChild(newRow);
+  table.dataset.currentMaxRow = currentRowId;
 }
 
 // ============= Interface Elements =================
@@ -157,6 +175,7 @@ function createEntryTable(data = []) {
     value: 'Add Task',
   };
   Object.assign(addBtn, btnAttr);
+  addBtn.addEventListener('click', addTaskClickHandler);
 
   wrapper.appendChild(form);
   wrapper.appendChild(addBtn);
