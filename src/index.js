@@ -2,6 +2,18 @@ import './style.css';
 import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
 
+// ============= Interface Behaviors ================
+function rowClearClickHandler(event) {
+  event.preventDefault();
+  const thisRowId = event.target.dataset.rowId;
+
+  const cells = document.querySelectorAll(`input[data-row-id="${thisRowId}"]:not([type=button]`);
+  for (let control of cells) {
+    control.value = '';
+  }
+}
+
+// ============= Interface Elements =================
 /**
  * Create a text element with it's internal text node.
  * @param {string} wrapperTag Tag name
@@ -61,7 +73,7 @@ function createDivWithIdAndClasses(id, classList = []) {
  * @param {string} fieldType
  * @returns HTMLElement
  */
-function generateDataField(label, fieldValue, fieldType) {
+function generateDataField(label, fieldValue, fieldType, rowId) {
   const cell = document.createElement('div');
   cell.classList.add('td');
   const element = document.createElement('input');
@@ -72,6 +84,7 @@ function generateDataField(label, fieldValue, fieldType) {
     name: label,
   };
   Object.assign(element, values);
+  element.dataset.rowId = rowId;
 
   cell.appendChild(element);
   return cell;
@@ -92,12 +105,15 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
   row.classList.add('tr', 'data-row');
   row.dataset.rowId = rowId;
 
-  const task = generateDataField('Task', taskName, 'text');
-  const min = generateDataField('Min Time', minTime, 'number');
-  const max = generateDataField('Max Time', maxTime, 'number');
-  const conf = generateDataField('Confidence', confidence, 'number');
-  const cost = generateDataField('Cost', hourlyCost, 'number');
-  const rmButton = generateDataField('Remove', 'Remove', 'button');
+  const task = generateDataField('Task', taskName, 'text', rowId);
+  const min = generateDataField('Min Time', minTime, 'number', rowId);
+  const max = generateDataField('Max Time', maxTime, 'number', rowId);
+  const conf = generateDataField('Confidence', confidence, 'number', rowId);
+  const cost = generateDataField('Cost', hourlyCost, 'number', rowId);
+  const rmButton = generateDataField('Clear', 'Clear', 'button', rowId);
+
+  // Add click event handler for the clear button.
+  rmButton.firstElementChild.addEventListener('click', rowClearClickHandler);
 
   row.appendChild(task);
   row.appendChild(min);
@@ -262,7 +278,6 @@ function setupUi() {
   simWrapper.appendChild(simHeader);
   simWrapper.appendChild(simControls);
   simWrapper.appendChild(simResultWrapper);
-
 
   // Add all elements to the main application wrapper.
   mainElement.appendChild(headerDiv);
