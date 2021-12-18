@@ -1,3 +1,4 @@
+/* General Layout */
 .project-icon {
   float: left;
 }
@@ -6,6 +7,24 @@
   clear: both;
 }
 
+/* Table layout mechanisms. */
+.table {
+  display: table;
+}
+.tr {
+  display: table-row;
+}
+.th {
+  display: table-cell;
+  font-weight: bold;
+  padding-left: 1em;
+}
+.td {
+  display: table-cell;
+  padding-left: 1em;
+}
+
+/* Graph Elements */
 .bar rect {
   fill: lightblue;
 }

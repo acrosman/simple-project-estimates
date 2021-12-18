@@ -1,11 +1,84 @@
 import './style.css';
 import Icon from './EstimateIcon.png';
+import sampleData from './data/sample.csv';
 
 function createTextElement(wrapperTag, text, classList) {
   const el = document.createElement(wrapperTag);
   el.appendChild(document.createTextNode(text));
   el.classList.add(...classList);
   return el
+}
+
+function generateDataField(label, fieldValue, fieldType) {
+  const cell = document.createElement('div');
+  cell.classList.add('td');
+  const element = document.createElement('input');
+  const values = {
+    type: fieldType,
+    value: fieldValue,
+    'aria-label': label,
+    name: label,
+  };
+  Object.assign(element, values);
+
+  cell.appendChild(element);
+  return cell;
+}
+
+function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCost) {
+  const row = document.createElement('div');
+  row.classList.add('tr', 'data-row');
+  row.dataset.rowId = rowId;
+
+  const task = generateDataField('Task', taskName, 'text');
+  const min = generateDataField('Min Time', minTime, 'number');
+  const max = generateDataField('Max Time', maxTime, 'number');
+  const conf = generateDataField('Confidence', confidence, 'number');
+  const cost = generateDataField('Cost', hourlyCost, 'number');
+  const rmButton = generateDataField('Remove', 'Remove', 'button');
+
+  row.appendChild(task);
+  row.appendChild(min);
+  row.appendChild(max);
+  row.appendChild(conf);
+  row.appendChild(cost);
+  row.appendChild(rmButton);
+
+  return row;
+}
+
+function createEntryTable(data = []) {
+  const wrapper = document.createElement('div');
+  wrapper.classList.add('wrapper-entry-table', 'section');
+  const form = document.createElement('div');
+  form.classList.add('table', 'data-entry');
+  form.id = 'DataEntryTable';
+  form.dataset.currentMaxRow = 1;
+  const header = document.createElement('div');
+  header.classList.add('tr', 'table-header-row');
+  header.appendChild(createTextElement('div', 'Task', ['th']));
+  header.appendChild(createTextElement('div', 'Min Time', ['th']));
+  header.appendChild(createTextElement('div', 'Max Time', ['th']));
+  header.appendChild(createTextElement('div', 'Confidence (%)', ['th']));
+  header.appendChild(createTextElement('div', 'Hourly Cost', ['th']));
+  header.appendChild(createTextElement('div', '', ['th']));
+
+  form.appendChild(header);
+  form.appendChild(generateDataRow(1, '', '', '', '', ''));
+
+  const addBtn = document.createElement('input');
+  const btnAttr = {
+    type: 'button',
+    name: 'Add Task Button',
+    id: 'addTaskBtn',
+    value: 'Add Task',
+  };
+  Object.assign(addBtn, btnAttr);
+
+  wrapper.appendChild(form);
+  wrapper.appendChild(addBtn);
+
+  return wrapper;
 }
 
 function setupUi() {
@@ -30,27 +103,42 @@ function setupUi() {
   dataWrapper.classList.add('section');
   dataWrapper.id = 'dataAreaWrapper';
 
-  // Add CSV File Loader Section
+  // === Add CSV File Loader Section ===
   const fileDiv = document.createElement('div');
+  fileDiv.classList.add('section', 'wrapper-file-load');
   const csvHeader = createTextElement('H2', 'Upload Task CSV File', ['header', 'csv-file']);
   let fieldSet = document.createElement('fieldset');
-  fieldSet.appendChild(createTextElement('legend', 'Select prepared file', []));
   const fileInput = document.createElement('input');
+  Object.assign(fileInput, {
+    type: 'file',
+    name: 'File Upload',
+    id: 'csvFileInput',
+    accept: '.csv',
+  });
   fileInput.classList.add('input-file-csv');
-  fileInput.type = 'file';
-  fileInput.name = 'File Upload';
-  fileInput.id = 'csvFileInput';
-  fileInput.accept = '.csv';
+  const sampleLink = createTextElement('a', 'Sample CSV File', ['link-sample']);
+  sampleLink.href = sampleData;
+
+  // Add fieldset elements.
+  fieldSet.appendChild(createTextElement('legend', 'Select prepared file', []));
   fieldSet.appendChild(fileInput);
+  fieldSet.appendChild(sampleLink);
 
   // Add segments to section
   fileDiv.appendChild(csvHeader);
   fileDiv.appendChild(fieldSet);
   dataWrapper.appendChild(fileDiv);
 
-  // <legend>Upload your CSV File</legend>
-  // <input type="file" name="File Upload" id="csvFileInput" accept=".csv" />
-  // <a href="data/sample.csv">View sample data</a>
+  // === Add Direct Input Controls ===
+  const dataEntryDiv = document.createElement('div');
+  dataEntryDiv.classList.add('section', 'wrapper-direct-load');
+  const dataEntryHeader = createTextElement('H2', 'Add Tasks By Hand', ['header', 'data-input']);
+  const dataEntryTable = createEntryTable();
+
+  // Add segments to section.
+  dataEntryDiv.appendChild(dataEntryHeader);
+  dataEntryDiv.appendChild(dataEntryTable);
+  dataWrapper.append(dataEntryDiv);
 
   // Add all elements to the main application wrapper.
   mainElement.appendChild(headerDiv);
