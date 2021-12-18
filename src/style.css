@@ -1,0 +1,24 @@
+.project-icon {
+  float: left;
+}
+
+.section {
+  clear: both;
+}
+
+.bar rect {
+  fill: lightblue;
+}
+
+.bar text {
+  fill: #fff;
+  font: 10px sans-serif;
+}
+
+.bar.median rect {
+  fill: red;
+}
+
+.bar.stdDev rect {
+  fill: steelblue;
+}
