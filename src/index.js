@@ -1,6 +1,7 @@
 import './style.css';
 import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
+import * as sim from './simulation.js';
 
 // ============= Interface Behaviors ================
 
@@ -29,6 +30,62 @@ function addTaskClickHandler(event) {
   const newRow = generateDataRow(currentRowId, '', '', '', '', '');
   table.appendChild(newRow);
   table.dataset.currentMaxRow = currentRowId;
+}
+
+/**
+ * Triggers the start of the simulation run with the current values.
+ * @param {Event} event
+ */
+function startSimulation(event) {
+  const passCount = document.getElementById('simulationPasses').value;
+  const graphSetting = document.getElementById('LimitGraph').checked;
+  const data = [];
+
+  // Gather the task information.
+  const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
+  let inputs;
+  let taskDetail;
+  for (let t of tasks) {
+    taskDetail = {};
+    inputs = t.getElementsByTagName('input');
+    for (let i of inputs) {
+      switch (i.name) {
+        case 'Task':
+          taskDetail.Name = i.value;
+          break;
+        case 'Min Time':
+          taskDetail.Min = i.value;
+          break;
+        case 'Max Time':
+          taskDetail.Max = i.value;
+          break;
+        case 'Confidence':
+          taskDetail.Confidence = i.value;
+          break;
+        case 'Cost':
+          taskDetail.Cost = i.value;
+          break;
+        default:
+          break;
+      }
+    }
+    data.push(taskDetail);
+  }
+
+  const settings = {
+    passes: passCount,
+    limitGraph: graphSetting,
+    data,
+  };
+  sim.runSimulation(settings, finishSimulation);
+}
+
+/**
+ * Callback for after simulation has run.
+ * @param {*} results
+ */
+function finishSimulation(results) {
+
 }
 
 // ============= Interface Elements =================
@@ -277,6 +334,7 @@ function setupUi() {
   simRun.type = 'button';
   simRun.id = 'startSimulationButton';
   simRun.value = 'Run Simulation';
+  simRun.addEventListener('click', startSimulation);
 
   simControls.appendChild(simCountCtl);
   simControls.appendChild(simLimitCtl);
