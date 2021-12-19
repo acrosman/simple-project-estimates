@@ -23,10 +23,11 @@ function getRandom(minimum, maximum) {
  * And so on.
  * @param {*} maxEstimate
  * @param {*} confidence
- * @returns
+ * @returns Integer
  */
 function taskUpperBound(maxEstimate, confidence) {
-  return maxEstimate * Math.abs(Math.floor(10 - (confidence * 10)));
+  const boundry = maxEstimate * Math.abs(Math.floor(10 - (confidence * 10)));
+  return boundry;
 }
 
 /**
@@ -105,14 +106,18 @@ function getStandardDeviation(numberArray) {
 
 /**
  * Calculate the longest time the simulator may come up with.
- * @param {*} tasks
+ * @param {*} tasks: The list of tasks being tested.
+ * @param {boolean} useCost: Calculates the cost instead of time boundary.
  * @returns
  */
-function calculateUpperBound(tasks) {
+function calculateUpperBound(tasks, useCost = false) {
   let total = 0;
-
+  let multiplier = 1;
   tasks.forEach((row) => {
-    total += taskUpperBound(row.Max, row.Confidence);
+    if (useCost) {
+      multiplier = row.Cost;
+    }
+    total += (taskUpperBound(row.Max, row.Confidence) * multiplier);
   });
   return total;
 }
@@ -126,12 +131,23 @@ function calculateUpperBound(tasks) {
  * @param {*} stdDev
  * @returns HTMLElement
  */
-function buildHistogram(list, min, max, median, stdDev) {
+function buildHistogram(list, min, max, median, stdDev, limitGraph) {
   const minBin = min;
   const maxBin = max;
   const stdDevOffset = Math.floor(stdDev);
   const maxVal = Math.max(...list);
   const medianIndex = Math.floor(median - min);
+
+  // // Trim the array to just hold cells in the range of results.
+  // // If limit graph is set, just show two standard deviations on the graph.
+  // let upper = max;
+  // let lower = min;
+  // if (limitGraph) {
+  //   upper = results.median + (results.sd * 2) < max ? results.median + (results.sd * 2) : max;
+  //   lower = results.median - (results.sd * 2) > min ? results.median - (results.sd * 2) : min;
+  // }
+  // results.trimmed = times.filter((e, i) => (i > lower && i < upper));
+
 
   // whitespace on either side of the bars
   const binmargin = 0.2;
@@ -221,58 +237,85 @@ function buildHistogram(list, min, max, median, stdDev) {
 
 /**
  * Runs the main simulation.
- * @param {*} settings
- * @param {*} callback
+ * @param {Integer} passes
+ * @param {Object} data
+ * @returns
  */
-function runSimulation(settings, callback) {
-  const { passes, limitGraph, data } = settings;
-  const upperbound = calculateUpperBound(data);
-  const times = new Array(upperbound).fill(0);
-  const estimates = [];
+function runSimulation(passes, data) {
+  const upperTimeBound = calculateUpperBound(data);
+  const upperCostBound = calculateUpperBound(data, true);
+  const times = new Array(upperTimeBound).fill(0);
+  const costs = new Array(upperCostBound).fill(0);
+  const estimates = {
+    times: [],
+    costs: [],
+  };
+  const estimateDetails = [];
   const startTime = Date.now();
-  let min = -1;
-  let max = 0;
+  let minTime = -1;
+  let maxTime = 0;
+  let minCost = -1;
+  let maxCost = 0;
   let endTime = 0;
+  let taskTime = 0;
+  let taskCost = 0;
+  let totalTime = 0;
+  let totalCost = 0;
+  let outcome = {};
 
   // Run the simulation.
   for (let i = 0; i < passes; i += 1) {
-    let time = 0;
+    totalTime = 0;
+    totalCost = 0;
+    outcome = {};
+
     data.forEach((row) => {
-      time += generateEstimate(row.Min, row.Max, row.Confidence);
+      taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
+      taskCost = taskTime * row.Cost;
+      totalTime += taskTime;
+      totalCost += taskCost;
+      outcome[row.Task] = {
+        time: taskTime,
+        cost: taskCost,
+      };
     });
-    times[time] += 1;
-    estimates.push(time);
-    if (time < min || min === -1) { min = time; }
-    if (time > max) { max = time; }
+    times[totalTime] += 1;
+    costs[totalCost] += 1;
+    estimates.times.push(totalTime);
+    estimates.costs.push(totalCost);
+    estimateDetails.push(outcome);
+    if (totalTime < minTime || minTime === -1) { minTime = totalTime; }
+    if (totalTime > maxTime) { maxTime = totalTime; }
+    if (totalCost < minCost || minCost === -1) { minCost = totalCost; }
+    if (totalCost > maxCost) { maxCost = totalCost; }
   }
   endTime = Date.now();
 
   // Calculate and display the results.
   const runningTime = endTime - startTime;
-  const sums = times.map((value, index) => value * index);
   const results = {
-    sums,
     runningTime,
-    sum: sums.reduce((a, b) => a + b),
-    median: getMedian(times),
-    sd: getStandardDeviation(estimates),
+    estimateDetails,
+    times: {
+      median: getMedian(times),
+      sd: getStandardDeviation(estimates.times),
+      min: minTime,
+      max: maxTime,
+    },
+    costs: {
+      median: getMedian(costs),
+      sd: getStandardDeviation(estimates.costs),
+      min: minCost,
+      max: maxCost,
+    },
   };
 
-  results.avg = results.sum / passes;
-  results.likelyMin = Math.round(results.median - results.sd);
-  results.likelyMax = Math.round(results.median + results.sd);
+  results.times.likelyMin = Math.round(results.times.median - results.times.sd);
+  results.times.likelyMax = Math.round(results.times.median + results.times.sd);
+  results.costs.likelyMin = Math.round(results.costs.median - results.costs.sd);
+  results.costs.likelyMax = Math.round(results.costs.median + results.costs.sd);
 
-  // Trim the array to just hold cells in the range of results.
-  // If limit graph is set, just show two standard deviations on the graph.
-  let upper = max;
-  let lower = min;
-  if (limitGraph) {
-    upper = results.median + (results.sd * 2) < max ? results.median + (results.sd * 2) : max;
-    lower = results.median - (results.sd * 2) > min ? results.median - (results.sd * 2) : min;
-  }
-  results.trimmed = times.filter((e, i) => (i > lower && i < upper));
-
-  callback(results);
+  return results;
 }
 
 export { runSimulation, buildHistogram };
