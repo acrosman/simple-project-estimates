@@ -6,6 +6,16 @@ import * as sim from './simulation.js';
 // ============= Interface Behaviors ================
 
 /**
+ * Helper function to replace all of a node's content with new text.
+ * @param {*} id Element ID for search.
+ * @param {*} content A string to place into the element.
+ */
+function updateElementText(id, content) {
+  const el = document.getElementById(id);
+  el.textContent = content;
+}
+
+/**
  * Click Event Handler for the clear row button.
  * @param {Event} event Fired event.
  */
@@ -54,38 +64,33 @@ function startSimulation(event) {
           taskDetail.Name = i.value;
           break;
         case 'Min Time':
-          taskDetail.Min = i.value;
+          taskDetail.Min = parseInt(i.value);
           break;
         case 'Max Time':
-          taskDetail.Max = i.value;
+          taskDetail.Max = parseInt(i.value);
           break;
         case 'Confidence':
-          taskDetail.Confidence = i.value;
+          taskDetail.Confidence = parseFloat(i.value) / 100;
           break;
         case 'Cost':
-          taskDetail.Cost = i.value;
+          taskDetail.Cost = parseInt(i.value);
           break;
         default:
           break;
       }
     }
-    data.push(taskDetail);
+    if (taskDetail.Name) {
+      data.push(taskDetail);
+    }
   }
 
-  const settings = {
-    passes: passCount,
-    limitGraph: graphSetting,
-    data,
-  };
-  sim.runSimulation(settings, finishSimulation);
-}
+  // Run Main simulator.
+  const results = sim.runSimulation(passCount, data);
 
-/**
- * Callback for after simulation has run.
- * @param {*} results
- */
-function finishSimulation(results) {
+  // Display summary data.
+  updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
 
+  // Build and display histogram.
 }
 
 // ============= Interface Elements =================
@@ -340,16 +345,31 @@ function setupUi() {
   simControls.appendChild(simLimitCtl);
   simControls.appendChild(simRun);
 
-  // Simulation Results elements
+  // Simulation Time Results elements
   const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
   simResultWrapper.appendChild(createDivWithIdAndClasses("simulationRunningTime", ['simulation-result', 'text']));
-  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationMedian", ['simulation-result', 'text']));
-  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationAverage", ['simulation-result', 'text']));
-  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationStandRange", ['simulation-result', 'text']));
-  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationMax", ['simulation-result', 'text']));
-  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationMin", ['simulation-result', 'text']));
-  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationStandDev", ['simulation-result', 'text']));
-  simResultWrapper.appendChild(createDivWithIdAndClasses("histoGram", ['simulation-result', 'graph']));
+  const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
+  simTimeResultWrapper.appendChild(createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMedian", ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeAverage", ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeStandRange", ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMax", ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMin", ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeStandDev", ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("timeHistoGram", ['simulation-result', 'time-info', 'graph']));
+  simResultWrapper.appendChild(simTimeResultWrapper);
+
+  // Simulation Cost Results elements
+  const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
+  simCostResultWrapper.appendChild(createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMedian", ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostAverage", ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostStandRange", ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMax", ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMin", ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostStandDev", ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses("costHistoGram", ['simulation-result', 'cost-info', 'graph']));
+  simResultWrapper.appendChild(simCostResultWrapper);
 
   // Add simulator elements to wrapper.
   simWrapper.appendChild(simHeader);
