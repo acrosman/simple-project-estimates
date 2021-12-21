@@ -2,6 +2,7 @@ import './style.css';
 import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
 import * as sim from './simulation.js';
+import { Spinner } from 'spin.js';
 
 // ============= Interface Behaviors ================
 
@@ -51,6 +52,31 @@ function startSimulation(event) {
   const graphSetting = document.getElementById('LimitGraph').checked;
   const data = [];
 
+  // Start the Spinner
+  const spinnerSettings = {
+    lines: 17, // The number of lines to draw
+    length: 10, // The length of each line
+    width: 48, // The line thickness
+    radius: 28, // The radius of the inner circle
+    scale: 1.05, // Scales overall size of the spinner
+    corners: 0.6, // Corner roundness (0..1)
+    speed: 0.6, // Rounds per second
+    rotate: 0, // The rotation offset
+    animation: 'spinner-line-fade-quick', // The CSS animation name for the lines
+    direction: -1, // 1: clockwise, -1: counterclockwise
+    color: '#63e4ff', // CSS color or array of colors
+    fadeColor: 'transparent', // CSS color or array of colors
+    top: '50%', // Top position relative to parent
+    left: '50%', // Left position relative to parent
+    shadow: '0 0 1px transparent', // Box-shadow for the lines
+    zIndex: 2000000000, // The z-index (defaults to 2e9)
+    className: 'spinner', // The CSS class to assign to the spinner
+    position: 'absolute', // Element positioning
+  };
+
+  const target = document.getElementById('simulationSpinner');
+  const spinner = new Spinner(spinnerSettings).spin(target);
+
   // Gather the task information.
   const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
   let inputs;
@@ -89,8 +115,21 @@ function startSimulation(event) {
 
   // Display summary data.
   updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
+  updateElementText('simulationTimeMedian', `Median Time: ${results.times.median}`);
+  updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax}`);
+  updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
+  updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
+  updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
+  updateElementText('simulationCostMedian', `Median cost: ${results.costs.median}`);
+  updateElementText('simulationCostStandRange', `Likely Range: ${results.costs.likelyMin} - ${results.costs.likelyMax}`);
+  updateElementText('simulationCostMax', `Max cost: ${results.costs.max}`);
+  updateElementText('simulationCostMin', `Min cost: ${results.costs.min}`);
+  updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
+
 
   // Build and display histogram.
+
+  spinner.stop();
 }
 
 // ============= Interface Elements =================
@@ -309,13 +348,11 @@ function setupUi() {
   dataWrapper.append(dataEntryDiv);
 
   // == Create Output Region ==
-  const simWrapper = document.createElement('div');
-  simWrapper.classList.add('section', 'container');
-  simWrapper.id = 'simulationAreaWrapper';
+  const simWrapper = createDivWithIdAndClasses('simulationAreaWrapper', ['section', 'container']);
   const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation'])
 
-  const simControls = document.createElement('div');
-  simControls.classList.add('section', 'controls-simulation');
+  const simControls = createDivWithIdAndClasses('simulatorControlsWrapper', ['section', 'controls-simulation']);
+  const spinnerContainer = createDivWithIdAndClasses('simulationSpinner', []);
 
   const simCountFldAttr = {
     type: 'number',
@@ -351,7 +388,6 @@ function setupUi() {
   const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
   simTimeResultWrapper.appendChild(createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMedian", ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeAverage", ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeStandRange", ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMax", ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMin", ['simulation-result', 'time-info', 'text']));
@@ -363,7 +399,6 @@ function setupUi() {
   const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
   simCostResultWrapper.appendChild(createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMedian", ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostAverage", ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostStandRange", ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMax", ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMin", ['simulation-result', 'cost-info', 'text']));
@@ -373,6 +408,7 @@ function setupUi() {
 
   // Add simulator elements to wrapper.
   simWrapper.appendChild(simHeader);
+  simWrapper.appendChild(spinnerContainer);
   simWrapper.appendChild(simControls);
   simWrapper.appendChild(simResultWrapper);
 
