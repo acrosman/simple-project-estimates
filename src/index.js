@@ -3,8 +3,28 @@ import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
 import * as sim from './simulation.js';
 import { Spinner } from 'spin.js';
+import { csv } from 'd3-fetch';
 
 // ============= Interface Behaviors ================
+/**
+ * Client event handler for the import button
+ * @param {Event} event Fired event.
+ */
+function importCsvFile(event) {
+  const fileInpput = document.getElementById('csvFileInput');
+  const file = fileInpput.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = function (evt) {
+      const dataUrl = evt.target.result;
+      // The following call results in an "Access denied" error in IE.
+      csv(dataUrl).then((data) => {
+        createEntryTable(data);
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+}
 
 /**
  * Helper function to replace all of a node's content with new text.
@@ -250,8 +270,15 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
  * @returns HTMLElement
  */
 function createEntryTable(data = []) {
-  const wrapper = document.createElement('div');
-  wrapper.classList.add('wrapper-entry-table', 'section');
+  // If there is an existing table remove it.
+  let wrapper = document.getElementById('dataTableWrapper');
+  if (wrapper !== null) {
+    wrapper.textContent = '';
+  } else {
+    wrapper = createDivWithIdAndClasses('dataTableWrapper', ['wrapper-entry-table', 'section']);
+  }
+
+  // Generate new table.
   const form = document.createElement('div');
   form.classList.add('table', 'data-entry');
   form.id = 'DataEntryTable';
@@ -266,7 +293,16 @@ function createEntryTable(data = []) {
   header.appendChild(createTextElement('div', '', ['th']));
 
   form.appendChild(header);
-  form.appendChild(generateDataRow(1, '', '', '', '', ''));
+
+  if (data.length < 1) {
+    form.appendChild(generateDataRow(1, '', '', '', '', ''));
+  } else {
+    let count = 0;
+    for (let row of data) {
+      count += 1;
+      form.appendChild(generateDataRow(count, row.Task, row.Min, row.Max, row.Confidence, row.Cost));
+    }
+  }
 
   const addBtn = document.createElement('input');
   const btnAttr = {
@@ -315,6 +351,8 @@ function setupUi() {
   fileDiv.classList.add('section', 'wrapper-file-load');
   const csvHeader = createTextElement('H2', 'Upload Task CSV File', ['header', 'csv-file']);
   let fieldSet = document.createElement('fieldset');
+
+  // File Input.
   const fileInput = document.createElement('input');
   Object.assign(fileInput, {
     type: 'file',
@@ -323,12 +361,22 @@ function setupUi() {
     accept: '.csv',
   });
   fileInput.classList.add('input-file-csv');
+  // File load button.
+  const fileLoadTrigger = document.createElement('input');
+  Object.assign(fileLoadTrigger, {
+    type: 'button',
+    id: 'fileLoadButton',
+    value: 'Load Tasks',
+  });
+  fileLoadTrigger.addEventListener('click', importCsvFile);
+  // Sample file link.
   const sampleLink = createTextElement('a', 'Sample CSV File', ['link-sample']);
   sampleLink.href = sampleData;
 
   // Add fieldset elements.
   fieldSet.appendChild(createTextElement('legend', 'Select prepared file', []));
   fieldSet.appendChild(fileInput);
+  fieldSet.appendChild(fileLoadTrigger);
   fieldSet.appendChild(sampleLink);
 
   // Add segments to section
