@@ -7,6 +7,10 @@
   clear: both;
 }
 
+input[type="button"] {
+  margin: 1em;
+}
+
 /* Table layout mechanisms. */
 .table {
   display: table;
@@ -22,6 +26,11 @@
 .td {
   display: table-cell;
   padding-left: 1em;
+}
+
+/* Interfact Elements */
+.link-sample {
+  display: block;
 }
 
 /* Graph Elements */
