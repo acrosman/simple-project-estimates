@@ -1,9 +1,9 @@
-Task,Max,Min,Confidence
-Setup,5,2,.90
-Page,20,10,.90
-Blog Post,20,10,.90
-Blog Lists,40,30,.80
-Stuff,80,70,.80
-More Stuff,20,10,.80
-Things,100,90,.80
-Other Things,10,5,.80
+Task,Max,Min,Confidence,Cost
+Setup,5,2,.90,120
+Page,20,10,.90,120
+Blog Post,20,10,.90,100
+Blog Lists,40,30,.80,100
+Stuff,80,70,.80,120
+More Stuff,20,10,.80,100
+Things,100,90,.80,100
+Other Things,10,5,.80,150
