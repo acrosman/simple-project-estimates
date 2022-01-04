@@ -134,16 +134,20 @@ function startSimulation(event) {
   const results = sim.runSimulation(passCount, data);
 
   // Display summary data.
+  const currencyFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  });
   updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
   updateElementText('simulationTimeMedian', `Median Time: ${results.times.median}`);
   updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax}`);
   updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
   updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
   updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
-  updateElementText('simulationCostMedian', `Median cost: ${results.costs.median}`);
-  updateElementText('simulationCostStandRange', `Likely Range: ${results.costs.likelyMin} - ${results.costs.likelyMax}`);
-  updateElementText('simulationCostMax', `Max cost: ${results.costs.max}`);
-  updateElementText('simulationCostMin', `Min cost: ${results.costs.min}`);
+  updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
+  updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
+  updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(results.costs.max)}`);
+  updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
   updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
 
 
