@@ -150,8 +150,9 @@ function startSimulation(event) {
   updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
   updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
 
-
-  // Build and display histogram.
+  // Build and display histograms.
+  const timeGraph = sim.buildHistogram(document.getElementById('timeHistoGram'), results.times.list, results.times.min, results.times.max, results.times.median, results.times.sd, graphSetting);
+  const costGraph = sim.buildHistogram(document.getElementById('costHistoGram'), results.costs.list, results.costs.min, results.costs.max, results.costs.median, results.costs.sd, graphSetting);
 
   spinner.stop();
 }
