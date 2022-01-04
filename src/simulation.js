@@ -66,23 +66,47 @@ function generateEstimate(minimum, maximum, confidence) {
 
 /**
  * Calculates the median value for all times run during a series of simulations.
- * @param {*} data
- * @returns
+ * @param {Array} data Array of summarized results with each cell being the number of times the index was the result of a run.
+ * @returns the median from value of the run.
  */
 function getMedian(data) {
-  const m = [];
-  data.forEach((index, value) => {
-    const nextSet = new Array(value).fill(index);
-    m.splice(0, 0, ...nextSet);
+
+  // Find total number of values in the list.
+  let total = 0;
+  data.forEach((value, index) => {
+    total += value * index;
   });
 
-  m.sort((a, b) => a - b);
-
-  const middle = Math.floor((m.length - 1) / 2);
-  if (m.length % 2) {
-    return m[middle];
+  // Walk back to the middle of the result set to see which is median
+  const midPoint = total / 2;
+  let median = 0;
+  let currentDistance = 0;
+  const isOdd = total % 2;
+  for (let i = 0; i < data.length; i += 1) {
+    currentDistance += data[i] * i;
+    // We aren't there yet, so keep going.
+    if (currentDistance < midPoint) {
+      continue;
+    }
+    // We passed the midPoint in this segment, so the median was here.
+    if (currentDistance > midPoint) {
+      median = i;
+      break;
+    }
+    // The median falls on the line between this segment and the next.
+    // if this is a odd-lengthed set (rare in this design) average this and the next.
+    // otherwise use this value.
+    if (currentDistance === midPoint) {
+      if (isOdd) {
+        median = (i + (i + 1)) / 2;
+      } else {
+        median = i;
+      }
+      break;
+    }
   }
-  return (m[middle] + m[middle + 1]) / 2.0;
+
+  return median;
 }
 
 /**
@@ -101,7 +125,9 @@ function getStandardDeviation(numberArray) {
   for (let i = 0; i < numberArray.length; i += 1) {
     sdPrep += (parseFloat(numberArray[i]) - avg) ** 2;
   }
-  return Math.sqrt(sdPrep / numberArray.length);
+
+  const standardDev = Math.sqrt(sdPrep / numberArray.length);
+  return standardDev;
 }
 
 /**
@@ -257,8 +283,6 @@ function runSimulation(passes, data) {
   let minCost = -1;
   let maxCost = 0;
   let endTime = 0;
-  let taskTime = 0;
-  let taskCost = 0;
   let totalTime = 0;
   let totalCost = 0;
   let outcome = {};
@@ -270,8 +294,8 @@ function runSimulation(passes, data) {
     outcome = {};
 
     data.forEach((row) => {
-      taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
-      taskCost = taskTime * row.Cost;
+      const taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
+      const taskCost = taskTime * row.Cost;
       totalTime += taskTime;
       totalCost += taskCost;
       outcome[row.Task] = {
