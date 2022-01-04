@@ -150,30 +150,29 @@ function calculateUpperBound(tasks, useCost = false) {
 
 /**
  * Builds the histogram graph, and returns an svg from D3.
- * @param {*} list
- * @param {*} min
- * @param {*} max
- * @param {*} median
- * @param {*} stdDev
+ * @param {HTMLElement} targetNode The DOM element to insert the graph into.
+ * @param {Array} list List of values to display
+ * @param {number} min Smallest value
+ * @param {number} max Largest value
+ * @param {number} median Median
+ * @param {number} stdDev Standard Devation of values.
+ * @param {boolean} limitGraph Limits the display to two standard deviations.
  * @returns HTMLElement
  */
-function buildHistogram(list, min, max, median, stdDev, limitGraph) {
-  const minBin = min;
-  const maxBin = max;
+function buildHistogram(targetNode, list, min, max, median, stdDev, limitGraph) {
+  let minBin = min;
+  let maxBin = max;
+
+  // Trim the array to just hold cells in the range of results.
+  // If limit graph is set, just show two standard deviations on the graph.
+  if (limitGraph) {
+    maxBin = median + (stdDev * 2) < max ? median + (stdDev * 2) : max;
+    minBin = median - (stdDev * 2) > min ? median - (stdDev * 2) : min;
+  }
+  const data = list.filter((e, i) => (i > minBin && i < maxBin));
+
   const stdDevOffset = Math.floor(stdDev);
-  const maxVal = Math.max(...list);
-  const medianIndex = Math.floor(median - min);
-
-  // // Trim the array to just hold cells in the range of results.
-  // // If limit graph is set, just show two standard deviations on the graph.
-  // let upper = max;
-  // let lower = min;
-  // if (limitGraph) {
-  //   upper = results.median + (results.sd * 2) < max ? results.median + (results.sd * 2) : max;
-  //   lower = results.median - (results.sd * 2) > min ? results.median - (results.sd * 2) : min;
-  // }
-  // results.trimmed = times.filter((e, i) => (i > lower && i < upper));
-
+  const medianIndex = Math.floor(median);
 
   // whitespace on either side of the bars
   const binmargin = 0.2;
@@ -198,15 +197,14 @@ function buildHistogram(list, min, max, median, stdDev, limitGraph) {
     .range([0, width]);
 
   const y = d3.scaleLinear()
-    .domain([0, maxVal])
+    .domain([0, maxBin])
     .range([height, 0]);
 
   const xAxis = d3.axisBottom().scale(x2);
   const yAxis = d3.axisLeft().scale(y).ticks(8);
 
   // Put the graph in the histogram div.
-  const svgDom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-  const svg = d3.select(svgDom.window.document).select('body').append('svg')
+  const svg = d3.select(targetNode).append('svg')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom)
     .append('g')
@@ -214,7 +212,7 @@ function buildHistogram(list, min, max, median, stdDev, limitGraph) {
 
   // Set up the bars.
   const bar = svg.selectAll('.bar')
-    .data(list)
+    .data(data)
     .enter().append('g')
     .attr('class', (d, i) => {
       if (i === medianIndex) {
@@ -325,12 +323,14 @@ function runSimulation(passes, data) {
       sd: getStandardDeviation(estimates.times),
       min: minTime,
       max: maxTime,
+      list: estimates.times,
     },
     costs: {
       median: getMedian(costs),
       sd: getStandardDeviation(estimates.costs),
       min: minCost,
       max: maxCost,
+      list: estimates.costs,
     },
   };
 
