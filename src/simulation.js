@@ -157,9 +157,12 @@ function calculateUpperBound(tasks, useCost = false) {
  * @param {number} median Median
  * @param {number} stdDev Standard Devation of values.
  * @param {boolean} limitGraph Limits the display to two standard deviations.
- * @returns HTMLElement
  */
-function buildHistogram(targetNode, list, min, max, median, stdDev, limitGraph) {
+function buildHistogram(targetNode, list, min, max, median, stdDev, xlabel, limitGraph) {
+  // Remove and existing graphs
+  targetNode.innerHTML = "";
+
+  // Set outter bounds of graph.
   let minBin = min;
   let maxBin = max;
 
@@ -169,7 +172,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, limitGraph) 
     maxBin = median + (stdDev * 2) < max ? median + (stdDev * 2) : max;
     minBin = median - (stdDev * 2) > min ? median - (stdDev * 2) : min;
   }
-  const data = list.filter((e, i) => (i > minBin && i < maxBin));
+  const data = list.filter((e, i) => (i >= minBin && i <= maxBin));
 
   const stdDevOffset = Math.floor(stdDev);
   const medianIndex = Math.floor(median);
@@ -186,6 +189,9 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, limitGraph) 
   const xmin = minBin - 1;
   const xmax = maxBin + 1;
 
+  // Set the range of the y axis.
+  const ymax = Math.max(data);
+
   // This scale is for determining the widths of the histogram bars
   const x = d3.scaleLinear()
     .domain([0, (xmax - xmin)])
@@ -197,7 +203,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, limitGraph) 
     .range([0, width]);
 
   const y = d3.scaleLinear()
-    .domain([0, maxBin])
+    .domain([0, ymax])
     .range([height, 0]);
 
   const xAxis = d3.axisBottom().scale(x2);
@@ -240,7 +246,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, limitGraph) 
     .attr('text-anchor', 'middle')
     .attr('x', width / 2)
     .attr('y', height + margin.bottom)
-    .text('Hours');
+    .text(xlabel);
 
   // Add the y axis and y-label.
   svg.append('g')
@@ -256,7 +262,6 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, limitGraph) 
     .style('text-anchor', 'middle')
     .text('Frequency');
 
-  return svg;
 }
 
 /**
@@ -323,14 +328,14 @@ function runSimulation(passes, data) {
       sd: getStandardDeviation(estimates.times),
       min: minTime,
       max: maxTime,
-      list: estimates.times,
+      list: times,
     },
     costs: {
       median: getMedian(costs),
       sd: getStandardDeviation(estimates.costs),
       min: minCost,
       max: maxCost,
-      list: estimates.costs,
+      list: costs,
     },
   };
 

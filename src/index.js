@@ -151,8 +151,26 @@ function startSimulation(event) {
   updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
 
   // Build and display histograms.
-  const timeGraph = sim.buildHistogram(document.getElementById('timeHistoGram'), results.times.list, results.times.min, results.times.max, results.times.median, results.times.sd, graphSetting);
-  const costGraph = sim.buildHistogram(document.getElementById('costHistoGram'), results.costs.list, results.costs.min, results.costs.max, results.costs.median, results.costs.sd, graphSetting);
+  const timeGraph = sim.buildHistogram(
+    document.getElementById('timeHistoGram'),
+    results.times.list,
+    results.times.min,
+    results.times.max,
+    results.times.median,
+    results.times.sd,
+    "Hours",
+    graphSetting
+  );
+  const costGraph = sim.buildHistogram(
+    document.getElementById('costHistoGram'),
+    results.costs.list,
+    results.costs.min,
+    results.costs.max,
+    results.costs.median,
+    results.costs.sd,
+    "Cost",
+    graphSetting
+  );
 
   spinner.stop();
 }
