@@ -11,8 +11,8 @@ import { csv } from 'd3-fetch';
  * @param {Event} event Fired event.
  */
 function importCsvFile(event) {
-  const fileInpput = document.getElementById('csvFileInput');
-  const file = fileInpput.files[0];
+  const fileInput = document.getElementById('csvFileInput');
+  const file = fileInput.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onloadend = function (evt) {
@@ -199,17 +199,17 @@ function createTextElement(wrapperTag, text, classList = []) {
  */
 function createLabeledInput(labelText, inputAttributes, labelFirst = true) {
   const wrapper = document.createElement('div');
-  const fldLabl = createTextElement('label', labelText);
-  fldLabl.htmlFor = inputAttributes.name;
+  const fldLabel = createTextElement('label', labelText);
+  fldLabel.htmlFor = inputAttributes.name;
   const field = document.createElement('input');
   Object.assign(field, inputAttributes);
 
   if (labelFirst) {
-    wrapper.appendChild(fldLabl);
+    wrapper.appendChild(fldLabel);
     wrapper.appendChild(field);
   } else {
     wrapper.appendChild(field);
-    wrapper.appendChild(fldLabl);
+    wrapper.appendChild(fldLabel);
   }
   return wrapper;
 }
