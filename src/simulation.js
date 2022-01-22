@@ -17,7 +17,7 @@ function getRandom(minimum, maximum) {
  * are known to underestimate, the idea here is the less confidence they have
  * in their estimate the more risk that it could go much higher than expected.
  * So for every 10% drop in confidence we add the max estimate on again.
- * 90% leaves the uppoer bound at max estimate.
+ * 90% leaves the upper bound at max estimate.
  * 80% gives us max * 2.
  * 70% max * 3.
  * And so on.
@@ -26,15 +26,15 @@ function getRandom(minimum, maximum) {
  * @returns Integer
  */
 function taskUpperBound(maxEstimate, confidence) {
-  const boundry = maxEstimate * Math.abs(Math.floor(10 - (confidence * 10)));
-  return boundry;
+  const boundary = maxEstimate * Math.abs(Math.floor(10 - (confidence * 10)));
+  return boundary;
 }
 
 /**
  * Does the estimate for one task. It picks a random number between min and
  * max confidence % of the time. If the number is outside the range, it has
  * an even chance of being between 0-min, or above max. Since confidence in
- * an estimate implies both likelyhood of being right and likelyhood of being
+ * an estimate implies both likelihood of being right and likelihood of being
  * close. The less confidence in the estimate the higher the risk of the
  * project going way over time. For every 10% drop in overrun grows by 100%
  * of max estimate.
@@ -47,15 +47,15 @@ function generateEstimate(minimum, maximum, confidence) {
   const max = parseInt(maximum, 10);
   const min = parseInt(minimum, 10);
   const base = getRandom(1, 1000);
-  const boundry = confidence * 1000;
-  const midBoundry = Math.floor((1000 - boundry) / 2);
+  const boundary = confidence * 1000;
+  const midBoundary = Math.floor((1000 - boundary) / 2);
   const range = (max - min) + 1;
   const maxOverrun = taskUpperBound(max, confidence);
   let total = 0;
 
-  if (base < boundry) {
+  if (base < boundary) {
     total = (base % range) + min;
-  } else if ((base - boundry) < midBoundry) {
+  } else if ((base - boundary) < midBoundary) {
     total = min === 0 ? 0 : base % min;
   } else {
     total = getRandom(max, maxOverrun);
@@ -94,7 +94,7 @@ function getMedian(data) {
       break;
     }
     // The median falls on the line between this segment and the next.
-    // if this is a odd-lengthed set (rare in this design) average this and the next.
+    // if this is a odd-length set (rare in this design) average this and the next.
     // otherwise use this value.
     if (currentDistance === midPoint) {
       if (isOdd) {
@@ -155,14 +155,14 @@ function calculateUpperBound(tasks, useCost = false) {
  * @param {number} min Smallest value
  * @param {number} max Largest value
  * @param {number} median Median
- * @param {number} stdDev Standard Devation of values.
+ * @param {number} stdDev Standard Deviation of values.
  * @param {boolean} limitGraph Limits the display to two standard deviations.
  */
-function buildHistogram(targetNode, list, min, max, median, stdDev, xlabel, limitGraph) {
+function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limitGraph) {
   // Remove and existing graphs
   targetNode.innerHTML = "";
 
-  // Set outter bounds of graph.
+  // Set outer bounds of graph.
   let minBin = min;
   let maxBin = max;
 
@@ -178,7 +178,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xlabel, limi
   const medianIndex = Math.floor(median);
 
   // whitespace on either side of the bars
-  const binmargin = 0.2;
+  const binMargin = 0.2;
   const margin = {
     top: 10, right: 30, bottom: 50, left: 60,
   };
@@ -186,24 +186,24 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xlabel, limi
   const height = 500 - margin.top - margin.bottom;
 
   // Set the limits of the x axis
-  const xmin = minBin - 1;
-  const xmax = maxBin + 1;
+  const xMin = minBin - 1;
+  const xMax = maxBin + 1;
 
   // Set the range of the y axis.
-  const ymax = Math.max(data);
+  const yMax = Math.max(data);
 
   // This scale is for determining the widths of the histogram bars
   const x = d3.scaleLinear()
-    .domain([0, (xmax - xmin)])
+    .domain([0, (xMax - xMin)])
     .range([0, width]);
 
   // Scale for the placement of the bars
   const x2 = d3.scaleLinear()
-    .domain([xmin, xmax])
+    .domain([xMin, xMax])
     .range([0, width]);
 
   const y = d3.scaleLinear()
-    .domain([0, ymax])
+    .domain([0, yMax])
     .range([height, 0]);
 
   const xAxis = d3.axisBottom().scale(x2);
@@ -232,8 +232,8 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xlabel, limi
 
   // Add rectangles of correct size at correct location.
   bar.append('rect')
-    .attr('x', x(binmargin))
-    .attr('width', x(2 * binmargin))
+    .attr('x', x(binMargin))
+    .attr('width', x(2 * binMargin))
     .attr('height', (d) => height - y(d));
 
   // Add the x axis and x-label.
@@ -242,11 +242,11 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xlabel, limi
     .attr('transform', `translate(0,${height})`)
     .call(xAxis);
   svg.append('text')
-    .attr('class', 'xlabel')
+    .attr('class', 'xLabel')
     .attr('text-anchor', 'middle')
     .attr('x', width / 2)
     .attr('y', height + margin.bottom)
-    .text(xlabel);
+    .text(xLabel);
 
   // Add the y axis and y-label.
   svg.append('g')
@@ -254,7 +254,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xlabel, limi
     .attr('transform', 'translate(0,0)')
     .call(yAxis);
   svg.append('text')
-    .attr('class', 'ylabel')
+    .attr('class', 'yLabel')
     .attr('y', 0 - margin.left) // x and y switched due to rotation.
     .attr('x', 0 - (height / 2))
     .attr('dy', '1em')
