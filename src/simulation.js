@@ -149,7 +149,8 @@ function calculateUpperBound(tasks, useCost = false) {
 }
 
 /**
- * Builds the histogram graph, and returns an svg from D3.
+ * Builds the histogram graph, and returns an svg from D3. When there is lots of
+ * data it will automatically convert to use a line graph instead of a bar graph.
  * @param {HTMLElement} targetNode The DOM element to insert the graph into.
  * @param {Array} list List of values to display
  * @param {number} min Smallest value
@@ -161,6 +162,20 @@ function calculateUpperBound(tasks, useCost = false) {
 function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limitGraph) {
   // Remove and existing graphs
   targetNode.innerHTML = "";
+
+  // The number of points before it switches to using a line graph.
+  const barCutoff = 600;
+
+  // The width of the image
+  const imageWidth = 800;
+  const imageHeight = 500;
+
+  // Image Margins
+  const binMargin = 0.2;
+  const margin = {
+    top: 10, right: 30, bottom: 50, left: 60,
+  };
+
 
   // Set outer bounds of graph.
   let minBin = min;
@@ -182,16 +197,15 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   const stdDevHighIndex = medianIndex + stdDevOffset;
 
   // whitespace on either side of the bars
-  const binMargin = 0.2;
-  const margin = {
-    top: 10, right: 30, bottom: 50, left: 60,
-  };
-  const width = 800 - margin.left - margin.right;
-  const height = 500 - margin.top - margin.bottom;
+  const width = imageWidth - margin.left - margin.right;
+  const height = imageHeight - margin.top - margin.bottom;
 
   // Set the limits of the x axis
   const xMin = minBin - 1;
   const xMax = maxBin + 1;
+
+  // Determine if we should use a bar graph or scatter plot.
+  const useBars = (xMax - xMin) < barCutoff;
 
   // Set the max range of the y axis.
   // The data array can be quite large so standard Math.Max approaches can fail.
@@ -222,26 +236,6 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Set up the bars.
-  const bar = svg.selectAll('.bar')
-    .data(data)
-    .enter().append('g')
-    .attr('class', (d, i) => {
-      if (i === medianIndex) {
-        return 'bar median';
-      } if (i > stdDevLowIndex && i < stdDevHighIndex) {
-        return 'bar stdDev';
-      }
-      return 'bar';
-    })
-    .attr('transform', (d, i) => `translate(${x2(i + minBin)},${y(d)})`);
-
-  // Add rectangles of correct size at correct location.
-  bar.append('rect')
-    .attr('x', x(binMargin))
-    .attr('width', x(2 * binMargin))
-    .attr('height', (d) => height - y(d));
-
   // Add the x axis and x-label.
   svg.append('g')
     .attr('class', 'x axis')
@@ -267,6 +261,38 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     .attr('transform', 'rotate(-90)')
     .style('text-anchor', 'middle')
     .text('Frequency');
+
+  // Set up the bars.
+  if (useBars) {
+    const bar = svg.selectAll('.bar')
+      .data(data)
+      .enter().append('g')
+      .attr('class', (d, i) => {
+        if (i === medianIndex) {
+          return 'bar median';
+        } if (i > stdDevLowIndex && i < stdDevHighIndex) {
+          return 'bar stdDev';
+        }
+        return 'bar';
+      })
+      .attr('transform', (d, i) => `translate(${x2(i + minBin)},${y(d)})`);
+
+    // Add rectangles of correct size at correct location.
+    bar.append('rect')
+      .attr('x', x(binMargin))
+      .attr('width', x(2 * binMargin))
+      .attr('height', (d) => height - y(d));
+  } else {
+    // Add the line
+    svg.append("path")
+      .datum(data)
+      .attr("stroke", "#69b3a2")
+      .attr("stroke-width", 1.5)
+      .attr("d", d3.line()
+        .x(function (d, i) { return x(i) })
+        .y(function (d) { return y(d) })
+      )
+  }
 
 }
 
