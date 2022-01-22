@@ -303,7 +303,7 @@ function runSimulation(passes, data) {
       const taskCost = taskTime * row.Cost;
       totalTime += taskTime;
       totalCost += taskCost;
-      outcome[row.Task] = {
+      outcome[row.Name] = {
         time: taskTime,
         cost: taskCost,
       };
