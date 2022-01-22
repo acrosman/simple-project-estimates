@@ -189,8 +189,10 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   const xMin = minBin - 1;
   const xMax = maxBin + 1;
 
-  // Set the range of the y axis.
-  const yMax = Math.max(data);
+  // Set the max range of the y axis.
+  // The data array can be quite large so standard Math.Max approaches can fail.
+  const sortedData = [...data].sort((a, b) => a - b);
+  const yMax = sortedData[sortedData.length - 1];
 
   // This scale is for determining the widths of the histogram bars
   const x = d3.scaleLinear()
