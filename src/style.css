@@ -28,7 +28,7 @@ input[type="button"] {
   padding-left: 1em;
 }
 
-/* Interfact Elements */
+/* Interface Elements */
 .link-sample {
   display: block;
 }
@@ -49,4 +49,22 @@ input[type="button"] {
 
 .bar.stdDev rect {
   fill: steelblue;
+}
+
+.graphLine {
+  stroke-width: 1.5;
+  stroke: lightblue;
+}
+
+.graphLine text {
+  fill: #fff;
+  font: 10px sans-serif;
+}
+
+.graphLine.median {
+  stroke: red;
+}
+
+.graphLine.stdDev {
+  stroke: steelblue;
 }

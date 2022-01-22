@@ -286,8 +286,14 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     // Add the line
     svg.append("path")
       .datum(data)
-      .attr("stroke", "#69b3a2")
-      .attr("stroke-width", 1.5)
+      .attr('class', (d, i) => {
+        if (i === medianIndex) {
+          return 'graphLine median';
+        } if (i > stdDevLowIndex && i < stdDevHighIndex) {
+          return 'graphLine stdDev';
+        }
+        return 'graphLine';
+      })
       .attr("d", d3.line()
         .x(function (d, i) { return x(i) })
         .y(function (d) { return y(d) })
