@@ -51,20 +51,19 @@ input[type="button"] {
   fill: steelblue;
 }
 
-.graphLine {
-  stroke-width: 1.5;
-  stroke: lightblue;
+.graphXY {
+  fill: lightblue;
 }
 
-.graphLine text {
+.graphXY text {
   fill: #fff;
   font: 10px sans-serif;
 }
 
-.graphLine.median {
-  stroke: red;
+.graphXY.median {
+  fill: red;
 }
 
-.graphLine.stdDev {
-  stroke: steelblue;
+.graphXY.stdDev {
+  fill: steelblue;
 }

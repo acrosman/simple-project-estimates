@@ -150,7 +150,7 @@ function calculateUpperBound(tasks, useCost = false) {
 
 /**
  * Builds the histogram graph, and returns an svg from D3. When there is lots of
- * data it will automatically convert to use a line graph instead of a bar graph.
+ * data it will automatically convert to use a xy scatter graph instead of a bar graph.
  * @param {HTMLElement} targetNode The DOM element to insert the graph into.
  * @param {Array} list List of values to display
  * @param {number} min Smallest value
@@ -283,21 +283,41 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
       .attr('width', x(2 * binMargin))
       .attr('height', (d) => height - y(d));
   } else {
-    // Add the line
-    svg.append("path")
-      .datum(data)
+    // Use Scatter plot instead of bars
+    const scatter = svg.selectAll("dot")
+      .data(data)
+      .join("circle")
+      .attr("cx", (d, i) => { return x(i); })
+      .attr("cy", (d) => { return y(d); })
+      .attr("r", (d, i) => {
+        if (i === medianIndex) {
+          return 3;
+        }
+        return 1;
+      })
       .attr('class', (d, i) => {
         if (i === medianIndex) {
-          return 'graphLine median';
+          return 'graphXY median';
         } if (i > stdDevLowIndex && i < stdDevHighIndex) {
-          return 'graphLine stdDev';
+          return 'graphXY stdDev';
         }
-        return 'graphLine';
-      })
-      .attr("d", d3.line()
-        .x(function (d, i) { return x(i) })
-        .y(function (d) { return y(d) })
-      )
+        return 'graphXY';
+      });
+    // Add the line
+    // svg.append("path")
+    //   .datum(data)
+    //   .attr('class', (d, i) => {
+    //     if (i === medianIndex) {
+    //       return 'graphLine median';
+    //     } if (i > stdDevLowIndex && i < stdDevHighIndex) {
+    //       return 'graphLine stdDev';
+    //     }
+    //     return 'graphLine';
+    //   })
+    //   .attr("d", d3.line()
+    //     .x(function (d, i) { return x(i) })
+    //     .y(function (d) { return y(d) })
+    //   )
   }
 
 }
