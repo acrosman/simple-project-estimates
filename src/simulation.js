@@ -174,8 +174,12 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   }
   const data = list.filter((e, i) => (i >= minBin && i <= maxBin));
 
-  const stdDevOffset = Math.floor(stdDev);
-  const medianIndex = Math.floor(median);
+  // We need to round the median and standard deviation and find the
+  // index we expect for the bars.
+  const medianIndex = Math.round(median) - minBin;
+  const stdDevOffset = Math.round(stdDev);
+  const stdDevLowIndex = medianIndex - stdDevOffset;
+  const stdDevHighIndex = medianIndex + stdDevOffset;
 
   // whitespace on either side of the bars
   const binMargin = 0.2;
@@ -225,7 +229,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     .attr('class', (d, i) => {
       if (i === medianIndex) {
         return 'bar median';
-      } if (i > medianIndex - stdDevOffset && i < medianIndex + stdDevOffset) {
+      } if (i > stdDevLowIndex && i < stdDevHighIndex) {
         return 'bar stdDev';
       }
       return 'bar';
