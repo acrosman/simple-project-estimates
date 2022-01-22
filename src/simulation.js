@@ -176,7 +176,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
 
   // We need to round the median and standard deviation and find the
   // index we expect for the bars.
-  const medianIndex = Math.round(median) - minBin;
+  const medianIndex = Math.round(median - minBin);
   const stdDevOffset = Math.round(stdDev);
   const stdDevLowIndex = medianIndex - stdDevOffset;
   const stdDevHighIndex = medianIndex + stdDevOffset;
