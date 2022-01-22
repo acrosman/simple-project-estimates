@@ -99,7 +99,7 @@ function startSimulation(event) {
           break;
       }
     }
-    if (taskDetail.Name) {
+    if (taskDetail.Name && taskDetail.Min && taskDetail.Max) {
       data.push(taskDetail);
     }
   }
