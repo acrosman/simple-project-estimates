@@ -2,7 +2,6 @@ import './style.css';
 import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
 import * as sim from './simulation.js';
-import { Spinner } from 'spin.js';
 import { csv } from 'd3-fetch';
 
 // ============= Interface Behaviors ================
@@ -71,31 +70,6 @@ function startSimulation(event) {
   const passCount = document.getElementById('simulationPasses').value;
   const graphSetting = document.getElementById('LimitGraph').checked;
   const data = [];
-
-  // Start the Spinner
-  const spinnerSettings = {
-    lines: 17, // The number of lines to draw
-    length: 10, // The length of each line
-    width: 48, // The line thickness
-    radius: 28, // The radius of the inner circle
-    scale: 1.05, // Scales overall size of the spinner
-    corners: 0.6, // Corner roundness (0..1)
-    speed: 0.6, // Rounds per second
-    rotate: 0, // The rotation offset
-    animation: 'spinner-line-fade-quick', // The CSS animation name for the lines
-    direction: -1, // 1: clockwise, -1: counterclockwise
-    color: '#63e4ff', // CSS color or array of colors
-    fadeColor: 'transparent', // CSS color or array of colors
-    top: '50%', // Top position relative to parent
-    left: '50%', // Left position relative to parent
-    shadow: '0 0 1px transparent', // Box-shadow for the lines
-    zIndex: 2000000000, // The z-index (defaults to 2e9)
-    className: 'spinner', // The CSS class to assign to the spinner
-    position: 'absolute', // Element positioning
-  };
-
-  const target = document.getElementById('simulationSpinner');
-  const spinner = new Spinner(spinnerSettings).spin(target);
 
   // Gather the task information.
   const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
@@ -172,7 +146,6 @@ function startSimulation(event) {
     graphSetting
   );
 
-  spinner.stop();
 }
 
 // ============= Interface Elements =================
@@ -423,7 +396,6 @@ function setupUi() {
   const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation'])
 
   const simControls = createDivWithIdAndClasses('simulatorControlsWrapper', ['section', 'controls-simulation']);
-  const spinnerContainer = createDivWithIdAndClasses('simulationSpinner', []);
 
   const simCountFldAttr = {
     type: 'number',
@@ -479,7 +451,6 @@ function setupUi() {
 
   // Add simulator elements to wrapper.
   simWrapper.appendChild(simHeader);
-  simWrapper.appendChild(spinnerContainer);
   simWrapper.appendChild(simControls);
   simWrapper.appendChild(simResultWrapper);
 
