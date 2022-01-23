@@ -1,0 +1,69 @@
+/* General Layout */
+.project-icon {
+  float: left;
+}
+
+.section {
+  clear: both;
+}
+
+input[type="button"] {
+  margin: 1em;
+}
+
+/* Table layout mechanisms. */
+.table {
+  display: table;
+}
+.tr {
+  display: table-row;
+}
+.th {
+  display: table-cell;
+  font-weight: bold;
+  padding-left: 1em;
+}
+.td {
+  display: table-cell;
+  padding-left: 1em;
+}
+
+/* Interface Elements */
+.link-sample {
+  display: block;
+}
+
+/* Graph Elements */
+.bar rect {
+  fill: lightblue;
+}
+
+.bar text {
+  fill: #fff;
+  font: 10px sans-serif;
+}
+
+.bar.median rect {
+  fill: red;
+}
+
+.bar.stdDev rect {
+  fill: steelblue;
+}
+
+.graphXY {
+  fill: lightblue;
+}
+
+.graphXY text {
+  fill: #fff;
+  font: 10px sans-serif;
+}
+
+.graphXY.median {
+  fill: red;
+}
+
+.graphXY.stdDev {
+  fill: steelblue;
+}
