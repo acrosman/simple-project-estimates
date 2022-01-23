@@ -17,6 +17,6 @@ The rows follow suit, providing a name for each task, the max number of hours es
 
 `Setup,5,2,90,150`
 
-There is a [sample file](src/data/sample.png) you can download to use as a template.
+There is a [sample file](src/data/sample.csv) you can download to use as a template.
 
 The project leverages [D3](https://d3js.org/) for the histogram.
