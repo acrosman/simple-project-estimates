@@ -321,6 +321,7 @@ function createEntryTable(data = []) {
  * @returns HTMLElement
  */
 function setupUi() {
+  // === Main page structures ===
   const mainElement = document.createElement('div');
 
   // Setup page header:
@@ -336,6 +337,11 @@ function setupUi() {
   // Set header
   const mainHeader = createTextElement("H1", "Project Estimate Simulator", ['header', 'main']);
   headerDiv.appendChild(mainHeader);
+
+  // Fork Me ribbon
+  const githubRibbon = createDivWithIdAndClasses('forkOnGithub', ['github-ribbon']);
+  githubRibbon.innerHTML = '<a href="https://github.com/acrosman/simple-project-estimates">Fork me on GitHub</a>';
+  headerDiv.appendChild(githubRibbon);
 
   // Setup data entry section
   const dataWrapper = document.createElement('div');
