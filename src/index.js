@@ -294,9 +294,14 @@ function createEntryTable(data = []) {
     form.appendChild(generateDataRow(1, '', '', '', '', ''));
   } else {
     let count = 0;
+    let confidence = 0;
     for (let row of data) {
       count += 1;
-      form.appendChild(generateDataRow(count, row.Task, row.Min, row.Max, row.Confidence, row.Cost));
+      confidence = row.Confidence;
+      if (confidence < 1) {
+        confidence = confidence * 100;
+      }
+      form.appendChild(generateDataRow(count, row.Task, row.Min, row.Max, confidence, row.Cost));
       form.dataset.currentMaxRow = count;
     }
   }
