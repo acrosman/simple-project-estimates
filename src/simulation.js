@@ -303,21 +303,6 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
         }
         return 'graphXY';
       });
-    // Add the line
-    // svg.append("path")
-    //   .datum(data)
-    //   .attr('class', (d, i) => {
-    //     if (i === medianIndex) {
-    //       return 'graphLine median';
-    //     } if (i > stdDevLowIndex && i < stdDevHighIndex) {
-    //       return 'graphLine stdDev';
-    //     }
-    //     return 'graphLine';
-    //   })
-    //   .attr("d", d3.line()
-    //     .x(function (d, i) { return x(i) })
-    //     .y(function (d) { return y(d) })
-    //   )
   }
 
 }
