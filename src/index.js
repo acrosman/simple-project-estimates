@@ -297,6 +297,7 @@ function createEntryTable(data = []) {
     for (let row of data) {
       count += 1;
       form.appendChild(generateDataRow(count, row.Task, row.Min, row.Max, row.Confidence, row.Cost));
+      form.dataset.currentMaxRow = count;
     }
   }
 
