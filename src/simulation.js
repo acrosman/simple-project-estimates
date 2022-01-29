@@ -333,7 +333,7 @@ function runSimulation(passes, data) {
     totalCost = 0;
     outcome = {};
 
-    data.forEach((row) => {
+    for (const row of data) {
       const taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
       const taskCost = taskTime * row.Cost;
       totalTime += taskTime;
@@ -342,7 +342,7 @@ function runSimulation(passes, data) {
         time: taskTime,
         cost: taskCost,
       };
-    });
+    }
     times[totalTime] += 1;
     costs[totalCost] += 1;
     estimates.times.push(totalTime);
