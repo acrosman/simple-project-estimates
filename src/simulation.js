@@ -72,7 +72,7 @@ function generateEstimate(minimum, maximum, confidence) {
  */
 function getMedian(data) {
 
-  // Find total number of values in the list.
+  // Find total value in the list.
   let total = 0;
   data.forEach((value, index) => {
     total += value * index;
