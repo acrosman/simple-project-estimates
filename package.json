@@ -13,6 +13,7 @@
     "eslint": "^8.5.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jest": "^26.0.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^27.4.7",
     "style-loader": "^3.3.1",
@@ -21,7 +22,9 @@
     "webpack-dev-server": "^4.6.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --coverage",
+    "lint": "eslint --ignore-path .gitignore src",
+    "lint-fix": "eslint src --fix",
     "watch": "webpack --watch",
     "start": "webpack serve --open",
     "build": "webpack --mode=development"
