@@ -8,11 +8,13 @@
     "d3-fetch": "^3.0.1"
   },
   "devDependencies": {
+    "babel-plugin-rewire": "^1.2.0",
     "css-loader": "^6.5.1",
     "eslint": "^8.5.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.14.0",
     "html-webpack-plugin": "^5.5.0",
+    "jest": "^27.4.7",
     "style-loader": "^3.3.1",
     "webpack": "^5.65.0",
     "webpack-cli": "^4.9.1",
