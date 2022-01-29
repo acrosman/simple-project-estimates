@@ -32,9 +32,9 @@ module.exports = {
         test: /\.csv$/i,
         type: 'asset/resource',
         generator: {
-          filename: 'static/[hash][ext][query]'
-        }
-      }
+          filename: 'static/[hash][ext][query]',
+        },
+      },
     ],
   },
 };
