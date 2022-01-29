@@ -300,7 +300,7 @@ function startSimulation(event) {
   updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
 
   // Build and display histograms.
-  const timeGraph = sim.buildHistogram(
+  sim.buildHistogram(
     document.getElementById('timeHistoGram'),
     results.times.list,
     results.times.min,
@@ -310,7 +310,7 @@ function startSimulation(event) {
     'Hours',
     graphSetting,
   );
-  const costGraph = sim.buildHistogram(
+  sim.buildHistogram(
     document.getElementById('costHistoGram'),
     results.costs.list,
     results.costs.min,
