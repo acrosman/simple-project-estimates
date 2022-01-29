@@ -71,7 +71,6 @@ function generateEstimate(minimum, maximum, confidence) {
  * @returns the median from value of the run.
  */
 function getMedian(data) {
-
   // Find total value in the list.
   let total = 0;
   data.forEach((value, index) => {
@@ -162,7 +161,7 @@ function calculateUpperBound(tasks, useCost = false) {
  */
 function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limitGraph) {
   // Remove and existing graphs
-  targetNode.innerHTML = "";
+  targetNode.innerHTML = '';
 
   // The number of points before it switches to using a line graph.
   const barCutoff = 600;
@@ -176,7 +175,6 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   const margin = {
     top: 10, right: 30, bottom: 50, left: 60,
   };
-
 
   // Set outer bounds of graph.
   let minBin = min;
@@ -285,12 +283,12 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
       .attr('height', (d) => height - y(d));
   } else {
     // Use Scatter plot instead of bars
-    const scatter = svg.selectAll("dot")
+    const scatter = svg.selectAll('dot')
       .data(data)
-      .join("circle")
-      .attr("cx", (d, i) => { return x(i); })
-      .attr("cy", (d) => { return y(d); })
-      .attr("r", (d, i) => {
+      .join('circle')
+      .attr('cx', (d, i) => x(i))
+      .attr('cy', (d) => y(d))
+      .attr('r', (d, i) => {
         if (i === medianIndex) {
           return 3;
         }
@@ -305,7 +303,6 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
         return 'graphXY';
       });
   }
-
 }
 
 /**

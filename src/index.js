@@ -1,8 +1,8 @@
+import { csv } from 'd3-fetch';
 import './style.css';
 import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
-import * as sim from './simulation.js';
-import { csv } from 'd3-fetch';
+import * as sim from './simulation';
 
 // ============= Interface Behaviors ================
 /**
@@ -44,7 +44,7 @@ function rowClearClickHandler(event) {
   const thisRowId = event.target.dataset.rowId;
 
   const cells = document.querySelectorAll(`input[data-row-id="${thisRowId}"]:not([type=button]`);
-  for (let control of cells) {
+  for (const control of cells) {
     control.value = '';
   }
 }
@@ -75,10 +75,10 @@ function startSimulation(event) {
   const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
   let inputs;
   let taskDetail;
-  for (let t of tasks) {
+  for (const t of tasks) {
     taskDetail = {};
     inputs = t.getElementsByTagName('input');
-    for (let i of inputs) {
+    for (const i of inputs) {
       switch (i.name) {
         case 'Task':
           taskDetail.Name = i.value;
@@ -132,8 +132,8 @@ function startSimulation(event) {
     results.times.max,
     results.times.median,
     results.times.sd,
-    "Hours",
-    graphSetting
+    'Hours',
+    graphSetting,
   );
   const costGraph = sim.buildHistogram(
     document.getElementById('costHistoGram'),
@@ -142,10 +142,9 @@ function startSimulation(event) {
     results.costs.max,
     results.costs.median,
     results.costs.sd,
-    "Cost",
-    graphSetting
+    'Cost',
+    graphSetting,
   );
-
 }
 
 // ============= Interface Elements =================
@@ -198,7 +197,7 @@ function createDivWithIdAndClasses(id, classList = []) {
   el.id = id;
   el.classList.add(...[]);
 
-  return el
+  return el;
 }
 
 /**
@@ -295,11 +294,11 @@ function createEntryTable(data = []) {
   } else {
     let count = 0;
     let confidence = 0;
-    for (let row of data) {
+    for (const row of data) {
       count += 1;
       confidence = row.Confidence;
       if (confidence < 1) {
-        confidence = confidence * 100;
+        confidence *= 100;
       }
       form.appendChild(generateDataRow(count, row.Task, row.Min, row.Max, confidence, row.Cost));
       form.dataset.currentMaxRow = count;
@@ -341,7 +340,7 @@ function setupUi() {
   headerDiv.appendChild(simIcon);
 
   // Set header
-  const mainHeader = createTextElement("H1", "Project Estimate Simulator", ['header', 'main']);
+  const mainHeader = createTextElement('H1', 'Project Estimate Simulator', ['header', 'main']);
   headerDiv.appendChild(mainHeader);
 
   // Fork Me ribbon
@@ -358,7 +357,7 @@ function setupUi() {
   const fileDiv = document.createElement('div');
   fileDiv.classList.add('section', 'wrapper-file-load');
   const csvHeader = createTextElement('H2', 'Upload Task CSV File', ['header', 'csv-file']);
-  let fieldSet = document.createElement('fieldset');
+  const fieldSet = document.createElement('fieldset');
 
   // File Input.
   const fileInput = document.createElement('input');
@@ -405,7 +404,7 @@ function setupUi() {
 
   // == Create Output Region ==
   const simWrapper = createDivWithIdAndClasses('simulationAreaWrapper', ['section', 'container']);
-  const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation'])
+  const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation']);
 
   const simControls = createDivWithIdAndClasses('simulatorControlsWrapper', ['section', 'controls-simulation']);
 
@@ -416,7 +415,7 @@ function setupUi() {
     step: '1000',
     id: 'simulationPasses',
     value: '100000',
-    name: 'Simulation Passes'
+    name: 'Simulation Passes',
   };
   const simCountCtl = createLabeledInput('Number of times to run the simulation:', simCountFldAttr, true);
 
@@ -439,26 +438,26 @@ function setupUi() {
 
   // Simulation Time Results elements
   const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
-  simResultWrapper.appendChild(createDivWithIdAndClasses("simulationRunningTime", ['simulation-result', 'text']));
+  simResultWrapper.appendChild(createDivWithIdAndClasses('simulationRunningTime', ['simulation-result', 'text']));
   const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
   simTimeResultWrapper.appendChild(createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMedian", ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeStandRange", ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMax", ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeMin", ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("simulationTimeStandDev", ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses("timeHistoGram", ['simulation-result', 'time-info', 'graph']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMedian', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandRange', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMax', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMin', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandDev', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('timeHistoGram', ['simulation-result', 'time-info', 'graph']));
   simResultWrapper.appendChild(simTimeResultWrapper);
 
   // Simulation Cost Results elements
   const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
   simCostResultWrapper.appendChild(createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMedian", ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostStandRange", ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMax", ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostMin", ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses("simulationCostStandDev", ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses("costHistoGram", ['simulation-result', 'cost-info', 'graph']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMedian', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandRange', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMax', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMin', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandDev', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('costHistoGram', ['simulation-result', 'cost-info', 'graph']));
   simResultWrapper.appendChild(simCostResultWrapper);
 
   // Add simulator elements to wrapper.
