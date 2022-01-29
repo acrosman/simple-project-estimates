@@ -65,8 +65,9 @@ function generateEstimate(minimum, maximum, confidence) {
 }
 
 /**
- * Calculates the median value for all times run during a series of simulations.
- * @param {Array} data Array of summarized results with each cell being the number of times the index was the result of a run.
+ * Calculates the median value for all times run during a series of simulations. In the expected
+ * array each cell is the number of times the result was equal to the index.
+ * @param {Array} data Array of summarized results.
  * @returns the median from value of the run.
  */
 function getMedian(data) {
