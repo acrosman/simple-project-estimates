@@ -8,6 +8,7 @@
     "d3-fetch": "^3.0.1"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.16.11",
     "babel-plugin-rewire": "^1.2.0",
     "css-loader": "^6.5.1",
     "eslint": "^8.5.0",
@@ -27,7 +28,8 @@
     "lint-fix": "eslint src --fix",
     "watch": "webpack --watch",
     "start": "webpack serve --open",
-    "build": "webpack --mode=development"
+    "build": "webpack --mode=development",
+    "node-version": "node --version"
   },
   "repository": {
     "type": "git",
@@ -38,5 +40,18 @@
   "bugs": {
     "url": "https://github.com/acrosman/simple-project-estimates/issues"
   },
-  "homepage": "https://github.com/acrosman/simple-project-estimates#readme"
+  "homepage": "https://github.com/acrosman/simple-project-estimates#readme",
+  "jest": {
+    "moduleFileExtensions": [
+      "js"
+    ],
+    "moduleDirectories": [
+      "node_modules"
+    ],
+    "moduleNameMapper": {
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
+      "\\.(css|less)$": "<rootDir>/__mocks__/styleMock.js",
+      "d3": "<rootDir>/__mocks__/d3Mock.js"
+    }
+  }
 }
