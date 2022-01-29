@@ -4,150 +4,7 @@ import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
 import * as sim from './simulation';
 
-// ============= Interface Behaviors ================
-/**
- * Client event handler for the import button
- * @param {Event} event Fired event.
- */
-function importCsvFile(event) {
-  const fileInput = document.getElementById('csvFileInput');
-  const file = fileInput.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onloadend = function (evt) {
-      const dataUrl = evt.target.result;
-      // The following call results in an "Access denied" error in IE.
-      csv(dataUrl).then((data) => {
-        createEntryTable(data);
-      });
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-/**
- * Helper function to replace all of a node's content with new text.
- * @param {*} id Element ID for search.
- * @param {*} content A string to place into the element.
- */
-function updateElementText(id, content) {
-  const el = document.getElementById(id);
-  el.textContent = content;
-}
-
-/**
- * Click Event Handler for the clear row button.
- * @param {Event} event Fired event.
- */
-function rowClearClickHandler(event) {
-  event.preventDefault();
-  const thisRowId = event.target.dataset.rowId;
-
-  const cells = document.querySelectorAll(`input[data-row-id="${thisRowId}"]:not([type=button]`);
-  for (const control of cells) {
-    control.value = '';
-  }
-}
-
-/**
- * Click event handler for add task button.
- * @param {Event} event fired event
- */
-function addTaskClickHandler(event) {
-  const table = document.querySelector('#DataEntryTable');
-  const currentRowId = parseInt(table.dataset.currentMaxRow) + 1;
-
-  const newRow = generateDataRow(currentRowId, '', '', '', '', '');
-  table.appendChild(newRow);
-  table.dataset.currentMaxRow = currentRowId;
-}
-
-/**
- * Triggers the start of the simulation run with the current values.
- * @param {Event} event
- */
-function startSimulation(event) {
-  const passCount = document.getElementById('simulationPasses').value;
-  const graphSetting = document.getElementById('LimitGraph').checked;
-  const data = [];
-
-  // Gather the task information.
-  const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
-  let inputs;
-  let taskDetail;
-  for (const t of tasks) {
-    taskDetail = {};
-    inputs = t.getElementsByTagName('input');
-    for (const i of inputs) {
-      switch (i.name) {
-        case 'Task':
-          taskDetail.Name = i.value;
-          break;
-        case 'Min Time':
-          taskDetail.Min = parseInt(i.value);
-          break;
-        case 'Max Time':
-          taskDetail.Max = parseInt(i.value);
-          break;
-        case 'Confidence':
-          taskDetail.Confidence = parseFloat(i.value) / 100;
-          break;
-        case 'Cost':
-          taskDetail.Cost = parseInt(i.value);
-          break;
-        default:
-          break;
-      }
-    }
-    if (taskDetail.Name && taskDetail.Min && taskDetail.Max) {
-      data.push(taskDetail);
-    }
-  }
-
-  // Run Main simulator.
-  const results = sim.runSimulation(passCount, data);
-
-  // Display summary data.
-  const currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  });
-  updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
-  updateElementText('simulationTimeMedian', `Median Time: ${results.times.median}`);
-  updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax}`);
-  updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
-  updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
-  updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
-  updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
-  updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
-  updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(results.costs.max)}`);
-  updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
-  updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
-
-  // Build and display histograms.
-  const timeGraph = sim.buildHistogram(
-    document.getElementById('timeHistoGram'),
-    results.times.list,
-    results.times.min,
-    results.times.max,
-    results.times.median,
-    results.times.sd,
-    'Hours',
-    graphSetting,
-  );
-  const costGraph = sim.buildHistogram(
-    document.getElementById('costHistoGram'),
-    results.costs.list,
-    results.costs.min,
-    results.costs.max,
-    results.costs.median,
-    results.costs.sd,
-    'Cost',
-    graphSetting,
-  );
-}
-
-// ============= Interface Elements =================
+// ============= Interface Element Helpers =================
 /**
  * Create a text element with it's internal text node.
  * @param {string} wrapperTag Tag name
@@ -195,7 +52,7 @@ function createLabeledInput(labelText, inputAttributes, labelFirst = true) {
 function createDivWithIdAndClasses(id, classList = []) {
   const el = document.createElement('div');
   el.id = id;
-  el.classList.add(...[]);
+  el.classList.add(...classList);
 
   return el;
 }
@@ -247,6 +104,19 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
   const rmButton = generateDataField('Clear', 'Clear', 'button', rowId);
 
   // Add click event handler for the clear button.
+  /**
+   * Click Event Handler for the clear row button.
+   * @param {Event} event Fired event.
+   */
+  const rowClearClickHandler = (event) => {
+    event.preventDefault();
+    const thisRowId = event.target.dataset.rowId;
+
+    const cells = document.querySelectorAll(`input[data-row-id="${thisRowId}"]:not([type=button]`);
+    for (const control of cells) {
+      control.value = '';
+    }
+  };
   rmButton.firstElementChild.addEventListener('click', rowClearClickHandler);
 
   row.appendChild(task);
@@ -313,12 +183,143 @@ function createEntryTable(data = []) {
     value: 'Add Task',
   };
   Object.assign(addBtn, btnAttr);
+  /**
+   * Click event handler for add task button.
+   * @param {Event} event fired event
+   */
+  const addTaskClickHandler = (event) => {
+    event.preventDefault();
+    const table = document.querySelector('#DataEntryTable');
+    const currentRowId = parseInt(table.dataset.currentMaxRow, 10) + 1;
+
+    const newRow = generateDataRow(currentRowId, '', '', '', '', '');
+    table.appendChild(newRow);
+    table.dataset.currentMaxRow = currentRowId;
+  };
   addBtn.addEventListener('click', addTaskClickHandler);
 
   wrapper.appendChild(form);
   wrapper.appendChild(addBtn);
 
   return wrapper;
+}
+
+// ============= Interface Behaviors ================
+/**
+ * Client event handler for the import button
+ * @param {Event} event Fired event.
+ */
+function importCsvFile(event) {
+  event.preventDefault();
+  const fileInput = document.getElementById('csvFileInput');
+  const file = fileInput.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = (evt) => {
+      const dataUrl = evt.target.result;
+      // The following call results in an "Access denied" error in IE.
+      csv(dataUrl).then((data) => {
+        createEntryTable(data);
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+/**
+ * Helper function to replace all of a node's content with new text.
+ * @param {*} id Element ID for search.
+ * @param {*} content A string to place into the element.
+ */
+function updateElementText(id, content) {
+  const el = document.getElementById(id);
+  el.textContent = content;
+}
+
+/**
+ * Triggers the start of the simulation run with the current values.
+ * @param {Event} event
+ */
+function startSimulation(event) {
+  event.preventDefault();
+  const passCount = document.getElementById('simulationPasses').value;
+  const graphSetting = document.getElementById('LimitGraph').checked;
+  const data = [];
+
+  // Gather the task information.
+  const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
+  let inputs;
+  let taskDetail;
+  for (const t of tasks) {
+    taskDetail = {};
+    inputs = t.getElementsByTagName('input');
+    for (const i of inputs) {
+      switch (i.name) {
+        case 'Task':
+          taskDetail.Name = i.value;
+          break;
+        case 'Min Time':
+          taskDetail.Min = parseInt(i.value, 10);
+          break;
+        case 'Max Time':
+          taskDetail.Max = parseInt(i.value, 10);
+          break;
+        case 'Confidence':
+          taskDetail.Confidence = parseFloat(i.value) / 100;
+          break;
+        case 'Cost':
+          taskDetail.Cost = parseInt(i.value, 10);
+          break;
+        default:
+          break;
+      }
+    }
+    if (taskDetail.Name && taskDetail.Min && taskDetail.Max) {
+      data.push(taskDetail);
+    }
+  }
+
+  // Run Main simulator.
+  const results = sim.runSimulation(passCount, data);
+
+  // Display summary data.
+  const currencyFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  });
+  updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
+  updateElementText('simulationTimeMedian', `Median Time: ${results.times.median}`);
+  updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax}`);
+  updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
+  updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
+  updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
+  updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
+  updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
+  updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(results.costs.max)}`);
+  updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
+  updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
+
+  // Build and display histograms.
+  const timeGraph = sim.buildHistogram(
+    document.getElementById('timeHistoGram'),
+    results.times.list,
+    results.times.min,
+    results.times.max,
+    results.times.median,
+    results.times.sd,
+    'Hours',
+    graphSetting,
+  );
+  const costGraph = sim.buildHistogram(
+    document.getElementById('costHistoGram'),
+    results.costs.list,
+    results.costs.min,
+    results.costs.max,
+    results.costs.median,
+    results.costs.sd,
+    'Cost',
+    graphSetting,
+  );
 }
 
 /**
