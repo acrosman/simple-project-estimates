@@ -84,10 +84,6 @@ function getMedian(data) {
   const isOdd = total % 2;
   for (let i = 0; i < data.length; i += 1) {
     currentDistance += data[i] * i;
-    // We aren't there yet, so keep going.
-    if (currentDistance < midPoint) {
-      continue;
-    }
     // We passed the midPoint in this segment, so the median was here.
     if (currentDistance > midPoint) {
       median = i;
@@ -283,7 +279,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
       .attr('height', (d) => height - y(d));
   } else {
     // Use Scatter plot instead of bars
-    const scatter = svg.selectAll('dot')
+    svg.selectAll('dot')
       .data(data)
       .join('circle')
       .attr('cx', (d, i) => x(i))
