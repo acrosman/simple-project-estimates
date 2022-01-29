@@ -384,4 +384,4 @@ function runSimulation(passes, data) {
   return results;
 }
 
-export { runSimulation, buildHistogram };
+export { runSimulation, buildHistogram, getRandom };
