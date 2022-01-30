@@ -45,3 +45,9 @@ test('GetMedian: Bell Curve', () => {
   const medianValue = sim.getMedian(sampleList);
   expect(medianValue).toBe(6);
 });
+
+test('StdDev: Bell Curve', () => {
+  const sampleList = [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
+  const stdDev = sim.getStandardDeviation(sampleList);
+  expect(stdDev.toFixed(9)).toBe(2.449489743);
+});
