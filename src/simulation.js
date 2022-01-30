@@ -384,4 +384,10 @@ function runSimulation(passes, data) {
   return results;
 }
 
-export { runSimulation, buildHistogram, getRandom };
+export {
+  runSimulation,
+  buildHistogram,
+  getRandom,
+  getMedian,
+  getStandardDeviation,
+};
