@@ -12,6 +12,21 @@ test('GetRandom', () => {
   expect(testResult).toBeLessThanOrEqual(2);
 });
 
+test('GetValueCount: Short List', () => {
+  // Represents a list of [1,2,2,2,3] therefore a count of 5 elements
+  const sampleList = [0, 1, 3, 1];
+  const countValue = sim.getValueCount(sampleList);
+  expect(countValue).toBe(5);
+});
+
+test('GetValueCount: Larger List', () => {
+  // Represents a list of 36 elements
+  const sampleList = [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
+  const countValue = sim.getValueCount(sampleList);
+  expect(countValue).toBe(36);
+});
+
+
 test('GetMedian: Simple', () => {
   // Represents a list of [1,2,2,2,3] therefore median of 2.
   const sampleList = [0, 1, 3, 1];
@@ -70,5 +85,5 @@ test('GetMedian: Bell Curve', () => {
 test('StdDev: Bell Curve', () => {
   const sampleList = [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
   const stdDev = sim.getStandardDeviation(sampleList);
-  expect(stdDev.toFixed(9)).toBe(2.449489743);
+  expect(stdDev.toFixed(9)).toBe("2.449489743");
 });

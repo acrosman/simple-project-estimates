@@ -65,6 +65,20 @@ function generateEstimate(minimum, maximum, confidence) {
 }
 
 /**
+ * Counts the total number of values in this result set.
+ * @param {Array} data Array of summarized results.
+ * @returns the count of values in the result set.
+ */
+function getValueCount(data) {
+  // Find total count of values.
+  let valueCount = 0;
+  data.forEach((value) => {
+    valueCount += value;
+  });
+  return valueCount;
+}
+
+/**
  * Calculates the median value for all times run during a series of simulations. In the expected
  * array each cell is the number of times the result was equal to the index.
  * @param {Array} data Array of summarized results.
@@ -72,10 +86,7 @@ function generateEstimate(minimum, maximum, confidence) {
  */
 function getMedian(data) {
   // Find total count of values.
-  let valueCount = 0;
-  data.forEach((value) => {
-    valueCount += value;
-  });
+  const valueCount = getValueCount(data);
 
   // Walk back to the middle of the result set to see which is median
   const midCount = valueCount / 2;
@@ -122,23 +133,30 @@ function getMedian(data) {
 }
 
 /**
- * Calculates the standard deviation of the result list.
- * Hat tip: https://stackoverflow.com/a/41781242/24215
+ * Calculates the standard deviation of the result list in compressed form.
+ * The assumption here is that this is histogram-style data so each cell
+ * is a count of results at that value.
+ * Hat Tip: http://statisticshelper.com/standard-deviation-calculator-with-step-by-step-solution
  * @param {*} numberArray
  * @returns
  */
 function getStandardDeviation(numberArray) {
   // Calculate the average.
-  const sum = numberArray.reduce((a, b) => a + b);
-  const avg = sum / numberArray.length;
+  const sum = numberArray.reduce((total, currentValue, currentIndex) => total + (currentValue * currentIndex));
+  const valueCount = getValueCount(numberArray);
+  const avg = sum / valueCount;
 
   // Calculate the standard deviation itself.
   let sdPrep = 0;
   for (let i = 0; i < numberArray.length; i += 1) {
-    sdPrep += (parseFloat(numberArray[i]) - avg) ** 2;
+    sdPrep += ((i - avg) ** 2) * numberArray[i];
   }
 
-  const standardDev = Math.sqrt(sdPrep / numberArray.length);
+  // Divide by n - 1
+  // This answer is the variance of the sample.
+  const variance = sdPrep / (valueCount - 1);
+
+  const standardDev = Math.sqrt(variance);
   return standardDev;
 }
 
@@ -404,6 +422,7 @@ export {
   runSimulation,
   buildHistogram,
   getRandom,
+  getValueCount,
   getMedian,
   getStandardDeviation,
 };
