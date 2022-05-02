@@ -77,3 +77,6 @@ typings/
 
 #IntelliJ settings
 .idea/
+
+#VSCode settings
+.vscode
