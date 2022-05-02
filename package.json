@@ -1,6 +1,6 @@
 {
   "name": "simple-project-estimates",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "This simple time estimator for projects",
   "private": true,
   "dependencies": {
