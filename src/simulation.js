@@ -92,7 +92,6 @@ function getMedian(data) {
   const midCount = valueCount / 2;
   let median = 0;
   let currentDistance = 0;
-  const isOddLength = valueCount % 2;
   for (let i = 0; i < data.length; i += 1) {
     currentDistance += data[i];
     // We passed the mid point in this segment, we are sitting on the value.
@@ -396,14 +395,14 @@ function runSimulation(passes, data) {
     estimateDetails,
     times: {
       median: getMedian(times),
-      sd: getStandardDeviation(estimates.times),
+      sd: getStandardDeviation(times),
       min: minTime,
       max: maxTime,
       list: times,
     },
     costs: {
       median: getMedian(costs),
-      sd: getStandardDeviation(estimates.costs),
+      sd: getStandardDeviation(costs),
       min: minCost,
       max: maxCost,
       list: costs,
