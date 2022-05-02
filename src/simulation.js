@@ -71,34 +71,50 @@ function generateEstimate(minimum, maximum, confidence) {
  * @returns the median from value of the run.
  */
 function getMedian(data) {
-  // Find total value in the list.
-  let total = 0;
-  data.forEach((value, index) => {
-    total += value * index;
+  // Find total count of values.
+  let valueCount = 0;
+  data.forEach((value) => {
+    valueCount += value;
   });
 
   // Walk back to the middle of the result set to see which is median
-  const midPoint = total / 2;
+  const midCount = valueCount / 2;
   let median = 0;
   let currentDistance = 0;
-  const isOdd = total % 2;
+  const isOddLength = valueCount % 2;
   for (let i = 0; i < data.length; i += 1) {
-    currentDistance += data[i] * i;
-    // We passed the midPoint in this segment, so the median was here.
-    if (currentDistance > midPoint) {
+    currentDistance += data[i];
+    // We passed the mid point in this segment, we are sitting on the value.
+    if (currentDistance > midCount) {
       median = i;
       break;
     }
-    // The median falls on the line between this segment and the next.
-    // if this is a odd-length set (rare in this design) average this and the next.
-    // otherwise use this value.
-    if (currentDistance === midPoint) {
-      if (isOdd) {
+    // The median falls on the line between this segment and the next we have a bit of work to do.
+    // If this is a odd-length set (rare in this design) average this and the next.
+    // If there is gap between this value and the next, we need to measure it and pick the
+    // midpoint of the gap.
+    if (currentDistance === midCount) {
+      let lookAhead = data[i + 1];
+      if (lookAhead) {
+        // No gap, to the median is between here and the next.
         median = (i + (i + 1)) / 2;
+        return median;
       } else {
-        median = i;
+        // We have a gap, so find next value.
+        let gap = 1;
+        let offset = 0;
+        for (let j = i + 2; j < data.length; j += 1) {
+          if (data[j] === 0) {
+            gap += 1;
+          } else {
+            // Found end of gap. The median is the middle of the gap.
+            offset = gap / 2;
+            break;
+          }
+        }
+        median = i + offset + 0.5;
+        return median;
       }
-      break;
     }
   }
 

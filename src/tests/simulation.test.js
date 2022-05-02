@@ -19,11 +19,32 @@ test('GetMedian: Simple', () => {
   expect(medianValue).toBe(2);
 });
 
-test('GetMedian: In space between values', () => {
+test('GetMedian: Last Value', () => {
+  // Represents a list of [2,2,2,2,2] therefore median of 2.
+  const sampleList = [0, 0, 5];
+  const medianValue = sim.getMedian(sampleList);
+  expect(medianValue).toBe(2);
+});
+
+test('GetMedian: One space between values', () => {
   // [2,2,2,2,4,4,4,4] therefore median 3 (between two values)
   const sampleList = [0, 0, 4, 0, 4];
   const medianValue = sim.getMedian(sampleList);
   expect(medianValue).toBe(3);
+});
+
+test('GetMedian: Two spaces between values', () => {
+  // [2,2,2,2,5,5,5,5] therefore median 3.5 (between two values)
+  const sampleList = [0, 0, 4, 0, 0, 4];
+  const medianValue = sim.getMedian(sampleList);
+  expect(medianValue).toBe(3.5);
+});
+
+test('GetMedian: Three spaces between values', () => {
+  // [2,2,2,2,6,6,6,6] therefore median 4 (between two values)
+  const sampleList = [0, 0, 4, 0, 0, 0, 4];
+  const medianValue = sim.getMedian(sampleList);
+  expect(medianValue).toBe(4);
 });
 
 test('GetMedian: Between to integers', () => {
@@ -41,13 +62,13 @@ test('GetMedian: With Gap in List', () => {
 });
 
 test('GetMedian: Bell Curve', () => {
-  const sampleList = [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
+  const sampleList = [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
   const medianValue = sim.getMedian(sampleList);
   expect(medianValue).toBe(6);
 });
 
 test('StdDev: Bell Curve', () => {
-  const sampleList = [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
+  const sampleList = [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
   const stdDev = sim.getStandardDeviation(sampleList);
   expect(stdDev.toFixed(9)).toBe(2.449489743);
 });
