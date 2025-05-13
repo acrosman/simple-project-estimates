@@ -104,27 +104,26 @@ function getMedian(data) {
     // If there is gap between this value and the next, we need to measure it and pick the
     // midpoint of the gap.
     if (currentDistance === midCount) {
-      let lookAhead = data[i + 1];
+      const lookAhead = data[i + 1];
       if (lookAhead) {
         // No gap, to the median is between here and the next.
         median = (i + (i + 1)) / 2;
         return median;
-      } else {
-        // We have a gap, so find next value.
-        let gap = 1;
-        let offset = 0;
-        for (let j = i + 2; j < data.length; j += 1) {
-          if (data[j] === 0) {
-            gap += 1;
-          } else {
-            // Found end of gap. The median is the middle of the gap.
-            offset = gap / 2;
-            break;
-          }
-        }
-        median = i + offset + 0.5;
-        return median;
       }
+      // We have a gap, so find next value.
+      let gap = 1;
+      let offset = 0;
+      for (let j = i + 2; j < data.length; j += 1) {
+        if (data[j] === 0) {
+          gap += 1;
+        } else {
+          // Found end of gap. The median is the middle of the gap.
+          offset = gap / 2;
+          break;
+        }
+      }
+      median = i + offset + 0.5;
+      return median;
     }
   }
 
@@ -141,7 +140,9 @@ function getMedian(data) {
  */
 function getStandardDeviation(numberArray) {
   // Calculate the average.
-  const sum = numberArray.reduce((total, currentValue, currentIndex) => total + (currentValue * currentIndex));
+  const sum = numberArray.reduce(
+    (total, currentValue, currentIndex) => total + (currentValue * currentIndex),
+  );
   const valueCount = getValueCount(numberArray);
   const avg = sum / valueCount;
 
