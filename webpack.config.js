@@ -16,6 +16,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Project Simulator',
+      template: './src/index.html',
     }),
   ],
   module: {

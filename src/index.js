@@ -474,4 +474,4 @@ function setupUi() {
   return mainElement;
 }
 
-document.body.appendChild(setupUi());
+document.getElementById('project-simulator').appendChild(setupUi());
