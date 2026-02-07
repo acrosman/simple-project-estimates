@@ -80,8 +80,11 @@ input[type="button"] {
   padding: 5px 40px;
   font-size: 1rem;
   line-height: 2rem;
-  position: relative;
+  position: absolute;
   transition: 0.5s;
+  top: 0px;
+  left: 0px;
+  width: 100%;
 }
 #forkOnGithub a:hover {
   background: #c11;
@@ -115,9 +118,8 @@ input[type="button"] {
   }
   #forkOnGithub a {
     width: 200px;
-    position: absolute;
-    top: 60px;
-    right: -60px;
+    top: 10px;
+    right: -55px;
     transform: rotate(45deg);
     -webkit-transform: rotate(45deg);
     -ms-transform: rotate(45deg);
