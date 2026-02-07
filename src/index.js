@@ -687,4 +687,19 @@ function setupUi() {
   return mainElement;
 }
 
-document.getElementById('project-simulator').appendChild(setupUi());
+// Initialize app if DOM element exists
+const projectSimulator = document.getElementById('project-simulator');
+if (projectSimulator) {
+  projectSimulator.appendChild(setupUi());
+}
+
+// Export functions for testing
+export {
+  createTextElement,
+  createLabeledInput,
+  createDivWithIdAndClasses,
+  generateDataField,
+  updateElementText,
+  estimationMode,
+  fibonacciMappings,
+};
