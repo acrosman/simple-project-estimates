@@ -2,7 +2,20 @@ import { csv } from 'd3-fetch';
 import './style.css';
 import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
+import sampleFibData from './data/sample-fib.csv';
 import * as sim from './simulation';
+
+// ============= Global State =================
+let estimationMode = 'hours'; // 'hours' or 'fibonacci'
+const fibonacciMappings = {
+  1: { min: 0, max: 1 },
+  2: { min: 1, max: 2 },
+  3: { min: 2, max: 3 },
+  5: { min: 3, max: 5 },
+  8: { min: 5, max: 8 },
+  13: { min: 8, max: 13 },
+  21: { min: 13, max: 21 },
+};
 
 // ============= Interface Element Helpers =================
 /**
@@ -89,16 +102,27 @@ function generateDataField(label, fieldValue, fieldType, rowId) {
  * @param {*} maxTime
  * @param {*} confidence
  * @param {*} hourlyCost
+ * @param {*} fibNumber
  * @returns HTMLElement
  */
-function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCost) {
+function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCost, fibNumber = '') {
   const row = document.createElement('div');
   row.classList.add('tr', 'data-row');
   row.dataset.rowId = rowId;
 
   const task = generateDataField('Task', taskName, 'text', rowId);
-  const min = generateDataField('Min Time', minTime, 'number', rowId);
-  const max = generateDataField('Max Time', maxTime, 'number', rowId);
+
+  let min;
+  let max;
+  let fib;
+
+  if (estimationMode === 'fibonacci') {
+    fib = generateDataField('Fibonacci', fibNumber, 'number', rowId);
+  } else {
+    min = generateDataField('Min Time', minTime, 'number', rowId);
+    max = generateDataField('Max Time', maxTime, 'number', rowId);
+  }
+
   const conf = generateDataField('Confidence', confidence, 'number', rowId);
   const cost = generateDataField('Cost', hourlyCost, 'number', rowId);
   const rmButton = generateDataField('Clear', 'Clear', 'button', rowId);
@@ -120,8 +144,14 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
   rmButton.firstElementChild.addEventListener('click', rowClearClickHandler);
 
   row.appendChild(task);
-  row.appendChild(min);
-  row.appendChild(max);
+
+  if (estimationMode === 'fibonacci') {
+    row.appendChild(fib);
+  } else {
+    row.appendChild(min);
+    row.appendChild(max);
+  }
+
   row.appendChild(conf);
   row.appendChild(cost);
   row.appendChild(rmButton);
@@ -151,8 +181,14 @@ function createEntryTable(data = []) {
   const header = document.createElement('div');
   header.classList.add('tr', 'table-header-row');
   header.appendChild(createTextElement('div', 'Task', ['th']));
-  header.appendChild(createTextElement('div', 'Min Time', ['th']));
-  header.appendChild(createTextElement('div', 'Max Time', ['th']));
+
+  if (estimationMode === 'fibonacci') {
+    header.appendChild(createTextElement('div', 'Fibonacci #', ['th']));
+  } else {
+    header.appendChild(createTextElement('div', 'Min Time', ['th']));
+    header.appendChild(createTextElement('div', 'Max Time', ['th']));
+  }
+
   header.appendChild(createTextElement('div', 'Confidence (%)', ['th']));
   header.appendChild(createTextElement('div', 'Hourly Cost', ['th']));
   header.appendChild(createTextElement('div', '', ['th']));
@@ -170,7 +206,12 @@ function createEntryTable(data = []) {
       if (confidence < 1) {
         confidence *= 100;
       }
-      form.appendChild(generateDataRow(count, row.Task, row.Min, row.Max, confidence, row.Cost));
+
+      if (estimationMode === 'fibonacci') {
+        form.appendChild(generateDataRow(count, row.Task, '', '', confidence, row.Cost, row.Fibonacci));
+      } else {
+        form.appendChild(generateDataRow(count, row.Task, row.Min, row.Max, confidence, row.Cost, ''));
+      }
       form.dataset.currentMaxRow = count;
     }
   }
@@ -202,6 +243,117 @@ function createEntryTable(data = []) {
   wrapper.appendChild(addBtn);
 
   return wrapper;
+}
+
+/**
+ * Updates the Fibonacci mapping when user changes values
+ * @param {Event} event
+ */
+function updateFibonacciMapping(event) {
+  const { fib, type } = event.target.dataset;
+  const fibNum = parseInt(fib, 10);
+  const value = parseInt(event.target.value, 10);
+
+  if (fibonacciMappings[fibNum]) {
+    fibonacciMappings[fibNum][type] = value;
+  }
+}
+
+/**
+ * Creates the Fibonacci mapping configuration interface
+ * @returns HTMLElement
+ */
+function createFibonacciMappingTable() {
+  const wrapper = createDivWithIdAndClasses('fibonacciMappingWrapper', ['section', 'fibonacci-mapping']);
+  const header = createTextElement('H3', 'Fibonacci Number to Hours Mapping', ['header', 'fib-mapping']);
+
+  const table = document.createElement('div');
+  table.classList.add('table', 'fib-mapping-table');
+
+  const tableHeader = document.createElement('div');
+  tableHeader.classList.add('tr', 'table-header-row');
+  tableHeader.appendChild(createTextElement('div', 'Fibonacci #', ['th']));
+  tableHeader.appendChild(createTextElement('div', 'Min Hours', ['th']));
+  tableHeader.appendChild(createTextElement('div', 'Max Hours', ['th']));
+  table.appendChild(tableHeader);
+
+  const fibNumbers = [1, 2, 3, 5, 8, 13, 21];
+
+  for (const fibNum of fibNumbers) {
+    const row = document.createElement('div');
+    row.classList.add('tr', 'fib-mapping-row');
+
+    const fibCell = document.createElement('div');
+    fibCell.classList.add('td');
+    fibCell.appendChild(createTextElement('span', fibNum.toString(), []));
+
+    const minCell = document.createElement('div');
+    minCell.classList.add('td');
+    const minInput = document.createElement('input');
+    Object.assign(minInput, {
+      type: 'number',
+      value: fibonacciMappings[fibNum].min,
+      name: `fib-min-${fibNum}`,
+      'data-fib': fibNum,
+      'data-type': 'min',
+    });
+    minCell.appendChild(minInput);
+
+    const maxCell = document.createElement('div');
+    maxCell.classList.add('td');
+    const maxInput = document.createElement('input');
+    Object.assign(maxInput, {
+      type: 'number',
+      value: fibonacciMappings[fibNum].max,
+      name: `fib-max-${fibNum}`,
+      'data-fib': fibNum,
+      'data-type': 'max',
+    });
+    maxCell.appendChild(maxInput);
+
+    row.appendChild(fibCell);
+    row.appendChild(minCell);
+    row.appendChild(maxCell);
+    table.appendChild(row);
+
+    // Add event listeners to update mappings
+    minInput.addEventListener('change', updateFibonacciMapping);
+    maxInput.addEventListener('change', updateFibonacciMapping);
+  }
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(table);
+  wrapper.style.display = 'none'; // Hidden by default
+
+  return wrapper;
+}
+
+/**
+ * Handles estimation mode changes
+ * @param {Event} event
+ */
+function handleModeChange(event) {
+  estimationMode = event.target.value;
+
+  const fibMapping = document.getElementById('fibonacciMappingWrapper');
+  const sampleLink = document.querySelector('.link-sample');
+
+  if (estimationMode === 'fibonacci') {
+    fibMapping.style.display = 'block';
+    if (sampleLink) {
+      sampleLink.href = sampleFibData;
+      sampleLink.textContent = 'Sample Fibonacci CSV File';
+    }
+  } else {
+    fibMapping.style.display = 'none';
+    if (sampleLink) {
+      sampleLink.href = sampleData;
+      sampleLink.textContent = 'Sample CSV File';
+    }
+  }
+
+  // Recreate the data entry table with the new mode
+  createEntryTable();
 }
 
 // ============= Interface Behaviors ================
@@ -264,6 +416,9 @@ function startSimulation(event) {
         case 'Max Time':
           taskDetail.Max = parseInt(i.value, 10);
           break;
+        case 'Fibonacci':
+          taskDetail.Fibonacci = parseInt(i.value, 10);
+          break;
         case 'Confidence':
           taskDetail.Confidence = parseFloat(i.value) / 100;
           break;
@@ -274,7 +429,17 @@ function startSimulation(event) {
           break;
       }
     }
-    if (taskDetail.Name && taskDetail.Min && taskDetail.Max) {
+
+    // Convert Fibonacci numbers to min/max if in Fibonacci mode
+    if (estimationMode === 'fibonacci' && taskDetail.Fibonacci) {
+      const mapping = fibonacciMappings[taskDetail.Fibonacci];
+      if (mapping) {
+        taskDetail.Min = mapping.min;
+        taskDetail.Max = mapping.max;
+      }
+    }
+
+    if (taskDetail.Name && taskDetail.Min !== undefined && taskDetail.Max !== undefined) {
       data.push(taskDetail);
     }
   }
@@ -354,6 +519,52 @@ function setupUi() {
   dataWrapper.classList.add('section');
   dataWrapper.id = 'dataAreaWrapper';
 
+  // === Add Estimation Mode Selector ===
+  const modeSelectorDiv = document.createElement('div');
+  modeSelectorDiv.classList.add('section', 'wrapper-mode-selector');
+  const modeHeader = createTextElement('H2', 'Estimation Mode', ['header', 'mode-selector']);
+
+  const modeFieldset = document.createElement('fieldset');
+  modeFieldset.appendChild(createTextElement('legend', 'Select estimation type', []));
+
+  const hoursRadio = document.createElement('input');
+  Object.assign(hoursRadio, {
+    type: 'radio',
+    id: 'modeHours',
+    name: 'estimationMode',
+    value: 'hours',
+    checked: true,
+  });
+  hoursRadio.addEventListener('change', handleModeChange);
+  const hoursLabel = createTextElement('label', 'Hours (Min/Max)', []);
+  hoursLabel.htmlFor = 'modeHours';
+
+  const fibRadio = document.createElement('input');
+  Object.assign(fibRadio, {
+    type: 'radio',
+    id: 'modeFibonacci',
+    name: 'estimationMode',
+    value: 'fibonacci',
+  });
+  fibRadio.addEventListener('change', handleModeChange);
+  const fibLabel = createTextElement('label', 'Fibonacci Numbers', []);
+  fibLabel.htmlFor = 'modeFibonacci';
+
+  modeFieldset.appendChild(hoursRadio);
+  modeFieldset.appendChild(hoursLabel);
+  modeFieldset.appendChild(document.createElement('br'));
+  modeFieldset.appendChild(fibRadio);
+  modeFieldset.appendChild(fibLabel);
+
+  modeSelectorDiv.appendChild(modeHeader);
+  modeSelectorDiv.appendChild(modeFieldset);
+
+  // Add Fibonacci mapping configuration
+  const fibMappingTable = createFibonacciMappingTable();
+  modeSelectorDiv.appendChild(fibMappingTable);
+
+  dataWrapper.appendChild(modeSelectorDiv);
+
   // === Add CSV File Loader Section ===
   const fileDiv = document.createElement('div');
   fileDiv.classList.add('section', 'wrapper-file-load');
@@ -379,7 +590,9 @@ function setupUi() {
   fileLoadTrigger.addEventListener('click', importCsvFile);
   // Sample file link.
   const sampleLink = createTextElement('a', 'Sample CSV File', ['link-sample']);
+  sampleLink.id = 'sampleCsvLink';
   sampleLink.href = sampleData;
+  sampleLink.download = 'sample.csv';
 
   // Add fieldset elements.
   fieldSet.appendChild(createTextElement('legend', 'Select prepared file', []));
