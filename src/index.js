@@ -246,6 +246,12 @@ function createEntryTable(data = []) {
     const newRow = generateDataRow(currentRowId, '', '', '', '', '');
     table.appendChild(newRow);
     table.dataset.currentMaxRow = currentRowId;
+
+    // Focus the first input field (Task name) in the new row
+    const firstInput = newRow.querySelector('input[type="text"]');
+    if (firstInput) {
+      firstInput.focus();
+    }
   };
   addBtn.addEventListener('click', addTaskClickHandler);
 
