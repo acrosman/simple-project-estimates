@@ -467,6 +467,10 @@ function startSimulation(event) {
           break;
         case 'Cost':
           taskDetail.Cost = parseInt(i.value, 10);
+          // Default to 0 if parseInt returns NaN (empty or invalid input)
+          if (Number.isNaN(taskDetail.Cost)) {
+            taskDetail.Cost = 0;
+          }
           break;
         default:
           break;
