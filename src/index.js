@@ -259,13 +259,29 @@ function createEntryTable(data = []) {
  * @param {Event} event
  */
 function updateFibonacciMapping(event) {
-  const { fib, type } = event.target.dataset;
-  const fibNum = parseInt(fib, 10);
-  const value = parseInt(event.target.value, 10);
-
-  if (fibonacciMappings[fibNum]) {
-    fibonacciMappings[fibNum][type] = value;
+  if (!event || !event.target || !event.target.dataset) {
+    return;
   }
+
+  const { fib, type } = event.target.dataset;
+  const rawValue = event.target.value;
+
+  if (!fib || !type) {
+    return;
+  }
+
+  const fibNum = Number.parseInt(fib, 10);
+  const value = Number.parseInt(rawValue, 10);
+
+  if (!Number.isFinite(fibNum) || !Number.isFinite(value)) {
+    return;
+  }
+
+  if (!fibonacciMappings[fibNum] || !(type in fibonacciMappings[fibNum])) {
+    return;
+  }
+
+  fibonacciMappings[fibNum][type] = value;
 }
 
 /**
