@@ -7,6 +7,7 @@ import * as sim from './simulation';
 
 // ============= Global State =================
 let estimationMode = 'hours'; // 'hours' or 'fibonacci'
+let enableCost = true; // Track cost by default
 const fibonacciMappings = {
   1: { min: 0, max: 1 },
   2: { min: 1, max: 2 },
@@ -153,7 +154,11 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
   }
 
   row.appendChild(conf);
-  row.appendChild(cost);
+
+  if (enableCost) {
+    row.appendChild(cost);
+  }
+
   row.appendChild(rmButton);
 
   return row;
@@ -190,7 +195,11 @@ function createEntryTable(data = []) {
   }
 
   header.appendChild(createTextElement('div', 'Confidence (%)', ['th']));
-  header.appendChild(createTextElement('div', 'Hourly Cost', ['th']));
+
+  if (enableCost) {
+    header.appendChild(createTextElement('div', 'Hourly Cost', ['th']));
+  }
+
   header.appendChild(createTextElement('div', '', ['th']));
 
   form.appendChild(header);
@@ -329,6 +338,23 @@ function createFibonacciMappingTable() {
 }
 
 /**
+ * Handles cost tracking toggle
+ * @param {Event} event
+ */
+function handleCostToggle(event) {
+  enableCost = event.target.checked;
+
+  const costResults = document.getElementById('simulationCostResultsWrapper');
+
+  if (costResults) {
+    costResults.style.display = enableCost ? 'block' : 'none';
+  }
+
+  // Recreate the data entry table with the new cost setting
+  createEntryTable();
+}
+
+/**
  * Handles estimation mode changes
  * @param {Event} event
  */
@@ -439,6 +465,11 @@ function startSimulation(event) {
       }
     }
 
+    // Set default cost to 0 if cost tracking is disabled
+    if (!enableCost && !taskDetail.Cost) {
+      taskDetail.Cost = 0;
+    }
+
     if (taskDetail.Name && taskDetail.Min !== undefined && taskDetail.Max !== undefined) {
       data.push(taskDetail);
     }
@@ -458,11 +489,15 @@ function startSimulation(event) {
   updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
   updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
   updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
-  updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
-  updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
-  updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(results.costs.max)}`);
-  updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
-  updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
+
+  // Only display cost results if cost tracking is enabled
+  if (enableCost) {
+    updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
+    updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
+    updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(results.costs.max)}`);
+    updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
+    updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
+  }
 
   // Build and display histograms.
   sim.buildHistogram(
@@ -475,16 +510,20 @@ function startSimulation(event) {
     'Hours',
     graphSetting,
   );
-  sim.buildHistogram(
-    document.getElementById('costHistoGram'),
-    results.costs.list,
-    results.costs.min,
-    results.costs.max,
-    results.costs.median,
-    results.costs.sd,
-    'Cost',
-    graphSetting,
-  );
+
+  // Only build cost histogram if cost tracking is enabled
+  if (enableCost) {
+    sim.buildHistogram(
+      document.getElementById('costHistoGram'),
+      results.costs.list,
+      results.costs.min,
+      results.costs.max,
+      results.costs.median,
+      results.costs.sd,
+      'Cost',
+      graphSetting,
+    );
+  }
 }
 
 /**
@@ -555,6 +594,22 @@ function setupUi() {
   modeFieldset.appendChild(document.createElement('br'));
   modeFieldset.appendChild(fibRadio);
   modeFieldset.appendChild(fibLabel);
+
+  // Add cost tracking toggle
+  modeFieldset.appendChild(document.createElement('br'));
+  modeFieldset.appendChild(document.createElement('br'));
+  const enableCostCheckbox = document.createElement('input');
+  Object.assign(enableCostCheckbox, {
+    type: 'checkbox',
+    id: 'EnableCost',
+    value: '1',
+    checked: true,
+  });
+  enableCostCheckbox.addEventListener('change', handleCostToggle);
+  const enableCostLabel = createTextElement('label', 'Track costs', []);
+  enableCostLabel.htmlFor = 'EnableCost';
+  modeFieldset.appendChild(enableCostCheckbox);
+  modeFieldset.appendChild(enableCostLabel);
 
   modeSelectorDiv.appendChild(modeHeader);
   modeSelectorDiv.appendChild(modeFieldset);
@@ -700,6 +755,9 @@ export {
   createDivWithIdAndClasses,
   generateDataField,
   updateElementText,
-  estimationMode,
   fibonacciMappings,
 };
+
+// Export getter functions for mutable state
+export const getEstimationMode = () => estimationMode;
+export const getEnableCost = () => enableCost;

@@ -14,8 +14,9 @@ describe('Index Module Exports', () => {
   });
 
   test('Validate exported state exists', () => {
-    expect(idx).toHaveProperty('estimationMode');
+    expect(idx).toHaveProperty('getEstimationMode');
     expect(idx).toHaveProperty('fibonacciMappings');
+    expect(idx).toHaveProperty('getEnableCost');
   });
 });
 
@@ -276,6 +277,12 @@ describe('Fibonacci Mappings', () => {
 
 describe('Estimation Mode', () => {
   test('defaults to hours mode', () => {
-    expect(idx.estimationMode).toBe('hours');
+    expect(idx.getEstimationMode()).toBe('hours');
+  });
+});
+
+describe('Cost Tracking', () => {
+  test('cost tracking is enabled by default', () => {
+    expect(idx.getEnableCost()).toBe(true);
   });
 });
