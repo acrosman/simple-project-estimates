@@ -496,6 +496,7 @@ describe('saveSvgAsImage', () => {
     window.getComputedStyle = originalGetComputedStyle;
     global.URL = originalURL;
     global.alert = originalAlert;
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
 
