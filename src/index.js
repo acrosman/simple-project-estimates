@@ -303,9 +303,9 @@ function createFibonacciMappingTable() {
       type: 'number',
       value: fibonacciMappings[fibNum].min,
       name: `fib-min-${fibNum}`,
-      'data-fib': fibNum,
-      'data-type': 'min',
     });
+    minInput.dataset.fib = fibNum;
+    minInput.dataset.type = 'min';
     minCell.appendChild(minInput);
 
     const maxCell = document.createElement('div');
@@ -315,9 +315,9 @@ function createFibonacciMappingTable() {
       type: 'number',
       value: fibonacciMappings[fibNum].max,
       name: `fib-max-${fibNum}`,
-      'data-fib': fibNum,
-      'data-type': 'max',
     });
+    maxInput.dataset.fib = fibNum;
+    maxInput.dataset.type = 'max';
     maxCell.appendChild(maxInput);
 
     row.appendChild(fibCell);
@@ -755,6 +755,7 @@ export {
   createDivWithIdAndClasses,
   generateDataField,
   updateElementText,
+  updateFibonacciMapping,
   fibonacciMappings,
 };
 

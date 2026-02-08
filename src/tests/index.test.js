@@ -275,6 +275,108 @@ describe('Fibonacci Mappings', () => {
   });
 });
 
+describe('updateFibonacciMapping', () => {
+  beforeEach(() => {
+    // Reset mappings to default values before each test
+    idx.fibonacciMappings[1] = { min: 0, max: 1 };
+    idx.fibonacciMappings[2] = { min: 1, max: 2 };
+    idx.fibonacciMappings[3] = { min: 2, max: 3 };
+    idx.fibonacciMappings[5] = { min: 3, max: 5 };
+    idx.fibonacciMappings[8] = { min: 5, max: 8 };
+    idx.fibonacciMappings[13] = { min: 8, max: 13 };
+    idx.fibonacciMappings[21] = { min: 13, max: 21 };
+  });
+
+  test('updates min value when min input changes', () => {
+    const mockEvent = {
+      target: {
+        dataset: { fib: '5', type: 'min' },
+        value: '10',
+      },
+    };
+
+    idx.updateFibonacciMapping(mockEvent);
+
+    expect(idx.fibonacciMappings[5].min).toBe(10);
+    expect(idx.fibonacciMappings[5].max).toBe(5); // max should remain unchanged
+  });
+
+  test('updates max value when max input changes', () => {
+    const mockEvent = {
+      target: {
+        dataset: { fib: '8', type: 'max' },
+        value: '20',
+      },
+    };
+
+    idx.updateFibonacciMapping(mockEvent);
+
+    expect(idx.fibonacciMappings[8].max).toBe(20);
+    expect(idx.fibonacciMappings[8].min).toBe(5); // min should remain unchanged
+  });
+
+  test('updates correct Fibonacci number mapping', () => {
+    const mockEvent = {
+      target: {
+        dataset: { fib: '13', type: 'max' },
+        value: '25',
+      },
+    };
+
+    idx.updateFibonacciMapping(mockEvent);
+
+    expect(idx.fibonacciMappings[13].max).toBe(25);
+    expect(idx.fibonacciMappings[8].max).toBe(8); // other mappings unchanged
+    expect(idx.fibonacciMappings[21].max).toBe(21); // other mappings unchanged
+  });
+
+  test('handles string numbers correctly', () => {
+    const mockEvent = {
+      target: {
+        dataset: { fib: '21', type: 'min' },
+        value: '15',
+      },
+    };
+
+    idx.updateFibonacciMapping(mockEvent);
+
+    expect(idx.fibonacciMappings[21].min).toBe(15);
+    expect(typeof idx.fibonacciMappings[21].min).toBe('number');
+  });
+
+  test('does not crash for non-existent Fibonacci number', () => {
+    const mockEvent = {
+      target: {
+        dataset: { fib: '99', type: 'min' },
+        value: '50',
+      },
+    };
+
+    expect(() => idx.updateFibonacciMapping(mockEvent)).not.toThrow();
+  });
+
+  test('updates multiple values sequentially', () => {
+    const event1 = {
+      target: {
+        dataset: { fib: '5', type: 'min' },
+        value: '4',
+      },
+    };
+    const event2 = {
+      target: {
+        dataset: { fib: '5', type: 'max' },
+        value: '10',
+      },
+    };
+
+    idx.updateFibonacciMapping(event1);
+    idx.updateFibonacciMapping(event2);
+
+    expect(idx.fibonacciMappings[5].min).toBe(4);
+    expect(idx.fibonacciMappings[5].max).toBe(10);
+  });
+});
+
 describe('Estimation Mode', () => {
   test('defaults to hours mode', () => {
     expect(idx.getEstimationMode()).toBe('hours');
