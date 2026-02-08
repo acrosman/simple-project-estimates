@@ -432,6 +432,81 @@ function updateElementText(id, content) {
 }
 
 /**
+ * Saves an SVG element as a PNG or JPEG image
+ * @param {string} svgContainerId ID of the element containing the SVG
+ * @param {string} filename Name for the downloaded file
+ * @param {string} format 'png' or 'jpeg'
+ */
+function saveSvgAsImage(svgContainerId, filename, format = 'png') {
+  const container = document.getElementById(svgContainerId);
+  const svg = container.querySelector('svg');
+
+  if (!svg) {
+    alert('No graph to save. Please run a simulation first.');
+    return;
+  }
+
+  // Clone the SVG to avoid modifying the original
+  const svgClone = svg.cloneNode(true);
+
+  // Inline styles to preserve colors
+  const allElements = svgClone.querySelectorAll('*');
+  const originalElements = svg.querySelectorAll('*');
+
+  allElements.forEach((element, index) => {
+    const originalElement = originalElements[index];
+    if (originalElement) {
+      const computedStyle = window.getComputedStyle(originalElement);
+      const styleString = Array.from(computedStyle).reduce((acc, key) => {
+        const value = computedStyle.getPropertyValue(key);
+        if (value && key !== 'all') {
+          return `${acc}${key}:${value};`;
+        }
+        return acc;
+      }, '');
+      if (styleString) {
+        element.setAttribute('style', styleString);
+      }
+    }
+  });
+
+  // Get SVG data
+  const svgData = new XMLSerializer().serializeToString(svgClone);
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  // Create an image to load the SVG
+  const img = new Image();
+  img.onload = () => {
+    // Create a canvas with bottom margin
+    const canvas = document.createElement('canvas');
+    const svgSize = svg.getBoundingClientRect();
+    const bottomMargin = 20;
+    canvas.width = svgSize.width;
+    canvas.height = svgSize.height + bottomMargin;
+
+    // Draw the image onto the canvas
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+
+    // Convert canvas to blob and download
+    canvas.toBlob((blob) => {
+      const link = document.createElement('a');
+      link.download = `${filename}.${format}`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }, `image/${format}`, 0.95);
+
+    URL.revokeObjectURL(url);
+  };
+
+  img.src = url;
+}
+
+/**
  * Triggers the start of the simulation run with the current values.
  * @param {Event} event
  */
@@ -737,6 +812,31 @@ function setupUi() {
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMin', ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandDev', ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('timeHistoGram', ['simulation-result', 'time-info', 'graph']));
+
+  // Add save buttons for time histogram
+  const timeSaveButtonsDiv = document.createElement('div');
+  timeSaveButtonsDiv.classList.add('save-buttons', 'no-print');
+
+  const saveTimePng = document.createElement('input');
+  Object.assign(saveTimePng, {
+    type: 'button',
+    value: 'Save Time Graph as PNG',
+    id: 'saveTimePngBtn',
+  });
+  saveTimePng.addEventListener('click', () => saveSvgAsImage('timeHistoGram', 'time-estimates', 'png'));
+
+  const saveTimeJpeg = document.createElement('input');
+  Object.assign(saveTimeJpeg, {
+    type: 'button',
+    value: 'Save Time Graph as JPEG',
+    id: 'saveTimeJpegBtn',
+  });
+  saveTimeJpeg.addEventListener('click', () => saveSvgAsImage('timeHistoGram', 'time-estimates', 'jpeg'));
+
+  timeSaveButtonsDiv.appendChild(saveTimePng);
+  timeSaveButtonsDiv.appendChild(saveTimeJpeg);
+  simTimeResultWrapper.appendChild(timeSaveButtonsDiv);
+
   simResultWrapper.appendChild(simTimeResultWrapper);
 
   // Simulation Cost Results elements
@@ -748,6 +848,31 @@ function setupUi() {
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMin', ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandDev', ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('costHistoGram', ['simulation-result', 'cost-info', 'graph']));
+
+  // Add save buttons for cost histogram
+  const costSaveButtonsDiv = document.createElement('div');
+  costSaveButtonsDiv.classList.add('save-buttons', 'no-print');
+
+  const saveCostPng = document.createElement('input');
+  Object.assign(saveCostPng, {
+    type: 'button',
+    value: 'Save Cost Graph as PNG',
+    id: 'saveCostPngBtn',
+  });
+  saveCostPng.addEventListener('click', () => saveSvgAsImage('costHistoGram', 'cost-estimates', 'png'));
+
+  const saveCostJpeg = document.createElement('input');
+  Object.assign(saveCostJpeg, {
+    type: 'button',
+    value: 'Save Cost Graph as JPEG',
+    id: 'saveCostJpegBtn',
+  });
+  saveCostJpeg.addEventListener('click', () => saveSvgAsImage('costHistoGram', 'cost-estimates', 'jpeg'));
+
+  costSaveButtonsDiv.appendChild(saveCostPng);
+  costSaveButtonsDiv.appendChild(saveCostJpeg);
+  simCostResultWrapper.appendChild(costSaveButtonsDiv);
+
   simResultWrapper.appendChild(simCostResultWrapper);
 
   // Add simulator elements to wrapper.

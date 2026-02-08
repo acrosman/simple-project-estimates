@@ -33,6 +33,14 @@ input[type="button"] {
   display: block;
 }
 
+.save-buttons {
+  margin: 1em 0;
+}
+
+.save-buttons input[type="button"] {
+  margin-right: 1em;
+}
+
 /* Mode Selector */
 .wrapper-mode-selector {
   background-color: #f5f5f5;
@@ -177,5 +185,92 @@ input[type="button"] {
     -moz-transform: rotate(45deg);
     -o-transform: rotate(45deg);
     box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Print Styles */
+@media print {
+  /* Set page margins to minimal */
+  @page {
+    margin: 0.5in;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Hide input controls and non-essential elements - use visibility to completely remove */
+  .wrapper-mode-selector,
+  .wrapper-file-load,
+  .wrapper-direct-load,
+  .controls-simulation,
+  .github-ribbon,
+  #forkOnGithub,
+  .save-buttons,
+  .no-print,
+  button,
+  input[type="button"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide the entire data entry section */
+  #dataAreaWrapper {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide the Simulator heading since controls are hidden */
+  .simulation.header {
+    display: none !important;
+  }
+
+  /* Ensure results are visible */
+  .wrap-simulation-results {
+    page-break-inside: avoid;
+  }
+
+  .wrap-simulation-time-results,
+  .wrap-simulation-cost-results {
+    page-break-inside: avoid;
+    margin-bottom: 2em;
+  }
+
+  /* Make graphs visible */
+  .graph svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Optimize text for print */
+  body {
+    font-size: 12pt;
+  }
+
+  h1 {
+    font-size: 18pt;
+  }
+
+  h2 {
+    font-size: 16pt;
+    margin-top: 1em;
+  }
+
+  h3 {
+    font-size: 14pt;
+  }
+
+  /* Remove backgrounds */
+  * {
+    background: transparent !important;
+    box-shadow: none !important;
   }
 }
