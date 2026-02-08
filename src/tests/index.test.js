@@ -86,7 +86,9 @@ describe('createLabeledInput', () => {
   });
 
   test('input has correct attributes', () => {
-    const attributes = { name: 'numberField', type: 'number', value: '42', min: '0', max: '100' };
+    const attributes = {
+      name: 'numberField', type: 'number', value: '42', min: '0', max: '100',
+    };
     const wrapper = idx.createLabeledInput('Number', attributes);
     const input = wrapper.querySelector('input');
 
@@ -238,7 +240,7 @@ describe('updateElementText', () => {
 describe('Fibonacci Mappings', () => {
   test('has correct Fibonacci numbers as keys', () => {
     const fibKeys = Object.keys(idx.fibonacciMappings).map(Number);
-    expect(fibKeys).toEqual([1, 2, 3, 5, 8, 13, 21]);
+    expect(fibKeys).toEqual([1, 2, 3, 5, 8, 13, 21, 34]);
   });
 
   test('each mapping has min and max properties', () => {

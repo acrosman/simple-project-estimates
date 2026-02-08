@@ -16,6 +16,7 @@ const fibonacciMappings = {
   8: { min: 5, max: 8 },
   13: { min: 8, max: 13 },
   21: { min: 13, max: 21 },
+  34: { min: 21, max: 34 },
 };
 
 // ============= Interface Element Helpers =================
@@ -302,7 +303,7 @@ function createFibonacciMappingTable() {
   tableHeader.appendChild(createTextElement('div', 'Max Hours', ['th']));
   table.appendChild(tableHeader);
 
-  const fibNumbers = [1, 2, 3, 5, 8, 13, 21];
+  const fibNumbers = [1, 2, 3, 5, 8, 13, 21, 34];
 
   for (const fibNum of fibNumbers) {
     const row = document.createElement('div');
