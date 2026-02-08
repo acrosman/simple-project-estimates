@@ -390,3 +390,190 @@ describe('Cost Tracking', () => {
     expect(idx.getEnableCost()).toBe(true);
   });
 });
+
+describe('saveSvgAsImage', () => {
+  let mockContainer;
+  let mockSvg;
+  let mockCanvas;
+  let mockContext;
+  let mockImage;
+  let originalCreateElement;
+  let originalGetComputedStyle;
+  let originalURL;
+  let originalAlert;
+
+  beforeEach(() => {
+    // Mock DOM elements
+    mockContext = {
+      fillRect: jest.fn(),
+      drawImage: jest.fn(),
+    };
+
+    mockCanvas = {
+      getContext: jest.fn(() => mockContext),
+      toBlob: jest.fn((callback) => {
+        callback(new Blob(['test'], { type: 'image/png' }));
+      }),
+      width: 0,
+      height: 0,
+    };
+
+    mockSvg = {
+      cloneNode: jest.fn(function cloneNode() {
+        return {
+          querySelectorAll: jest.fn(() => []),
+        };
+      }),
+      querySelector: jest.fn(),
+      querySelectorAll: jest.fn(() => []),
+      getBoundingClientRect: jest.fn(() => ({ width: 800, height: 600 })),
+    };
+
+    mockContainer = {
+      querySelector: jest.fn(() => mockSvg),
+    };
+
+    // Mock Image constructor
+    mockImage = {
+      onload: null,
+      src: '',
+    };
+
+    // Mock document methods
+    document.getElementById = jest.fn(() => mockContainer);
+    originalCreateElement = document.createElement;
+    document.createElement = jest.fn((tag) => {
+      if (tag === 'canvas') return mockCanvas;
+      if (tag === 'a') {
+        return {
+          click: jest.fn(),
+          download: '',
+          href: '',
+        };
+      }
+      return originalCreateElement.call(document, tag);
+    });
+
+    // Mock Image constructor globally
+    global.Image = jest.fn(() => mockImage);
+
+    // Mock XMLSerializer
+    global.XMLSerializer = jest.fn(() => ({
+      serializeToString: jest.fn(() => '<svg></svg>'),
+    }));
+
+    // Mock Blob
+    global.Blob = jest.fn((content, options) => ({
+      content,
+      options,
+      type: options.type,
+    }));
+
+    // Mock window.getComputedStyle
+    originalGetComputedStyle = window.getComputedStyle;
+    window.getComputedStyle = jest.fn(() => ({
+      getPropertyValue: jest.fn(() => 'blue'),
+      [Symbol.iterator]: function* iterator() {
+        yield 'fill';
+        yield 'stroke';
+      },
+    }));
+
+    // Mock URL methods
+    originalURL = global.URL;
+    global.URL = {
+      createObjectURL: jest.fn(() => 'blob:mock-url'),
+      revokeObjectURL: jest.fn(),
+    };
+
+    // Mock alert
+    originalAlert = global.alert;
+    global.alert = jest.fn();
+  });
+
+  afterEach(() => {
+    document.createElement = originalCreateElement;
+    window.getComputedStyle = originalGetComputedStyle;
+    global.URL = originalURL;
+    global.alert = originalAlert;
+    jest.clearAllMocks();
+  });
+
+  test('shows alert when no SVG found', () => {
+    mockContainer.querySelector = jest.fn(() => null);
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+    expect(global.alert).toHaveBeenCalledWith('No graph to save. Please run a simulation first.');
+  });
+
+  test('clones SVG to avoid modifying original', () => {
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+    expect(mockSvg.cloneNode).toHaveBeenCalledWith(true);
+  });
+
+  test('creates canvas with correct dimensions including bottom margin', () => {
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+    // Trigger onload
+    mockImage.onload();
+    expect(mockCanvas.width).toBe(800);
+    expect(mockCanvas.height).toBe(620); // 600 + 20 margin
+  });
+
+  test('draws white background before image', () => {
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+    mockImage.onload();
+    expect(mockContext.fillRect).toHaveBeenCalledWith(0, 0, 800, 620);
+    expect(mockContext.drawImage).toHaveBeenCalledWith(mockImage, 0, 0);
+  });
+
+  test('generates PNG by default', () => {
+    idx.saveSvgAsImage('testId', 'test-file');
+    mockImage.onload();
+    expect(mockCanvas.toBlob).toHaveBeenCalled();
+    const toBlobCall = mockCanvas.toBlob.mock.calls[0];
+    expect(toBlobCall[1]).toBe('image/png');
+  });
+
+  test('generates JPEG when specified', () => {
+    idx.saveSvgAsImage('testId', 'test-file', 'jpeg');
+    mockImage.onload();
+    const toBlobCall = mockCanvas.toBlob.mock.calls[0];
+    expect(toBlobCall[1]).toBe('image/jpeg');
+  });
+
+  test('uses XMLSerializer to serialize SVG', () => {
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+    expect(global.XMLSerializer).toHaveBeenCalled();
+  });
+
+  test('creates blob URL and sets as image source', () => {
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+    expect(global.URL.createObjectURL).toHaveBeenCalled();
+    expect(mockImage.src).toBe('blob:mock-url');
+  });
+
+  test('revokes blob URL after image loads', () => {
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+    mockImage.onload();
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+  });
+
+  test('gets computed styles from original elements', () => {
+    const mockElements = [
+      { setAttribute: jest.fn() },
+      { setAttribute: jest.fn() },
+    ];
+    const mockOriginalElements = [{}, {}];
+
+    const clonedSvg = {
+      querySelectorAll: jest.fn(() => mockElements),
+    };
+
+    mockSvg.cloneNode = jest.fn(() => clonedSvg);
+    mockSvg.querySelectorAll = jest.fn(() => mockOriginalElements);
+
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+
+    expect(window.getComputedStyle).toHaveBeenCalled();
+    expect(mockElements[0].setAttribute).toHaveBeenCalled();
+  });
+});

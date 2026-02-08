@@ -903,6 +903,7 @@ export {
   updateElementText,
   updateFibonacciMapping,
   fibonacciMappings,
+  saveSvgAsImage,
 };
 
 // Export getter functions for mutable state
