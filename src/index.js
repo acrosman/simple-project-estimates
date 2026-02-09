@@ -612,6 +612,8 @@ function startSimulation(event) {
     'Hours',
     graphSetting,
   );
+  // Show time save buttons now that graph is generated
+  document.getElementById('timeSaveButtons').style.display = 'block';
 
   // Only build cost histogram if cost tracking is enabled
   if (enableCost) {
@@ -625,6 +627,11 @@ function startSimulation(event) {
       'Cost',
       graphSetting,
     );
+    // Show cost save buttons now that graph is generated
+    document.getElementById('costSaveButtons').style.display = 'block';
+  } else {
+    // Hide cost save buttons if cost tracking is disabled
+    document.getElementById('costSaveButtons').style.display = 'none';
   }
 }
 
@@ -821,7 +828,9 @@ function setupUi() {
 
   // Add save buttons for time histogram
   const timeSaveButtonsDiv = document.createElement('div');
+  timeSaveButtonsDiv.id = 'timeSaveButtons';
   timeSaveButtonsDiv.classList.add('save-buttons', 'no-print');
+  timeSaveButtonsDiv.style.display = 'none';
 
   const saveTimePng = document.createElement('input');
   Object.assign(saveTimePng, {
@@ -857,7 +866,9 @@ function setupUi() {
 
   // Add save buttons for cost histogram
   const costSaveButtonsDiv = document.createElement('div');
+  costSaveButtonsDiv.id = 'costSaveButtons';
   costSaveButtonsDiv.classList.add('save-buttons', 'no-print');
+  costSaveButtonsDiv.style.display = 'none';
 
   const saveCostPng = document.createElement('input');
   Object.assign(saveCostPng, {

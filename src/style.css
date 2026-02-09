@@ -22,6 +22,7 @@ input[type="button"] {
   display: table-cell;
   font-weight: bold;
   padding-left: 1em;
+  white-space: nowrap;
 }
 .td {
   display: table-cell;
@@ -209,7 +210,7 @@ input[type="button"] {
   /* Hide input controls and non-essential elements - use visibility to completely remove */
   .wrapper-mode-selector,
   .wrapper-file-load,
-  .wrapper-direct-load,
+  .wrapper-direct-load .header,
   .controls-simulation,
   .github-ribbon,
   #forkOnGithub,
@@ -225,18 +226,30 @@ input[type="button"] {
     overflow: hidden !important;
   }
 
-  /* Hide the entire data entry section */
-  #dataAreaWrapper {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
   /* Hide the Simulator heading since controls are hidden */
   .simulation.header {
     display: none !important;
+  }
+
+  /* Show task list but make it read-only looking */
+  .data-entry {
+    page-break-inside: avoid;
+    margin-bottom: 2em;
+  }
+
+  .data-entry input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0.3em;
+  }
+
+  .data-entry .tr {
+    border-bottom: 1px solid #ccc;
+  }
+
+  .data-entry .table-header-row {
+    border-bottom: 2px solid #000;
+    font-weight: bold;
   }
 
   /* Ensure results are visible */
