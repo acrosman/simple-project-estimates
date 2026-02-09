@@ -75,7 +75,6 @@ input[type="button"] {
 }
 
 .fib-mapping-table .th {
-  background-color: #e0e0e0;
   padding: 0.5em 1em;
 }
 
@@ -86,10 +85,6 @@ input[type="button"] {
 .fib-mapping-row input[type="number"] {
   width: 80px;
   padding: 0.3em;
-}
-
-.fib-mapping-row:nth-child(even) {
-  background-color: #f9f9f9;
 }
 
 /* Data Entry Table */
