@@ -43,7 +43,7 @@ You can enter your project tasks in two ways:
    - **Task**: Name or description of the task
    - **Min Time** (hours mode): Minimum hours estimate
    - **Max Time** (hours mode): Maximum hours estimate
-   - **Fibonacci** (Fibonacci mode): Story point value (1, 2, 3, 5, 8, 13, 21, 34)
+   - **Fibonacci** (Fibonacci mode): Story point value (mutually exclusive with hours)
    - **Confidence**: Your confidence level as a percentage (0-100)
    - **Cost**: Hourly rate for this task
 4. Click "Run Simulation" to generate results
@@ -149,18 +149,20 @@ The project leverages [D3](https://d3js.org/) for the histogram visualization.
 
 ### Prerequisites
 
-- Node.js (v14 or higher recommended)
-- npm (comes with Node.js)
+- Node.js (v20 or higher recommended)
+- npm
 
 ### Setup
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/acrosman/simple-project-estimates.git
 cd simple-project-estimates
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -182,6 +184,7 @@ The project uses Jest for testing. Tests are located in `src/tests/`:
 - `index.test.js` - Tests for UI functions and DOM manipulation
 
 Run tests with coverage report:
+
 ```bash
 npm test
 ```
@@ -214,11 +217,3 @@ src/
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
-
-### Recent Improvements
-
-- **Enhanced Error Handling**: CSV parsing errors now display user-friendly messages
-- **Improved Accessibility**: Replaced alerts with ARIA live regions for screen reader compatibility
-- **Fixed Confidence Scaling**: Corrected taskUpperBound calculation for accurate risk assessment
-- **Better Input Validation**: Added comprehensive validation for task parameters
-- **Production Optimizations**: Content-hash filenames for better caching, external source maps
