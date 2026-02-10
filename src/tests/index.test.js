@@ -578,10 +578,14 @@ describe('saveSvgAsImage', () => {
     jest.clearAllMocks();
   });
 
-  test('shows alert when no SVG found', () => {
+  test('shows error message when no SVG found', () => {
     mockContainer.querySelector = jest.fn(() => null);
+    mockContainer.appendChild = jest.fn();
     idx.saveSvgAsImage('testId', 'test-file', 'png');
-    expect(global.alert).toHaveBeenCalledWith('No graph to save. Please run a simulation first.');
+    expect(mockContainer.appendChild).toHaveBeenCalled();
+    const errorDiv = mockContainer.appendChild.mock.calls[0][0];
+    expect(errorDiv.getAttribute('role')).toBe('alert');
+    expect(errorDiv.textContent).toBe('No graph to save. Please run a simulation first.');
   });
 
   test('clones SVG to avoid modifying original', () => {

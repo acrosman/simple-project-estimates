@@ -293,3 +293,14 @@ input[type="button"] {
     box-shadow: none !important;
   }
 }
+
+/* Error Messages */
+.error-message {
+  color: #d32f2f;
+  font-weight: bold;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #ffebee;
+  border: 1px solid #ef5350;
+  border-radius: 4px;
+}

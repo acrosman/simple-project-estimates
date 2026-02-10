@@ -26,7 +26,11 @@ function getRandom(minimum, maximum) {
  * @returns Integer
  */
 function taskUpperBound(maxEstimate, confidence) {
-  const boundary = maxEstimate * Math.abs(Math.floor(10 - (confidence * 10)));
+  // Calculate multiplier based on confidence level
+  // 100% conf = 1x, 90% = 1x, 80% = 2x, 70% = 3x, etc.
+  const confidencePercent = Math.round(confidence * 100);
+  const multiplier = Math.max(1, Math.ceil((100 - confidencePercent) / 10));
+  const boundary = maxEstimate * multiplier;
   return boundary;
 }
 
