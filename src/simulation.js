@@ -79,6 +79,60 @@ function getValueCount(data) {
 }
 
 /**
+ * Gaussian kernel function for KDE.
+ * @param {number} distance Distance from the point
+ * @param {number} bandwidth Bandwidth parameter
+ * @returns {number} Kernel value
+ */
+function gaussianKernel(distance, bandwidth) {
+  const u = distance / bandwidth;
+  return Math.exp(-0.5 * u * u) / Math.sqrt(2 * Math.PI);
+}
+
+/**
+ * Calculates kernel density estimate for visualization.
+ * @param {Array} data Array of frequency values
+ * @param {number} minBin Starting index
+ * @param {number} maxBin Ending index
+ * @returns {Array} Array of KDE values
+ */
+function calculateKDE(data, minBin, maxBin) {
+  // Calculate bandwidth using Silverman's rule of thumb
+  const totalCount = getValueCount(data);
+  const range = maxBin - minBin;
+  const bandwidth = Math.max(range * 0.02, 1);
+
+  const kdeValues = [];
+  const samplePoints = Math.min(200, range); // Limit sample points for performance
+  const step = range / samplePoints;
+
+  for (let sample = 0; sample < samplePoints; sample += 1) {
+    const x = minBin + (sample * step);
+    let density = 0;
+
+    // Sum kernel contributions from all data points
+    data.forEach((frequency, i) => {
+      if (frequency > 0) {
+        const dataPoint = i + minBin;
+        const distance = x - dataPoint;
+        // Weight by frequency (how many times this value occurred)
+        density += frequency * gaussianKernel(distance, bandwidth);
+      }
+    });
+
+    // Normalize by total count and bandwidth
+    kdeValues.push(density / (totalCount * bandwidth));
+  }
+
+  // Scale KDE values to match the frequency scale for visualization
+  const maxKDE = Math.max(...kdeValues);
+  const maxFreq = Math.max(...data);
+  const scaleFactor = maxFreq / maxKDE;
+
+  return kdeValues.map((v) => v * scaleFactor);
+}
+
+/**
  * Calculates the median value for all times run during a series of simulations. In the expected
  * array each cell is the number of times the result was equal to the index.
  * @param {Array} data Array of summarized results.
@@ -316,7 +370,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     svg.selectAll('dot')
       .data(data)
       .join('circle')
-      .attr('cx', (d, i) => x(i))
+      .attr('cx', (d, i) => x2(i + minBin))
       .attr('cy', (d) => y(d))
       .attr('r', (d, i) => {
         if (i === medianIndex) {
@@ -332,6 +386,24 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
         }
         return 'graphXY';
       });
+
+    // Draw kernel density estimate curve
+    const kdeData = calculateKDE(data, minBin, maxBin);
+    const kdeStep = (maxBin - minBin) / kdeData.length;
+
+    const lineGenerator = d3.line()
+      .x((d, i) => x2(minBin + (i * kdeStep)))
+      .y((d) => y(d))
+      .curve(d3.curveCardinal.tension(0.5));
+
+    svg.append('path')
+      .datum(kdeData)
+      .attr('class', 'kde-curve')
+      .attr('fill', 'none')
+      .attr('stroke', '#ef4444')
+      .attr('stroke-width', 2.5)
+      .attr('opacity', 0.8)
+      .attr('d', lineGenerator);
   }
 }
 
@@ -425,4 +497,5 @@ export {
   getValueCount,
   getMedian,
   getStandardDeviation,
+  calculateKDE,
 };
