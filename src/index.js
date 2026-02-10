@@ -470,6 +470,19 @@ function importCsvFile(event) {
       // The following call results in an "Access denied" error in IE.
       csv(dataUrl).then((data) => {
         createEntryTable(data);
+      }).catch((error) => {
+        const errorDiv = document.createElement('div');
+        errorDiv.setAttribute('role', 'alert');
+        errorDiv.setAttribute('aria-live', 'assertive');
+        errorDiv.classList.add('error-message');
+        errorDiv.textContent = `Failed to parse CSV file: ${error.message}. Please check the file format.`;
+
+        const dataWrapper = document.getElementById('dataAreaWrapper');
+        const existingError = dataWrapper.querySelector('.error-message');
+        if (existingError) {
+          existingError.remove();
+        }
+        dataWrapper.insertBefore(errorDiv, dataWrapper.firstChild);
       });
     };
     reader.readAsDataURL(file);
@@ -497,8 +510,23 @@ function saveSvgAsImage(svgContainerId, filename, format = 'png') {
   const svg = container.querySelector('svg');
 
   if (!svg) {
-    // eslint-disable-next-line no-alert
-    alert('No graph to save. Please run a simulation first.');
+    // Create accessible error message instead of alert
+    const errorDiv = document.createElement('div');
+    errorDiv.setAttribute('role', 'alert');
+    errorDiv.setAttribute('aria-live', 'assertive');
+    errorDiv.classList.add('error-message');
+    errorDiv.textContent = 'No graph to save. Please run a simulation first.';
+
+    const existingError = container.querySelector('.error-message');
+    if (existingError) {
+      existingError.remove();
+    }
+    container.appendChild(errorDiv);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      errorDiv.remove();
+    }, 5000);
     return;
   }
 
@@ -629,9 +657,33 @@ function startSimulation(event) {
     const hasValidConfidence = !Number.isNaN(taskDetail.Confidence)
       && taskDetail.Confidence !== undefined;
 
-    if (hasName && hasValidMin && hasValidMax && hasValidConfidence) {
+    // Additional validation for value ranges
+    const minIsPositive = hasValidMin && taskDetail.Min >= 0;
+    const maxIsValid = hasValidMax && taskDetail.Max >= taskDetail.Min;
+    const confidenceInRange = hasValidConfidence
+      && taskDetail.Confidence >= 0
+      && taskDetail.Confidence <= 1;
+
+    if (hasName && minIsPositive && maxIsValid && confidenceInRange) {
       data.push(taskDetail);
     }
+  }
+
+  // Validate we have at least one task
+  if (data.length === 0) {
+    const errorDiv = document.createElement('div');
+    errorDiv.setAttribute('role', 'alert');
+    errorDiv.setAttribute('aria-live', 'assertive');
+    errorDiv.classList.add('error-message');
+    errorDiv.textContent = 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.';
+
+    const resultsDiv = document.getElementById('results');
+    const existingError = resultsDiv.querySelector('.error-message');
+    if (existingError) {
+      existingError.remove();
+    }
+    resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
+    return;
   }
 
   // Run Main simulator.
@@ -716,7 +768,10 @@ function setupUi() {
 
   // Fork Me ribbon
   const githubRibbon = createDivWithIdAndClasses('forkOnGithub', ['github-ribbon']);
-  githubRibbon.innerHTML = '<a href="https://github.com/acrosman/simple-project-estimates">Fork me on GitHub</a>';
+  const githubLink = document.createElement('a');
+  githubLink.href = 'https://github.com/acrosman/simple-project-estimates';
+  githubLink.textContent = 'Fork me on GitHub';
+  githubRibbon.appendChild(githubLink);
   headerDiv.appendChild(githubRibbon);
 
   // Setup data entry section

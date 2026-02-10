@@ -157,3 +157,47 @@ test('RunSimulation: Single Task', () => {
   expect(results.costs.likelyMin).not.toBeNaN();
   expect(results.costs.likelyMax).not.toBeNaN();
 });
+
+// Tests for taskUpperBound function
+describe('taskUpperBound', () => {
+  test('100% confidence should give 1x multiplier', () => {
+    const result = sim.taskUpperBound(10, 1.0);
+    expect(result).toBe(10);
+  });
+
+  test('90% confidence should give 1x multiplier', () => {
+    const result = sim.taskUpperBound(10, 0.90);
+    expect(result).toBe(10);
+  });
+
+  test('85% confidence should give 2x multiplier', () => {
+    const result = sim.taskUpperBound(10, 0.85);
+    expect(result).toBe(20);
+  });
+
+  test('80% confidence should give 2x multiplier', () => {
+    const result = sim.taskUpperBound(10, 0.80);
+    expect(result).toBe(20);
+  });
+
+  test('70% confidence should give 3x multiplier', () => {
+    const result = sim.taskUpperBound(10, 0.70);
+    expect(result).toBe(30);
+  });
+
+  test('50% confidence should give 5x multiplier', () => {
+    const result = sim.taskUpperBound(10, 0.50);
+    expect(result).toBe(50);
+  });
+
+  test('0% confidence should give 10x multiplier', () => {
+    const result = sim.taskUpperBound(10, 0);
+    expect(result).toBe(100);
+  });
+
+  test('Works with different max estimates', () => {
+    expect(sim.taskUpperBound(20, 0.90)).toBe(20);
+    expect(sim.taskUpperBound(20, 0.80)).toBe(40);
+    expect(sim.taskUpperBound(5, 0.70)).toBe(15);
+  });
+});

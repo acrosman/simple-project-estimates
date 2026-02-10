@@ -139,3 +139,81 @@ Each Fibonacci number maps to an hour range:
 - Multiple peaks: May indicate tasks with very different confidence levels
 
 The project leverages [D3](https://d3js.org/) for the histogram visualization.
+
+## Development
+
+### Prerequisites
+
+- Node.js (v14 or higher recommended)
+- npm (comes with Node.js)
+
+### Setup
+
+1. Clone the repository:
+```bash
+git clone https://github.com/acrosman/simple-project-estimates.git
+cd simple-project-estimates
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+### Available Scripts
+
+- `npm start` - Start development server with hot reload
+- `npm test` - Run test suite with coverage
+- `npm run lint` - Check code style with ESLint
+- `npm run lint-fix` - Automatically fix linting issues
+- `npm run build` - Build for development
+- `npx webpack --mode=production` - Build optimized production bundle
+
+### Testing
+
+The project uses Jest for testing. Tests are located in `src/tests/`:
+
+- `simulation.test.js` - Tests for simulation logic and mathematical functions
+- `index.test.js` - Tests for UI functions and DOM manipulation
+
+Run tests with coverage report:
+```bash
+npm test
+```
+
+### Code Quality
+
+- ESLint configured with Airbnb style guide
+- All functions include JSDoc documentation
+- Comprehensive test coverage for core simulation logic
+- Accessible UI with ARIA labels and keyboard navigation
+
+### Project Structure
+
+```
+src/
+├── index.js          # UI and user interaction logic
+├── simulation.js     # Pure mathematical simulation functions
+├── style.css         # Styling
+├── index.html        # HTML template
+├── data/            # Sample CSV files
+└── tests/           # Test files
+```
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests and linting (`npm test && npm run lint`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### Recent Improvements
+
+- **Enhanced Error Handling**: CSV parsing errors now display user-friendly messages
+- **Improved Accessibility**: Replaced alerts with ARIA live regions for screen reader compatibility
+- **Fixed Confidence Scaling**: Corrected taskUpperBound calculation for accurate risk assessment
+- **Better Input Validation**: Added comprehensive validation for task parameters
+- **Production Optimizations**: Content-hash filenames for better caching, external source maps
