@@ -344,8 +344,8 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
 function runSimulation(passes, data) {
   const upperTimeBound = calculateUpperBound(data);
   const upperCostBound = calculateUpperBound(data, true);
-  const times = new Array(upperTimeBound).fill(0);
-  const costs = new Array(upperCostBound).fill(0);
+  const times = new Array(upperTimeBound + 1).fill(0);
+  const costs = new Array(upperCostBound + 1).fill(0);
   const estimates = {
     times: [],
     costs: [],

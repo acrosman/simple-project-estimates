@@ -86,3 +86,29 @@ test('StdDev: Bell Curve', () => {
   const stdDev = sim.getStandardDeviation(sampleList);
   expect(stdDev.toFixed(9)).toBe('2.449489743');
 });
+
+test('RunSimulation: Single Task', () => {
+  const tasks = [
+    {
+      Name: 'Test Task',
+      Min: 36,
+      Max: 73,
+      Confidence: 0.9,
+      Cost: 200,
+    },
+  ];
+  const results = sim.runSimulation(10000, tasks);
+
+  // Should have valid median (not 0 since min is 36)
+  expect(results.times.median).toBeGreaterThan(0);
+
+  // Should have valid standard deviation (not NaN)
+  expect(results.times.sd).not.toBeNaN();
+  expect(results.costs.sd).not.toBeNaN();
+
+  // Likely ranges should not be NaN
+  expect(results.times.likelyMin).not.toBeNaN();
+  expect(results.times.likelyMax).not.toBeNaN();
+  expect(results.costs.likelyMin).not.toBeNaN();
+  expect(results.costs.likelyMax).not.toBeNaN();
+});
