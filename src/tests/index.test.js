@@ -12,6 +12,8 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('generateDataField');
     expect(idx).toHaveProperty('updateElementText');
     expect(idx).toHaveProperty('isRowEmpty');
+    expect(idx).toHaveProperty('getNextFibonacci');
+    expect(idx).toHaveProperty('addFibonacciNumber');
   });
 
   test('Validate exported state exists', () => {
@@ -458,6 +460,128 @@ describe('updateFibonacciMapping', () => {
 
     expect(idx.fibonacciMappings[5].min).toBe(4);
     expect(idx.fibonacciMappings[5].max).toBe(10);
+  });
+});
+
+describe('getNextFibonacci', () => {
+  beforeEach(() => {
+    // Reset mappings to default state
+    Object.keys(idx.fibonacciMappings).forEach((key) => {
+      if (parseInt(key, 10) > 34) {
+        delete idx.fibonacciMappings[key];
+      }
+    });
+    idx.fibonacciMappings[1] = { min: 0, max: 1 };
+    idx.fibonacciMappings[2] = { min: 1, max: 2 };
+    idx.fibonacciMappings[3] = { min: 2, max: 3 };
+    idx.fibonacciMappings[5] = { min: 3, max: 5 };
+    idx.fibonacciMappings[8] = { min: 5, max: 8 };
+    idx.fibonacciMappings[13] = { min: 8, max: 13 };
+    idx.fibonacciMappings[21] = { min: 13, max: 21 };
+    idx.fibonacciMappings[34] = { min: 21, max: 34 };
+  });
+
+  test('calculates next Fibonacci number correctly', () => {
+    expect(idx.getNextFibonacci()).toBe(55);
+  });
+
+  test('continues sequence after multiple additions', () => {
+    idx.fibonacciMappings[55] = { min: 34, max: 55 };
+    expect(idx.getNextFibonacci()).toBe(89);
+  });
+
+  test('handles extended sequence', () => {
+    idx.fibonacciMappings[55] = { min: 34, max: 55 };
+    idx.fibonacciMappings[89] = { min: 55, max: 89 };
+    expect(idx.getNextFibonacci()).toBe(144);
+  });
+
+  test('works with unordered keys in object', () => {
+    // Add a new number out of order
+    idx.fibonacciMappings[55] = { min: 34, max: 55 };
+    // Function should still calculate correctly by sorting
+    expect(idx.getNextFibonacci()).toBe(89);
+  });
+});
+
+describe('addFibonacciNumber', () => {
+  beforeEach(() => {
+    // Reset mappings and DOM
+    Object.keys(idx.fibonacciMappings).forEach((key) => {
+      if (parseInt(key, 10) > 34) {
+        delete idx.fibonacciMappings[key];
+      }
+    });
+    idx.fibonacciMappings[1] = { min: 0, max: 1 };
+    idx.fibonacciMappings[2] = { min: 1, max: 2 };
+    idx.fibonacciMappings[3] = { min: 2, max: 3 };
+    idx.fibonacciMappings[5] = { min: 3, max: 5 };
+    idx.fibonacciMappings[8] = { min: 5, max: 8 };
+    idx.fibonacciMappings[13] = { min: 8, max: 13 };
+    idx.fibonacciMappings[21] = { min: 13, max: 21 };
+    idx.fibonacciMappings[34] = { min: 21, max: 34 };
+
+    document.body.innerHTML = '';
+  });
+
+  test('adds next Fibonacci number to mappings', () => {
+    idx.addFibonacciNumber();
+    expect(idx.fibonacciMappings).toHaveProperty('55');
+  });
+
+  test('sets correct min value from previous max', () => {
+    idx.addFibonacciNumber();
+    expect(idx.fibonacciMappings[55].min).toBe(34);
+  });
+
+  test('sets correct max value as new Fibonacci number', () => {
+    idx.addFibonacciNumber();
+    expect(idx.fibonacciMappings[55].max).toBe(55);
+  });
+
+  test('can add multiple numbers sequentially', () => {
+    idx.addFibonacciNumber();
+    expect(idx.fibonacciMappings).toHaveProperty('55');
+
+    idx.addFibonacciNumber();
+    expect(idx.fibonacciMappings).toHaveProperty('89');
+
+    idx.addFibonacciNumber();
+    expect(idx.fibonacciMappings).toHaveProperty('144');
+  });
+
+  test('maintains proper sequence relationships', () => {
+    idx.addFibonacciNumber(); // Add 55
+    idx.addFibonacciNumber(); // Add 89
+
+    expect(idx.fibonacciMappings[89].min).toBe(55);
+    expect(idx.fibonacciMappings[89].max).toBe(89);
+  });
+
+  test('does not modify existing mappings', () => {
+    const originalMapping = { ...idx.fibonacciMappings[34] };
+    idx.addFibonacciNumber();
+
+    expect(idx.fibonacciMappings[34]).toEqual(originalMapping);
+  });
+
+  test('updates DOM when wrapper exists', () => {
+    // Create a mock parent element with the Fibonacci wrapper
+    const parent = document.createElement('div');
+    const wrapper = document.createElement('div');
+    wrapper.id = 'fibonacciMappingWrapper';
+    parent.appendChild(wrapper);
+    document.body.appendChild(parent);
+
+    idx.addFibonacciNumber();
+
+    // Check that wrapper still exists (was replaced, not removed)
+    const updatedWrapper = document.getElementById('fibonacciMappingWrapper');
+    expect(updatedWrapper).not.toBeNull();
+  });
+
+  test('does not crash when DOM wrapper is missing', () => {
+    expect(() => idx.addFibonacciNumber()).not.toThrow();
   });
 });
 
