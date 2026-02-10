@@ -721,7 +721,8 @@ function startSimulation(event) {
     'Hours',
     graphSetting,
   );
-  // Show time save buttons now that graph is generated
+  // Show time estimate header and save buttons now that graph is generated
+  document.getElementById('timeEstimateHeader').style.display = 'block';
   document.getElementById('timeSaveButtons').style.display = 'block';
 
   // Only build cost histogram if cost tracking is enabled
@@ -736,10 +737,12 @@ function startSimulation(event) {
       'Cost',
       graphSetting,
     );
-    // Show cost save buttons now that graph is generated
+    // Show cost estimate header and save buttons now that graph is generated
+    document.getElementById('costEstimateHeader').style.display = 'block';
     document.getElementById('costSaveButtons').style.display = 'block';
   } else {
-    // Hide cost save buttons if cost tracking is disabled
+    // Hide cost estimate header and save buttons if cost tracking is disabled
+    document.getElementById('costEstimateHeader').style.display = 'none';
     document.getElementById('costSaveButtons').style.display = 'none';
   }
 }
@@ -930,7 +933,10 @@ function setupUi() {
   const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
   simResultWrapper.appendChild(createDivWithIdAndClasses('simulationRunningTime', ['simulation-result', 'text']));
   const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
-  simTimeResultWrapper.appendChild(createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']));
+  const timeHeader = createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']);
+  timeHeader.id = 'timeEstimateHeader';
+  timeHeader.style.display = 'none';
+  simTimeResultWrapper.appendChild(timeHeader);
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMedian', ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandRange', ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMax', ['simulation-result', 'time-info', 'text']));
@@ -968,7 +974,10 @@ function setupUi() {
 
   // Simulation Cost Results elements
   const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
-  simCostResultWrapper.appendChild(createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']));
+  const costHeader = createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']);
+  costHeader.id = 'costEstimateHeader';
+  costHeader.style.display = 'none';
+  simCostResultWrapper.appendChild(costHeader);
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMedian', ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandRange', ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMax', ['simulation-result', 'cost-info', 'text']));
