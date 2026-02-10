@@ -1,5 +1,10 @@
 # Simple Project Simulator
 
+![Run Tests](https://github.com/acrosman/simple-project-estimates/actions/workflows/test.yml/badge.svg)
+![Lint Code](https://github.com/acrosman/simple-project-estimates/actions/workflows/lint.yml/badge.svg)
+![CodeQL Security Scan](https://github.com/acrosman/simple-project-estimates/actions/workflows/codeql-analysis.yml/badge.svg)
+![Build and Deploy](https://github.com/acrosman/simple-project-estimates/actions/workflows/deploy.yml/badge.svg)
+
 This simple time estimator for projects takes a CSV file and runs a monte carlo simulation to help understand the project's future. It will give you projections of both time required and costs. It is inspired by ideas from [Joel Spolsky's piece of Evidence Based Estimates](https://www.joelonsoftware.com/2007/10/26/evidence-based-scheduling/) with my own tweaks and adjustments.
 
 ![Sample Time Projection Results](images/TimeEstimateSample.png?raw=true)
