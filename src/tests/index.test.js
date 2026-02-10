@@ -11,12 +11,94 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('createDivWithIdAndClasses');
     expect(idx).toHaveProperty('generateDataField');
     expect(idx).toHaveProperty('updateElementText');
+    expect(idx).toHaveProperty('isRowEmpty');
   });
 
   test('Validate exported state exists', () => {
     expect(idx).toHaveProperty('getEstimationMode');
     expect(idx).toHaveProperty('fibonacciMappings');
     expect(idx).toHaveProperty('getEnableCost');
+  });
+});
+
+describe('isRowEmpty', () => {
+  beforeEach(() => {
+    // Create a test container
+    document.body.innerHTML = '';
+  });
+
+  test('returns true when all fields are empty', () => {
+    document.body.innerHTML = `
+      <input data-row-id="1" type="text" value="" />
+      <input data-row-id="1" type="number" value="" />
+      <input data-row-id="1" type="number" value="" />
+      <input data-row-id="1" type="button" value="Clear" />
+    `;
+    expect(idx.isRowEmpty('1')).toBe(true);
+  });
+
+  test('returns false when at least one field has a value', () => {
+    document.body.innerHTML = `
+      <input data-row-id="2" type="text" value="Task Name" />
+      <input data-row-id="2" type="number" value="" />
+      <input data-row-id="2" type="number" value="" />
+      <input data-row-id="2" type="button" value="Clear" />
+    `;
+    expect(idx.isRowEmpty('2')).toBe(false);
+  });
+
+  test('returns false when all fields have values', () => {
+    document.body.innerHTML = `
+      <input data-row-id="3" type="text" value="Task" />
+      <input data-row-id="3" type="number" value="10" />
+      <input data-row-id="3" type="number" value="20" />
+      <input data-row-id="3" type="number" value="90" />
+      <input data-row-id="3" type="button" value="Clear" />
+    `;
+    expect(idx.isRowEmpty('3')).toBe(false);
+  });
+
+  test('returns true when fields contain only whitespace', () => {
+    document.body.innerHTML = `
+      <input data-row-id="4" type="text" value="   " />
+      <input data-row-id="4" type="number" value="  " />
+      <input data-row-id="4" type="button" value="Clear" />
+    `;
+    expect(idx.isRowEmpty('4')).toBe(true);
+  });
+
+  test('ignores button inputs when checking', () => {
+    document.body.innerHTML = `
+      <input data-row-id="5" type="text" value="" />
+      <input data-row-id="5" type="number" value="" />
+      <input data-row-id="5" type="button" value="Clear" />
+    `;
+    expect(idx.isRowEmpty('5')).toBe(true);
+  });
+
+  test('returns true when row has no input fields', () => {
+    document.body.innerHTML = `
+      <div data-row-id="6"></div>
+    `;
+    expect(idx.isRowEmpty('6')).toBe(true);
+  });
+
+  test('correctly identifies different rows independently', () => {
+    document.body.innerHTML = `
+      <input data-row-id="7" type="text" value="Filled" />
+      <input data-row-id="8" type="text" value="" />
+    `;
+    expect(idx.isRowEmpty('7')).toBe(false);
+    expect(idx.isRowEmpty('8')).toBe(true);
+  });
+
+  test('returns false when any numeric field has value', () => {
+    document.body.innerHTML = `
+      <input data-row-id="9" type="text" value="" />
+      <input data-row-id="9" type="number" value="5" />
+      <input data-row-id="9" type="number" value="" />
+    `;
+    expect(idx.isRowEmpty('9')).toBe(false);
   });
 });
 

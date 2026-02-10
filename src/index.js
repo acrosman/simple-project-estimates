@@ -73,6 +73,21 @@ function createDivWithIdAndClasses(id, classList = []) {
 }
 
 /**
+ * Checks if a row is empty (all input fields are empty except the button).
+ * @param {string} rowId The row ID to check
+ * @returns {boolean} True if the row is empty
+ */
+function isRowEmpty(rowId) {
+  const cells = document.querySelectorAll(`input[data-row-id="${rowId}"]:not([type=button])`);
+  for (const control of cells) {
+    if (control.value.trim() !== '') {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Creates an input field for a specific input control
  * @param {string} label
  * @param {string} fieldValue
@@ -138,9 +153,43 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
     event.preventDefault();
     const thisRowId = event.target.dataset.rowId;
 
-    const cells = document.querySelectorAll(`input[data-row-id="${thisRowId}"]:not([type=button]`);
-    for (const control of cells) {
-      control.value = '';
+    // Get all data rows
+    const allRows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    const totalRows = allRows.length;
+
+    // Find the current row element to check its position
+    const rowElement = document.querySelector(`.data-row[data-row-id="${thisRowId}"]`);
+
+    // Check if this row is between two other rows
+    const hasRowBefore = rowElement.previousElementSibling &&
+      rowElement.previousElementSibling.classList.contains('data-row');
+    const hasRowAfter = rowElement.nextElementSibling &&
+      rowElement.nextElementSibling.classList.contains('data-row');
+    const isBetweenRows = hasRowBefore && hasRowAfter;
+
+    // Count empty rows (excluding the current one)
+    let emptyRowCount = 0;
+    for (const dataRow of allRows) {
+      const checkRowId = dataRow.dataset.rowId;
+      if (checkRowId !== thisRowId && isRowEmpty(checkRowId)) {
+        emptyRowCount += 1;
+      }
+    }
+
+    // Remove the row if it's between two other rows OR there's already another empty row
+    // AND we'd have at least 2 rows left
+    const shouldRemove = (isBetweenRows || emptyRowCount > 0) && totalRows > 2;
+
+    if (shouldRemove) {
+      if (rowElement) {
+        rowElement.remove();
+      }
+    } else {
+      // Otherwise, just clear the fields
+      const cells = document.querySelectorAll(`input[data-row-id="${thisRowId}"]:not([type=button])`);
+      for (const control of cells) {
+        control.value = '';
+      }
     }
   };
   rmButton.firstElementChild.addEventListener('click', rowClearClickHandler);
@@ -921,6 +970,7 @@ export {
   updateFibonacciMapping,
   fibonacciMappings,
   saveSvgAsImage,
+  isRowEmpty,
 };
 
 // Export getter functions for mutable state
