@@ -502,4 +502,5 @@ export {
   getMedian,
   getStandardDeviation,
   calculateKDE,
+  taskUpperBound,
 };
