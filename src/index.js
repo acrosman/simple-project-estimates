@@ -25,12 +25,16 @@ const fibonacciMappings = {
  * @param {string} wrapperTag Tag name
  * @param {string} text Tag content
  * @param {array} classList List of classes.
+ * @param {string} role Optional ARIA role
  * @returns HTMLElement
  */
-function createTextElement(wrapperTag, text, classList = []) {
+function createTextElement(wrapperTag, text, classList = [], role = null) {
   const el = document.createElement(wrapperTag);
   el.appendChild(document.createTextNode(text));
   el.classList.add(...classList);
+  if (role) {
+    el.setAttribute('role', role);
+  }
   return el;
 }
 
@@ -94,9 +98,10 @@ function isRowEmpty(rowId) {
  * @param {string} fieldType
  * @returns HTMLElement
  */
-function generateDataField(label, fieldValue, fieldType, rowId) {
+function generateDataField(label, fieldValue, fieldType, rowId, isRequired = false) {
   const cell = document.createElement('div');
   cell.classList.add('td');
+  cell.setAttribute('role', 'cell');
   const element = document.createElement('input');
   const values = {
     type: fieldType,
@@ -104,6 +109,10 @@ function generateDataField(label, fieldValue, fieldType, rowId) {
     'aria-label': label,
     name: label,
   };
+  if (isRequired) {
+    values['aria-required'] = 'true';
+    values.required = true;
+  }
   Object.assign(element, values);
   element.dataset.rowId = rowId;
 
@@ -125,24 +134,25 @@ function generateDataField(label, fieldValue, fieldType, rowId) {
 function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCost, fibNumber = '') {
   const row = document.createElement('div');
   row.classList.add('tr', 'data-row');
+  row.setAttribute('role', 'row');
   row.dataset.rowId = rowId;
 
-  const task = generateDataField('Task', taskName, 'text', rowId);
+  const task = generateDataField('Task', taskName, 'text', rowId, true);
 
   let min;
   let max;
   let fib;
 
   if (estimationMode === 'fibonacci') {
-    fib = generateDataField('Fibonacci', fibNumber, 'number', rowId);
+    fib = generateDataField('Fibonacci', fibNumber, 'number', rowId, true);
   } else {
-    min = generateDataField('Min Time', minTime, 'number', rowId);
-    max = generateDataField('Max Time', maxTime, 'number', rowId);
+    min = generateDataField('Min Time', minTime, 'number', rowId, true);
+    max = generateDataField('Max Time', maxTime, 'number', rowId, true);
   }
 
-  const conf = generateDataField('Confidence', confidence, 'number', rowId);
+  const conf = generateDataField('Confidence', confidence, 'number', rowId, true);
   const cost = generateDataField('Cost', hourlyCost, 'number', rowId);
-  const rmButton = generateDataField('Clear', 'Clear', 'button', rowId);
+  const rmButton = generateDataField('Clear Row', 'Clear Row', 'button', rowId);
 
   // Add click event handler for the clear button.
   /**
@@ -231,26 +241,29 @@ function createEntryTable(data = []) {
   // Generate new table.
   const form = document.createElement('div');
   form.classList.add('table', 'data-entry');
+  form.setAttribute('role', 'table');
+  form.setAttribute('aria-label', 'Task data entry');
   form.id = 'DataEntryTable';
   form.dataset.currentMaxRow = 1;
   const header = document.createElement('div');
   header.classList.add('tr', 'table-header-row');
-  header.appendChild(createTextElement('div', 'Task', ['th']));
+  header.setAttribute('role', 'row');
+  header.appendChild(createTextElement('div', 'Task *', ['th'], 'columnheader'));
 
   if (estimationMode === 'fibonacci') {
-    header.appendChild(createTextElement('div', 'Fibonacci #', ['th']));
+    header.appendChild(createTextElement('div', 'Fibonacci # *', ['th'], 'columnheader'));
   } else {
-    header.appendChild(createTextElement('div', 'Min Time', ['th']));
-    header.appendChild(createTextElement('div', 'Max Time', ['th']));
+    header.appendChild(createTextElement('div', 'Min Time *', ['th'], 'columnheader'));
+    header.appendChild(createTextElement('div', 'Max Time *', ['th'], 'columnheader'));
   }
 
-  header.appendChild(createTextElement('div', 'Confidence (%)', ['th']));
+  header.appendChild(createTextElement('div', 'Confidence (%) *', ['th'], 'columnheader'));
 
   if (enableCost) {
-    header.appendChild(createTextElement('div', 'Hourly Cost', ['th']));
+    header.appendChild(createTextElement('div', 'Hourly Cost', ['th'], 'columnheader'));
   }
 
-  header.appendChild(createTextElement('div', '', ['th']));
+  header.appendChild(createTextElement('div', '', ['th'], 'columnheader'));
 
   form.appendChild(header);
 
@@ -426,6 +439,7 @@ function createFibonacciMappingTable() {
       type: 'number',
       value: fibonacciMappings[fibNum].min,
       name: `fib-min-${fibNum}`,
+      'aria-label': `Minimum hours for Fibonacci ${fibNum}`,
     });
     minInput.dataset.fib = fibNum;
     minInput.dataset.type = 'min';
@@ -448,6 +462,7 @@ function createFibonacciMappingTable() {
       type: 'number',
       value: fibonacciMappings[fibNum].max,
       name: `fib-max-${fibNum}`,
+      'aria-label': `Maximum hours for Fibonacci ${fibNum}`,
     });
     maxInput.dataset.fib = fibNum;
     maxInput.dataset.type = 'max';
@@ -828,6 +843,7 @@ function setupUi() {
   // Insert project Icon
   const simIcon = new Image();
   simIcon.src = Icon;
+  simIcon.alt = 'Project Estimate Simulator icon';
   simIcon.classList.add('project-icon');
   headerDiv.appendChild(simIcon);
 
@@ -917,6 +933,8 @@ function setupUi() {
   const fieldSet = document.createElement('fieldset');
 
   // File Input.
+  const fileLabel = createTextElement('label', 'Choose CSV file:', []);
+  fileLabel.htmlFor = 'csvFileInput';
   const fileInput = document.createElement('input');
   Object.assign(fileInput, {
     type: 'file',
@@ -941,6 +959,7 @@ function setupUi() {
 
   // Add fieldset elements.
   fieldSet.appendChild(createTextElement('legend', 'Select prepared file', []));
+  fieldSet.appendChild(fileLabel);
   fieldSet.appendChild(fileInput);
   fieldSet.appendChild(fileLoadTrigger);
   fieldSet.appendChild(sampleLink);
