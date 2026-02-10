@@ -341,6 +341,50 @@ function updateFibonacciMapping(event) {
 }
 
 /**
+ * Gets the next Fibonacci number in the sequence
+ * @returns number
+ */
+function getNextFibonacci() {
+  const currentNumbers = Object.keys(fibonacciMappings)
+    .map((n) => parseInt(n, 10))
+    .sort((a, b) => a - b);
+  const len = currentNumbers.length;
+  if (len < 2) return 1;
+  return currentNumbers[len - 1] + currentNumbers[len - 2];
+}
+
+/**
+ * Adds the next Fibonacci number to the mappings
+ */
+function addFibonacciNumber() {
+  const nextFib = getNextFibonacci();
+  const currentNumbers = Object.keys(fibonacciMappings)
+    .map((n) => parseInt(n, 10))
+    .sort((a, b) => a - b);
+  const lastFib = currentNumbers[currentNumbers.length - 1];
+
+  // Set default min as previous max, and max as the new fib number
+  fibonacciMappings[nextFib] = {
+    min: fibonacciMappings[lastFib].max,
+    max: nextFib,
+  };
+
+  // Rebuild the Fibonacci mapping table
+  const existingWrapper = document.getElementById('fibonacciMappingWrapper');
+  if (existingWrapper) {
+    const parent = existingWrapper.parentNode;
+    // eslint-disable-next-line no-use-before-define
+    const newWrapper = createFibonacciMappingTable();
+    parent.replaceChild(newWrapper, existingWrapper);
+
+    // If we're in fibonacci mode, keep it visible
+    if (estimationMode === 'fibonacci') {
+      newWrapper.style.display = 'block';
+    }
+  }
+}
+
+/**
  * Creates the Fibonacci mapping configuration interface
  * @returns HTMLElement
  */
@@ -351,23 +395,30 @@ function createFibonacciMappingTable() {
   const table = document.createElement('div');
   table.classList.add('table', 'fib-mapping-table');
 
-  const tableHeader = document.createElement('div');
-  tableHeader.classList.add('tr', 'table-header-row');
-  tableHeader.appendChild(createTextElement('div', 'Fibonacci #', ['th']));
-  tableHeader.appendChild(createTextElement('div', 'Min Hours', ['th']));
-  tableHeader.appendChild(createTextElement('div', 'Max Hours', ['th']));
-  table.appendChild(tableHeader);
+  // Get Fibonacci numbers dynamically from the mappings object
+  const fibNumbers = Object.keys(fibonacciMappings)
+    .map((n) => parseInt(n, 10))
+    .sort((a, b) => a - b);
 
-  const fibNumbers = [1, 2, 3, 5, 8, 13, 21, 34];
+  // Row 1: Fibonacci Numbers
+  const fibRow = document.createElement('div');
+  fibRow.classList.add('tr', 'fib-mapping-row');
+  fibRow.appendChild(createTextElement('div', 'Fibonacci #', ['th']));
 
   for (const fibNum of fibNumbers) {
-    const row = document.createElement('div');
-    row.classList.add('tr', 'fib-mapping-row');
-
     const fibCell = document.createElement('div');
     fibCell.classList.add('td');
     fibCell.appendChild(createTextElement('span', fibNum.toString(), []));
+    fibRow.appendChild(fibCell);
+  }
+  table.appendChild(fibRow);
 
+  // Row 2: Min Hours
+  const minRow = document.createElement('div');
+  minRow.classList.add('tr', 'fib-mapping-row');
+  minRow.appendChild(createTextElement('div', 'Min Hours', ['th']));
+
+  for (const fibNum of fibNumbers) {
     const minCell = document.createElement('div');
     minCell.classList.add('td');
     const minInput = document.createElement('input');
@@ -378,8 +429,18 @@ function createFibonacciMappingTable() {
     });
     minInput.dataset.fib = fibNum;
     minInput.dataset.type = 'min';
+    minInput.addEventListener('change', updateFibonacciMapping);
     minCell.appendChild(minInput);
+    minRow.appendChild(minCell);
+  }
+  table.appendChild(minRow);
 
+  // Row 3: Max Hours
+  const maxRow = document.createElement('div');
+  maxRow.classList.add('tr', 'fib-mapping-row');
+  maxRow.appendChild(createTextElement('div', 'Max Hours', ['th']));
+
+  for (const fibNum of fibNumbers) {
     const maxCell = document.createElement('div');
     maxCell.classList.add('td');
     const maxInput = document.createElement('input');
@@ -390,20 +451,25 @@ function createFibonacciMappingTable() {
     });
     maxInput.dataset.fib = fibNum;
     maxInput.dataset.type = 'max';
-    maxCell.appendChild(maxInput);
-
-    row.appendChild(fibCell);
-    row.appendChild(minCell);
-    row.appendChild(maxCell);
-    table.appendChild(row);
-
-    // Add event listeners to update mappings
-    minInput.addEventListener('change', updateFibonacciMapping);
     maxInput.addEventListener('change', updateFibonacciMapping);
+    maxCell.appendChild(maxInput);
+    maxRow.appendChild(maxCell);
   }
+  table.appendChild(maxRow);
 
   wrapper.appendChild(header);
   wrapper.appendChild(table);
+
+  // Add button to add more Fibonacci numbers
+  const addFibButton = document.createElement('input');
+  Object.assign(addFibButton, {
+    type: 'button',
+    value: 'Add Next Fibonacci Number',
+    id: 'addFibNumberBtn',
+  });
+  addFibButton.addEventListener('click', addFibonacciNumber);
+  wrapper.appendChild(addFibButton);
+
   wrapper.style.display = 'none'; // Hidden by default
 
   return wrapper;
@@ -1040,6 +1106,8 @@ export {
   generateDataField,
   updateElementText,
   updateFibonacciMapping,
+  getNextFibonacci,
+  addFibonacciNumber,
   fibonacciMappings,
   saveSvgAsImage,
   isRowEmpty,
