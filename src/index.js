@@ -161,10 +161,10 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
     const rowElement = document.querySelector(`.data-row[data-row-id="${thisRowId}"]`);
 
     // Check if this row is between two other rows
-    const hasRowBefore = rowElement.previousElementSibling &&
-      rowElement.previousElementSibling.classList.contains('data-row');
-    const hasRowAfter = rowElement.nextElementSibling &&
-      rowElement.nextElementSibling.classList.contains('data-row');
+    const hasRowBefore = rowElement.previousElementSibling
+      && rowElement.previousElementSibling.classList.contains('data-row');
+    const hasRowAfter = rowElement.nextElementSibling
+      && rowElement.nextElementSibling.classList.contains('data-row');
     const isBetweenRows = hasRowBefore && hasRowAfter;
 
     // Count empty rows (excluding the current one)
@@ -497,6 +497,7 @@ function saveSvgAsImage(svgContainerId, filename, format = 'png') {
   const svg = container.querySelector('svg');
 
   if (!svg) {
+    // eslint-disable-next-line no-alert
     alert('No graph to save. Please run a simulation first.');
     return;
   }

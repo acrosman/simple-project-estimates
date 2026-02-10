@@ -125,7 +125,7 @@ describe('createTextElement', () => {
 
   test('creates element with empty classList by default', () => {
     const element = idx.createTextElement('h1', 'Header');
-    expect(element.classList.length).toBe(0);
+    expect(element.classList).toHaveLength(0);
   });
 
   test('creates different HTML tags correctly', () => {
@@ -145,7 +145,7 @@ describe('createLabeledInput', () => {
     const wrapper = idx.createLabeledInput('Test Label', attributes, true);
 
     expect(wrapper.tagName).toBe('DIV');
-    expect(wrapper.children.length).toBe(2);
+    expect(wrapper.children).toHaveLength(2);
     expect(wrapper.children[0].tagName).toBe('LABEL');
     expect(wrapper.children[1].tagName).toBe('INPUT');
   });
@@ -196,7 +196,7 @@ describe('createDivWithIdAndClasses', () => {
 
     expect(div.tagName).toBe('DIV');
     expect(div.id).toBe('testId');
-    expect(div.classList.length).toBe(0);
+    expect(div.classList).toHaveLength(0);
   });
 
   test('creates div with id and single class', () => {
@@ -213,14 +213,14 @@ describe('createDivWithIdAndClasses', () => {
     expect(div.classList.contains('class1')).toBe(true);
     expect(div.classList.contains('class2')).toBe(true);
     expect(div.classList.contains('class3')).toBe(true);
-    expect(div.classList.length).toBe(3);
+    expect(div.classList).toHaveLength(3);
   });
 
   test('handles empty classList array', () => {
     const div = idx.createDivWithIdAndClasses('emptyClasses', []);
 
     expect(div.id).toBe('emptyClasses');
-    expect(div.classList.length).toBe(0);
+    expect(div.classList).toHaveLength(0);
   });
 });
 
@@ -230,7 +230,7 @@ describe('generateDataField', () => {
 
     expect(cell.tagName).toBe('DIV');
     expect(cell.classList.contains('td')).toBe(true);
-    expect(cell.children.length).toBe(1);
+    expect(cell.children).toHaveLength(1);
   });
 
   test('input has correct attributes', () => {
@@ -493,19 +493,15 @@ describe('saveSvgAsImage', () => {
 
     mockCanvas = {
       getContext: jest.fn(() => mockContext),
-      toBlob: jest.fn((callback) => {
-        callback(new Blob(['test'], { type: 'image/png' }));
-      }),
+      toBlob: jest.fn((callback) => callback(new Blob(['test'], { type: 'image/png' }))),
       width: 0,
       height: 0,
     };
 
     mockSvg = {
-      cloneNode: jest.fn(function cloneNode() {
-        return {
-          querySelectorAll: jest.fn(() => []),
-        };
-      }),
+      cloneNode: jest.fn(() => ({
+        querySelectorAll: jest.fn(() => []),
+      })),
       querySelector: jest.fn(),
       querySelectorAll: jest.fn(() => []),
       getBoundingClientRect: jest.fn(() => ({ width: 800, height: 600 })),
