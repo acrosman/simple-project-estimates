@@ -516,9 +516,6 @@ function saveSvgAsImage(svgContainerId, filename, format = 'png') {
     errorDiv.setAttribute('aria-live', 'assertive');
     errorDiv.classList.add('error-message');
     errorDiv.textContent = 'No graph to save. Please run a simulation first.';
-    errorDiv.style.color = 'red';
-    errorDiv.style.fontWeight = 'bold';
-    errorDiv.style.marginTop = '10px';
 
     const existingError = container.querySelector('.error-message');
     if (existingError) {
@@ -679,9 +676,6 @@ function startSimulation(event) {
     errorDiv.setAttribute('aria-live', 'assertive');
     errorDiv.classList.add('error-message');
     errorDiv.textContent = 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.';
-    errorDiv.style.color = 'red';
-    errorDiv.style.fontWeight = 'bold';
-    errorDiv.style.marginTop = '10px';
 
     const resultsDiv = document.getElementById('results');
     const existingError = resultsDiv.querySelector('.error-message');
