@@ -318,6 +318,8 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
 
   // Put the graph in the histogram div.
   const svg = d3.select(targetNode).append('svg')
+    .attr('role', 'img')
+    .attr('aria-label', `Histogram showing distribution of ${xLabel}. Median: ${median.toFixed(2)}, Standard Deviation: ${stdDev.toFixed(2)}, Range: ${min} to ${max}`)
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom)
     .append('g')
