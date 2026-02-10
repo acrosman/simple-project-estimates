@@ -622,7 +622,14 @@ function startSimulation(event) {
       taskDetail.Cost = 0;
     }
 
-    if (taskDetail.Name && taskDetail.Min !== undefined && taskDetail.Max !== undefined) {
+    // Validate that task has required fields and they are valid numbers
+    const hasName = taskDetail.Name && taskDetail.Name.trim() !== '';
+    const hasValidMin = !Number.isNaN(taskDetail.Min) && taskDetail.Min !== undefined;
+    const hasValidMax = !Number.isNaN(taskDetail.Max) && taskDetail.Max !== undefined;
+    const hasValidConfidence = !Number.isNaN(taskDetail.Confidence)
+      && taskDetail.Confidence !== undefined;
+
+    if (hasName && hasValidMin && hasValidMax && hasValidConfidence) {
       data.push(taskDetail);
     }
   }

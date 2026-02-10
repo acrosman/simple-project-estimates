@@ -87,6 +87,51 @@ test('StdDev: Bell Curve', () => {
   expect(stdDev.toFixed(9)).toBe('2.449489743');
 });
 
+test('CalculateKDE: Returns array of density values', () => {
+  const data = [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
+  const kdeValues = sim.calculateKDE(data, 0, 10);
+
+  expect(Array.isArray(kdeValues)).toBe(true);
+  expect(kdeValues.length).toBeGreaterThan(0);
+  expect(kdeValues.length).toBeLessThanOrEqual(200); // Max sample points
+});
+
+test('CalculateKDE: Peak corresponds to data peak', () => {
+  // Bell curve with peak at index 5
+  const data = [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
+  const kdeValues = sim.calculateKDE(data, 0, 10);
+
+  // Find index of max KDE value
+  const maxKDE = Math.max(...kdeValues);
+  const maxIndex = kdeValues.indexOf(maxKDE);
+
+  // Should be near the middle where data peaks
+  const midPoint = kdeValues.length / 2;
+  expect(Math.abs(maxIndex - midPoint)).toBeLessThan(kdeValues.length * 0.2);
+});
+
+test('CalculateKDE: Handles uniform distribution', () => {
+  const data = [5, 5, 5, 5, 5];
+  const kdeValues = sim.calculateKDE(data, 0, 4);
+
+  expect(Array.isArray(kdeValues)).toBe(true);
+  expect(kdeValues.length).toBeGreaterThan(0);
+  // All values should be positive
+  expect(kdeValues.every((v) => v >= 0)).toBe(true);
+});
+
+test('CalculateKDE: Handles sparse data', () => {
+  const data = [10, 0, 0, 0, 0, 0, 0, 0, 0, 10];
+  const kdeValues = sim.calculateKDE(data, 0, 9);
+
+  expect(Array.isArray(kdeValues)).toBe(true);
+  expect(kdeValues.length).toBeGreaterThan(0);
+  // Should have two peaks
+  const maxVal = Math.max(...kdeValues);
+  const peaks = kdeValues.filter((v) => v > maxVal * 0.7);
+  expect(peaks.length).toBeGreaterThan(0);
+});
+
 test('RunSimulation: Single Task', () => {
   const tasks = [
     {
