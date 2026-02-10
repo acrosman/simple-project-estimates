@@ -828,6 +828,7 @@ function setupUi() {
   // Insert project Icon
   const simIcon = new Image();
   simIcon.src = Icon;
+  simIcon.alt = 'Project Estimate Simulator icon';
   simIcon.classList.add('project-icon');
   headerDiv.appendChild(simIcon);
 

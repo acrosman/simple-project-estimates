@@ -302,13 +302,27 @@ input[type="button"] {
   }
 }
 
+/* Keyboard focus indicators */
+input:focus,
+button:focus,
+a:focus {
+  outline: 2px solid #005fcc;
+  outline-offset: 2px;
+}
+
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+  outline: 2px solid #005fcc;
+  outline-offset: 2px;
+}
+
 /* Error Messages */
 .error-message {
-  color: #d32f2f;
+  color: #c62828;
   font-weight: bold;
   margin: 10px 0;
   padding: 10px;
   background-color: #ffebee;
-  border: 1px solid #ef5350;
+  border: 2px solid #c62828;
   border-radius: 4px;
 }
