@@ -6,16 +6,6 @@ import sampleFibData from './data/sample-fib.csv';
 import sampleTshirtData from './data/sample-tshirt.csv';
 import * as sim from './simulation';
 
-/**
- * Configuration constants for mini task row graphs
- */
-const MINI_GRAPH_CONFIG = {
-  WIDTH: 140,
-  HEIGHT: 26,
-  MAX_BUCKETS: 24,
-  GAP: 1, // Gap between bars
-};
-
 // ============= Application State Management =================
 /**
  * Manages application state in a testable, encapsulated way.
@@ -996,71 +986,6 @@ function updateElementText(id, content) {
 }
 
 /**
- * Builds a compact histogram visualization for a single task row.
- * @param {HTMLElement} targetNode Graph container for one task row.
- * @param {Array<number>} list Task histogram data.
- * @param {number} min Minimum simulated value.
- * @param {number} max Maximum simulated value.
- * @param {string} taskName Task display name.
- */
-function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
-  targetNode.innerHTML = '';
-
-  if (min < 0 || max < min) {
-    return;
-  }
-
-  const graphWidth = MINI_GRAPH_CONFIG.WIDTH;
-  const graphHeight = MINI_GRAPH_CONFIG.HEIGHT;
-  const maxBuckets = MINI_GRAPH_CONFIG.MAX_BUCKETS;
-  const valueRange = max - min + 1;
-  const bucketCount = Math.min(maxBuckets, valueRange);
-  const bucketSize = Math.ceil(valueRange / bucketCount);
-  const buckets = new Array(bucketCount).fill(0);
-
-  for (let i = min; i <= max; i += 1) {
-    const bucketIndex = Math.min(Math.floor((i - min) / bucketSize), bucketCount - 1);
-    buckets[bucketIndex] += list[i];
-  }
-
-  let peak = 0;
-  for (const value of buckets) {
-    if (value > peak) {
-      peak = value;
-    }
-  }
-
-  if (peak === 0) {
-    return;
-  }
-
-  const svgNs = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNs, 'svg');
-  svg.setAttribute('width', String(graphWidth));
-  svg.setAttribute('height', String(graphHeight));
-  svg.setAttribute('viewBox', `0 0 ${graphWidth} ${graphHeight}`);
-  svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `Task outcome histogram for ${taskName || 'task'}`);
-
-  const gap = MINI_GRAPH_CONFIG.GAP;
-  const barWidth = Math.max((graphWidth / bucketCount) - gap, 1);
-
-  for (let i = 0; i < buckets.length; i += 1) {
-    const bucketValue = buckets[i];
-    const barHeight = Math.max((bucketValue / peak) * graphHeight, 1);
-    const rect = document.createElementNS(svgNs, 'rect');
-    rect.setAttribute('x', String(i * (barWidth + gap)));
-    rect.setAttribute('y', String(graphHeight - barHeight));
-    rect.setAttribute('width', String(barWidth));
-    rect.setAttribute('height', String(barHeight));
-    rect.setAttribute('class', 'task-row-mini-bar');
-    svg.appendChild(rect);
-  }
-
-  targetNode.appendChild(svg);
-}
-
-/**
  * Renders mini histograms for all task rows from simulation output.
  * @param {Array} taskResults Per-task simulation results.
  */
@@ -1077,7 +1002,7 @@ function renderTaskRowHistograms(taskResults) {
   for (const taskResult of taskResults) {
     const graphNode = document.querySelector(`.task-row-graph[data-row-id="${taskResult.rowId}"]`);
     if (graphNode) {
-      buildTaskRowHistogram(
+      sim.buildTaskRowHistogram(
         graphNode,
         taskResult.times.list,
         taskResult.times.min,
@@ -1718,9 +1643,204 @@ function createSimulationPanel() {
   // Add simulator elements to wrapper.
   simWrapper.appendChild(simHeader);
   simWrapper.appendChild(simControls);
+  simWrapper.appendChild(createAdvancedSettings());
   simWrapper.appendChild(simResultWrapper);
 
   return simWrapper;
+}
+
+/**
+ * Creates the advanced graph settings panel for power users.
+ * @returns HTMLElement Details element with graph configuration controls.
+ */
+function createAdvancedSettings() {
+  const details = document.createElement('details');
+  details.classList.add('advanced-settings');
+  details.id = 'advancedSettings';
+
+  const summary = document.createElement('summary');
+  summary.textContent = 'Advanced Graph Settings';
+  details.appendChild(summary);
+
+  const settingsWrapper = createDivWithIdAndClasses('advancedSettingsContent', ['settings-grid']);
+
+  // Main histogram settings
+  const histogramHeader = createTextElement('h3', 'Main Histogram Settings', ['settings-header']);
+  settingsWrapper.appendChild(histogramHeader);
+
+  const histogramWidthAttr = {
+    type: 'number',
+    min: '400',
+    max: '2000',
+    step: '50',
+    id: 'histogramWidth',
+    value: String(sim.GRAPH_CONFIG.histogram.width),
+    name: 'Histogram Width',
+  };
+  settingsWrapper.appendChild(createLabeledInput('Width (px):', histogramWidthAttr, true));
+
+  const histogramHeightAttr = {
+    type: 'number',
+    min: '300',
+    max: '1000',
+    step: '50',
+    id: 'histogramHeight',
+    value: String(sim.GRAPH_CONFIG.histogram.height),
+    name: 'Histogram Height',
+  };
+  settingsWrapper.appendChild(createLabeledInput('Height (px):', histogramHeightAttr, true));
+
+  const histogramBarCutoffAttr = {
+    type: 'number',
+    min: '100',
+    max: '2000',
+    step: '50',
+    id: 'histogramBarCutoff',
+    value: String(sim.GRAPH_CONFIG.histogram.barCutoff),
+    name: 'Bar Cutoff',
+  };
+  settingsWrapper.appendChild(createLabeledInput('Bar/Scatter Cutoff:', histogramBarCutoffAttr, true));
+
+  const histogramMaxBucketsAttr = {
+    type: 'number',
+    min: '20',
+    max: '500',
+    step: '10',
+    id: 'histogramMaxBuckets',
+    value: String(sim.GRAPH_CONFIG.histogram.maxBuckets),
+    name: 'Max Buckets',
+  };
+  settingsWrapper.appendChild(createLabeledInput('Max Buckets:', histogramMaxBucketsAttr, true));
+
+  // Mini graph settings
+  const miniGraphHeader = createTextElement('h3', 'Task Row Mini Graph Settings', ['settings-header']);
+  settingsWrapper.appendChild(miniGraphHeader);
+
+  const miniWidthAttr = {
+    type: 'number',
+    min: '50',
+    max: '300',
+    step: '10',
+    id: 'miniGraphWidth',
+    value: String(sim.GRAPH_CONFIG.miniGraph.width),
+    name: 'Mini Graph Width',
+  };
+  settingsWrapper.appendChild(createLabeledInput('Width (px):', miniWidthAttr, true));
+
+  const miniHeightAttr = {
+    type: 'number',
+    min: '10',
+    max: '100',
+    step: '2',
+    id: 'miniGraphHeight',
+    value: String(sim.GRAPH_CONFIG.miniGraph.height),
+    name: 'Mini Graph Height',
+  };
+  settingsWrapper.appendChild(createLabeledInput('Height (px):', miniHeightAttr, true));
+
+  const miniMaxBucketsAttr = {
+    type: 'number',
+    min: '5',
+    max: '50',
+    step: '1',
+    id: 'miniGraphMaxBuckets',
+    value: String(sim.GRAPH_CONFIG.miniGraph.maxBuckets),
+    name: 'Mini Max Buckets',
+  };
+  settingsWrapper.appendChild(createLabeledInput('Max Buckets:', miniMaxBucketsAttr, true));
+
+  const miniGapAttr = {
+    type: 'number',
+    min: '0',
+    max: '5',
+    step: '0.5',
+    id: 'miniGraphGap',
+    value: String(sim.GRAPH_CONFIG.miniGraph.gap),
+    name: 'Mini Graph Gap',
+  };
+  settingsWrapper.appendChild(createLabeledInput('Bar Gap (px):', miniGapAttr, true));
+
+  // Reset and Apply buttons
+  const buttonWrapper = document.createElement('div');
+  buttonWrapper.classList.add('settings-buttons');
+
+  const applyButton = document.createElement('input');
+  Object.assign(applyButton, {
+    type: 'button',
+    value: 'Apply Settings',
+    id: 'applyGraphSettings',
+  });
+  applyButton.addEventListener('click', applyGraphSettings);
+
+  const resetButton = document.createElement('input');
+  Object.assign(resetButton, {
+    type: 'button',
+    value: 'Reset to Defaults',
+    id: 'resetGraphSettings',
+  });
+  resetButton.addEventListener('click', resetGraphSettings);
+
+  buttonWrapper.appendChild(applyButton);
+  buttonWrapper.appendChild(resetButton);
+  settingsWrapper.appendChild(buttonWrapper);
+
+  details.appendChild(settingsWrapper);
+  return details;
+}
+
+/**
+ * Applies user-modified graph settings to GRAPH_CONFIG.
+ */
+function applyGraphSettings() {
+  sim.GRAPH_CONFIG.histogram.width = parseInt(document.getElementById('histogramWidth').value, 10);
+  sim.GRAPH_CONFIG.histogram.height = parseInt(document.getElementById('histogramHeight').value, 10);
+  sim.GRAPH_CONFIG.histogram.barCutoff = parseInt(document.getElementById('histogramBarCutoff').value, 10);
+  sim.GRAPH_CONFIG.histogram.maxBuckets = parseInt(document.getElementById('histogramMaxBuckets').value, 10);
+  sim.GRAPH_CONFIG.miniGraph.width = parseInt(document.getElementById('miniGraphWidth').value, 10);
+  sim.GRAPH_CONFIG.miniGraph.height = parseInt(document.getElementById('miniGraphHeight').value, 10);
+  sim.GRAPH_CONFIG.miniGraph.maxBuckets = parseInt(document.getElementById('miniGraphMaxBuckets').value, 10);
+  sim.GRAPH_CONFIG.miniGraph.gap = parseFloat(document.getElementById('miniGraphGap').value);
+
+  // Show confirmation
+  const details = document.getElementById('advancedSettings');
+  const originalSummary = details.querySelector('summary').textContent;
+  details.querySelector('summary').textContent = 'Advanced Graph Settings ✓ Applied';
+  setTimeout(() => {
+    details.querySelector('summary').textContent = originalSummary;
+  }, 2000);
+}
+
+/**
+ * Resets graph settings to default values.
+ */
+function resetGraphSettings() {
+  // Reset to defaults
+  sim.GRAPH_CONFIG.histogram.width = 800;
+  sim.GRAPH_CONFIG.histogram.height = 500;
+  sim.GRAPH_CONFIG.histogram.barCutoff = 600;
+  sim.GRAPH_CONFIG.histogram.maxBuckets = 120;
+  sim.GRAPH_CONFIG.miniGraph.width = 140;
+  sim.GRAPH_CONFIG.miniGraph.height = 26;
+  sim.GRAPH_CONFIG.miniGraph.maxBuckets = 24;
+  sim.GRAPH_CONFIG.miniGraph.gap = 1;
+
+  // Update form fields
+  document.getElementById('histogramWidth').value = '800';
+  document.getElementById('histogramHeight').value = '500';
+  document.getElementById('histogramBarCutoff').value = '600';
+  document.getElementById('histogramMaxBuckets').value = '120';
+  document.getElementById('miniGraphWidth').value = '140';
+  document.getElementById('miniGraphHeight').value = '26';
+  document.getElementById('miniGraphMaxBuckets').value = '24';
+  document.getElementById('miniGraphGap').value = '1';
+
+  // Show confirmation
+  const details = document.getElementById('advancedSettings');
+  const originalSummary = details.querySelector('summary').textContent;
+  details.querySelector('summary').textContent = 'Advanced Graph Settings ✓ Reset';
+  setTimeout(() => {
+    details.querySelector('summary').textContent = originalSummary;
+  }, 2000);
 }
 
 /**
@@ -1769,7 +1889,6 @@ export {
   createDivWithIdAndClasses,
   generateDataField,
   updateElementText,
-  buildTaskRowHistogram,
   renderTaskRowHistograms,
   updateFibonacciMapping,
   updateTshirtMapping,
@@ -1782,6 +1901,8 @@ export {
   isRowEmpty,
   appState,
   validateCsvData,
+  applyGraphSettings,
+  resetGraphSettings,
 };
 
 // Export getter functions for mutable state

@@ -359,3 +359,73 @@ input[type="radio"]:focus {
   border: 2px solid #c62828;
   border-radius: 4px;
 }
+
+/* Advanced Settings */
+.advanced-settings {
+  margin: 1em 0;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.advanced-settings summary {
+  padding: 0.75em 1em;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: #e8e8e8;
+  border-radius: 5px;
+  user-select: none;
+}
+
+.advanced-settings summary:hover {
+  background-color: #dcdcdc;
+}
+
+.advanced-settings[open] summary {
+  border-bottom: 1px solid #ccc;
+  border-radius: 5px 5px 0 0;
+}
+
+.settings-grid {
+  padding: 1em;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5em 1em;
+}
+
+.settings-grid .settings-header {
+  grid-column: 1 / -1;
+  margin: 1em 0 0.5em 0;
+  font-size: 1.1em;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.25em;
+}
+
+.settings-grid .settings-header:first-child {
+  margin-top: 0;
+}
+
+.settings-grid label {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.settings-grid input[type="number"] {
+  width: 100px;
+  padding: 0.25em;
+}
+
+.settings-buttons {
+  grid-column: 1 / -1;
+  margin-top: 1em;
+  padding-top: 1em;
+  border-top: 1px solid #ccc;
+  display: flex;
+  gap: 1em;
+}
+
+.settings-buttons input[type="button"] {
+  margin: 0;
+}
