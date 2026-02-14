@@ -760,7 +760,7 @@ function runSimulationCore(passes, data, callbacks = {}) {
       const endIndex = Math.min(startIndex + currentBatchSize, totalPasses);
 
       for (let i = startIndex; i < endIndex; i += 1) {
-        runIteration(i);
+        runIteration();
       }
 
       const processedPasses = endIndex;
@@ -796,7 +796,7 @@ function runSimulationCore(passes, data, callbacks = {}) {
 
   // Otherwise, execute synchronously
   for (let i = 0; i < totalPasses; i += 1) {
-    runIteration(i);
+    runIteration();
   }
 
   return compileResults();
