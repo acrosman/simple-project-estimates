@@ -24,7 +24,7 @@ const createTransition = () => {
 const createSelection = () => {
   const selection = {
     append: jest.fn().mockReturnThis(),
-    select: jest.fn(function() {
+    select: jest.fn(() => {
       const sel = createSelection();
       sel.empty = jest.fn().mockReturnValue(false);
       return sel;
@@ -42,13 +42,13 @@ const createSelection = () => {
     attr: jest.fn().mockReturnThis(),
     style: jest.fn().mockReturnThis(),
     text: jest.fn().mockReturnThis(),
-    call: jest.fn(function(fn) {
+    call: jest.fn((fn) => {
       if (typeof fn === 'function') {
-        fn(this);
+        fn(selection);
       }
-      return this;
+      return selection;
     }),
-    transition: jest.fn(function() {
+    transition: jest.fn(() => {
       const trans = createSelection();
       trans.duration = jest.fn().mockReturnThis();
       trans.ease = jest.fn().mockReturnThis();
