@@ -424,6 +424,7 @@ function runSimulation(passes, data) {
   const upperCostBound = calculateUpperBound(data, true);
   const times = new Array(upperTimeBound + 1).fill(0);
   const costs = new Array(upperCostBound + 1).fill(0);
+  const taskOutcomes = {};
   const estimates = {
     times: [],
     costs: [],
@@ -439,6 +440,27 @@ function runSimulation(passes, data) {
   let totalCost = 0;
   let outcome = {};
 
+  // Setup task-level outcome histograms for row-level visualization.
+  for (const row of data) {
+    const taskTimeUpperBound = taskUpperBound(row.Max, row.Confidence);
+    const taskCostUpperBound = taskTimeUpperBound * row.Cost;
+    const rowId = row.RowId || row.Name;
+    taskOutcomes[rowId] = {
+      rowId,
+      name: row.Name,
+      times: {
+        min: -1,
+        max: 0,
+        list: new Array(taskTimeUpperBound + 1).fill(0),
+      },
+      costs: {
+        min: -1,
+        max: 0,
+        list: new Array(taskCostUpperBound + 1).fill(0),
+      },
+    };
+  }
+
   // Run the simulation.
   for (let i = 0; i < passes; i += 1) {
     totalTime = 0;
@@ -446,6 +468,8 @@ function runSimulation(passes, data) {
     outcome = {};
 
     for (const row of data) {
+      const rowId = row.RowId || row.Name;
+      const taskOutcome = taskOutcomes[rowId];
       const taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
       const taskCost = taskTime * row.Cost;
       totalTime += taskTime;
@@ -454,6 +478,21 @@ function runSimulation(passes, data) {
         time: taskTime,
         cost: taskCost,
       };
+
+      taskOutcome.times.list[taskTime] += 1;
+      taskOutcome.costs.list[taskCost] += 1;
+      if (taskOutcome.times.min === -1 || taskTime < taskOutcome.times.min) {
+        taskOutcome.times.min = taskTime;
+      }
+      if (taskTime > taskOutcome.times.max) {
+        taskOutcome.times.max = taskTime;
+      }
+      if (taskOutcome.costs.min === -1 || taskCost < taskOutcome.costs.min) {
+        taskOutcome.costs.min = taskCost;
+      }
+      if (taskCost > taskOutcome.costs.max) {
+        taskOutcome.costs.max = taskCost;
+      }
     }
     times[totalTime] += 1;
     costs[totalCost] += 1;
@@ -467,11 +506,36 @@ function runSimulation(passes, data) {
   }
   endTime = Date.now();
 
+  const taskResults = Object.values(taskOutcomes).map((task) => {
+    const result = {
+      rowId: task.rowId,
+      name: task.name,
+      times: {
+        ...task.times,
+        median: getMedian(task.times.list),
+        sd: getStandardDeviation(task.times.list),
+      },
+      costs: {
+        ...task.costs,
+        median: getMedian(task.costs.list),
+        sd: getStandardDeviation(task.costs.list),
+      },
+    };
+
+    result.times.likelyMin = Math.round(result.times.median - result.times.sd);
+    result.times.likelyMax = Math.round(result.times.median + result.times.sd);
+    result.costs.likelyMin = Math.round(result.costs.median - result.costs.sd);
+    result.costs.likelyMax = Math.round(result.costs.median + result.costs.sd);
+
+    return result;
+  });
+
   // Calculate and display the results.
   const runningTime = endTime - startTime;
   const results = {
     runningTime,
     estimateDetails,
+    taskResults,
     times: {
       median: getMedian(times),
       sd: getStandardDeviation(times),

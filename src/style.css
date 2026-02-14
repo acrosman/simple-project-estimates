@@ -112,6 +112,25 @@ input[type="button"] {
   min-width: 150px;
 }
 
+.task-row-graph-cell {
+  min-width: 150px;
+  vertical-align: middle;
+}
+
+.task-row-graph {
+  height: 26px;
+  display: flex;
+  align-items: center;
+}
+
+.task-row-graph svg {
+  display: block;
+}
+
+.task-row-mini-bar {
+  fill: lightblue;
+}
+
 /* Required Field Indicators */
 input[required]:not([type="button"]) {
   border-left-width: 3px;

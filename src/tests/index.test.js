@@ -11,6 +11,8 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('createDivWithIdAndClasses');
     expect(idx).toHaveProperty('generateDataField');
     expect(idx).toHaveProperty('updateElementText');
+    expect(idx).toHaveProperty('buildTaskRowHistogram');
+    expect(idx).toHaveProperty('renderTaskRowHistograms');
     expect(idx).toHaveProperty('isRowEmpty');
     expect(idx).toHaveProperty('normalizeTshirtSize');
     expect(idx).toHaveProperty('updateTshirtMapping');
@@ -321,6 +323,77 @@ describe('updateElementText', () => {
     idx.updateElementText('numericDiv', 'Median: 42');
 
     expect(div.textContent).toBe('Median: 42');
+  });
+});
+
+describe('buildTaskRowHistogram', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('renders compact histogram svg for valid task distribution', () => {
+    const wrapper = document.createElement('div');
+    document.body.appendChild(wrapper);
+    const histogram = [0, 3, 0, 5, 2, 1];
+
+    idx.buildTaskRowHistogram(wrapper, histogram, 1, 5, 'Task A');
+
+    const svg = wrapper.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('height')).toBe('26');
+    expect(svg.querySelectorAll('rect').length).toBeGreaterThan(0);
+  });
+
+  test('does not render when min and max are invalid', () => {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = '<span>old</span>';
+    document.body.appendChild(wrapper);
+
+    idx.buildTaskRowHistogram(wrapper, [0, 1, 2], 5, 2, 'Task B');
+
+    expect(wrapper.querySelector('svg')).toBeNull();
+    expect(wrapper.innerHTML).toBe('');
+  });
+});
+
+describe('renderTaskRowHistograms', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('renders histogram only for matching task row ids', () => {
+    document.body.innerHTML = `
+      <div class="task-row-graph" data-row-id="1"></div>
+      <div class="task-row-graph" data-row-id="2"></div>
+    `;
+
+    idx.renderTaskRowHistograms([
+      {
+        rowId: '1',
+        name: 'Task 1',
+        times: {
+          list: [0, 2, 4, 2],
+          min: 1,
+          max: 3,
+        },
+      },
+    ]);
+
+    const row1Svg = document.querySelector('.task-row-graph[data-row-id="1"] svg');
+    const row2Svg = document.querySelector('.task-row-graph[data-row-id="2"] svg');
+
+    expect(row1Svg).not.toBeNull();
+    expect(row2Svg).toBeNull();
+  });
+
+  test('clears existing graphs when no task results are provided', () => {
+    document.body.innerHTML = `
+      <div class="task-row-graph" data-row-id="1"><svg></svg></div>
+    `;
+
+    idx.renderTaskRowHistograms([]);
+
+    expect(document.querySelector('.task-row-graph[data-row-id="1"]').innerHTML).toBe('');
   });
 });
 
