@@ -6,27 +6,89 @@ import sampleFibData from './data/sample-fib.csv';
 import sampleTshirtData from './data/sample-tshirt.csv';
 import * as sim from './simulation';
 
-// ============= Global State =================
-let estimationMode = 'hours'; // 'hours', 'fibonacci', or 'tshirt'
-let enableCost = true; // Track cost by default
-const fibonacciMappings = {
-  1: { min: 0, max: 1 },
-  2: { min: 1, max: 2 },
-  3: { min: 2, max: 3 },
-  5: { min: 3, max: 5 },
-  8: { min: 5, max: 8 },
-  13: { min: 8, max: 13 },
-  21: { min: 13, max: 21 },
-  34: { min: 21, max: 34 },
-};
-const tshirtMappings = {
-  XS: { min: 1, max: 2 },
-  S: { min: 2, max: 3 },
-  M: { min: 3, max: 5 },
-  L: { min: 5, max: 8 },
-  XL: { min: 8, max: 13 },
-  XXL: { min: 13, max: 21 },
-};
+// ============= Application State Management =================
+/**
+ * Manages application state in a testable, encapsulated way.
+ */
+class AppState {
+  constructor() {
+    this.estimationMode = 'hours'; // 'hours', 'fibonacci', or 'tshirt'
+    this.enableCost = true; // Track cost by default
+    this.fibonacciMappings = {
+      1: { min: 0, max: 1 },
+      2: { min: 1, max: 2 },
+      3: { min: 2, max: 3 },
+      5: { min: 3, max: 5 },
+      8: { min: 5, max: 8 },
+      13: { min: 8, max: 13 },
+      21: { min: 13, max: 21 },
+      34: { min: 21, max: 34 },
+    };
+    this.tshirtMappings = {
+      XS: { min: 1, max: 2 },
+      S: { min: 2, max: 3 },
+      M: { min: 3, max: 5 },
+      L: { min: 5, max: 8 },
+      XL: { min: 8, max: 13 },
+      XXL: { min: 13, max: 21 },
+    };
+  }
+
+  setEstimationMode(mode) {
+    this.estimationMode = mode;
+  }
+
+  getEstimationMode() {
+    return this.estimationMode;
+  }
+
+  setEnableCost(enabled) {
+    this.enableCost = enabled;
+  }
+
+  getEnableCost() {
+    return this.enableCost;
+  }
+
+  getFibonacciMappings() {
+    return this.fibonacciMappings;
+  }
+
+  getTshirtMappings() {
+    return this.tshirtMappings;
+  }
+
+  /**
+   * Resets state to default values (useful for testing).
+   */
+  reset() {
+    this.estimationMode = 'hours';
+    this.enableCost = true;
+    this.fibonacciMappings = {
+      1: { min: 0, max: 1 },
+      2: { min: 1, max: 2 },
+      3: { min: 2, max: 3 },
+      5: { min: 3, max: 5 },
+      8: { min: 5, max: 8 },
+      13: { min: 8, max: 13 },
+      21: { min: 13, max: 21 },
+      34: { min: 21, max: 34 },
+    };
+    this.tshirtMappings = {
+      XS: { min: 1, max: 2 },
+      S: { min: 2, max: 3 },
+      M: { min: 3, max: 5 },
+      L: { min: 5, max: 8 },
+      XL: { min: 8, max: 13 },
+      XXL: { min: 13, max: 21 },
+    };
+  }
+}
+
+const appState = new AppState();
+
+// Maintain backward compatibility with existing code
+const { fibonacciMappings, tshirtMappings } = appState;
 
 // ============= Interface Element Helpers =================
 /**
@@ -227,9 +289,9 @@ function generateDataRow(
   let fib;
   let tshirt;
 
-  if (estimationMode === 'fibonacci') {
+  if (appState.estimationMode === 'fibonacci') {
     fib = generateDataField('Fibonacci', fibNumber, 'number', rowId, true);
-  } else if (estimationMode === 'tshirt') {
+  } else if (appState.estimationMode === 'tshirt') {
     tshirt = generateDataField('T-Shirt', tshirtSize, 'text', rowId, true);
   } else {
     min = generateDataField('Min Time', minTime, 'number', rowId, true);
@@ -299,9 +361,9 @@ function generateDataRow(
 
   row.appendChild(task);
 
-  if (estimationMode === 'fibonacci') {
+  if (appState.estimationMode === 'fibonacci') {
     row.appendChild(fib);
-  } else if (estimationMode === 'tshirt') {
+  } else if (appState.estimationMode === 'tshirt') {
     row.appendChild(tshirt);
   } else {
     row.appendChild(min);
@@ -310,7 +372,7 @@ function generateDataRow(
 
   row.appendChild(conf);
 
-  if (enableCost) {
+  if (appState.enableCost) {
     row.appendChild(cost);
   }
 
@@ -346,9 +408,9 @@ function createEntryTable(data = []) {
   header.setAttribute('role', 'row');
   header.appendChild(createTextElement('div', 'Task *', ['th'], 'columnheader'));
 
-  if (estimationMode === 'fibonacci') {
+  if (appState.estimationMode === 'fibonacci') {
     header.appendChild(createTextElement('div', 'Fibonacci # *', ['th'], 'columnheader'));
-  } else if (estimationMode === 'tshirt') {
+  } else if (appState.estimationMode === 'tshirt') {
     header.appendChild(createTextElement('div', 'T-Shirt Size *', ['th'], 'columnheader'));
   } else {
     header.appendChild(createTextElement('div', 'Min Time *', ['th'], 'columnheader'));
@@ -357,7 +419,7 @@ function createEntryTable(data = []) {
 
   header.appendChild(createTextElement('div', 'Confidence (%) *', ['th'], 'columnheader'));
 
-  if (enableCost) {
+  if (appState.enableCost) {
     header.appendChild(createTextElement('div', 'Hourly Cost', ['th'], 'columnheader'));
   }
 
@@ -378,9 +440,9 @@ function createEntryTable(data = []) {
         confidence *= 100;
       }
 
-      if (estimationMode === 'fibonacci') {
+      if (appState.estimationMode === 'fibonacci') {
         form.appendChild(generateDataRow(count, row.Task, '', '', confidence, row.Cost, row.Fibonacci));
-      } else if (estimationMode === 'tshirt') {
+      } else if (appState.estimationMode === 'tshirt') {
         form.appendChild(generateDataRow(
           count,
           row.Task,
@@ -461,6 +523,18 @@ function updateFibonacciMapping(event) {
   }
 
   fibonacciMappings[fibNum][type] = value;
+
+  // Validate that min <= max (only if we have a real DOM element)
+  if (fibonacciMappings[fibNum].min > fibonacciMappings[fibNum].max) {
+    if (event.target.setCustomValidity) {
+      event.target.setCustomValidity('Min must be less than or equal to Max');
+      if (event.target.reportValidity) {
+        event.target.reportValidity();
+      }
+    }
+  } else if (event.target.setCustomValidity) {
+    event.target.setCustomValidity('');
+  }
 }
 
 /**
@@ -491,6 +565,18 @@ function updateTshirtMapping(event) {
   }
 
   tshirtMappings[size][type] = value;
+
+  // Validate that min <= max (only if we have a real DOM element)
+  if (tshirtMappings[size].min > tshirtMappings[size].max) {
+    if (event.target.setCustomValidity) {
+      event.target.setCustomValidity('Min must be less than or equal to Max');
+      if (event.target.reportValidity) {
+        event.target.reportValidity();
+      }
+    }
+  } else if (event.target.setCustomValidity) {
+    event.target.setCustomValidity('');
+  }
 }
 
 /**
@@ -531,7 +617,7 @@ function addFibonacciNumber() {
     parent.replaceChild(newWrapper, existingWrapper);
 
     // If we're in fibonacci mode, keep it visible
-    if (estimationMode === 'fibonacci') {
+    if (appState.estimationMode === 'fibonacci') {
       newWrapper.style.display = 'block';
     }
   }
@@ -723,12 +809,12 @@ function createTshirtMappingTable() {
  * @param {Event} event
  */
 function handleCostToggle(event) {
-  enableCost = event.target.checked;
+  appState.setEnableCost(event.target.checked);
 
   const costResults = document.getElementById('simulationCostResultsWrapper');
 
   if (costResults) {
-    costResults.style.display = enableCost ? 'block' : 'none';
+    costResults.style.display = appState.enableCost ? 'block' : 'none';
   }
 
   // Recreate the data entry table with the new cost setting
@@ -740,13 +826,13 @@ function handleCostToggle(event) {
  * @param {Event} event
  */
 function handleModeChange(event) {
-  estimationMode = event.target.value;
+  appState.setEstimationMode(event.target.value);
 
   const fibMapping = document.getElementById('fibonacciMappingWrapper');
   const tshirtMapping = document.getElementById('tshirtMappingWrapper');
   const sampleLink = document.querySelector('.link-sample');
 
-  if (estimationMode === 'fibonacci') {
+  if (appState.estimationMode === 'fibonacci') {
     fibMapping.style.display = 'block';
     tshirtMapping.style.display = 'none';
     if (sampleLink) {
@@ -754,7 +840,7 @@ function handleModeChange(event) {
       sampleLink.textContent = 'Sample Fibonacci CSV File';
       sampleLink.download = 'sample-fib.csv';
     }
-  } else if (estimationMode === 'tshirt') {
+  } else if (appState.estimationMode === 'tshirt') {
     fibMapping.style.display = 'none';
     tshirtMapping.style.display = 'block';
     if (sampleLink) {
@@ -791,13 +877,59 @@ function importCsvFile(event) {
       const dataUrl = evt.target.result;
       // The following call results in an "Access denied" error in IE.
       csv(dataUrl).then((data) => {
+        // Validate CSV data has required structure
+        if (!data || data.length === 0) {
+          throw new Error('CSV file is empty or contains no data rows.');
+        }
+
+        // Check for required columns based on current estimation mode
+        const requiredColumns = ['Task', 'Confidence'];
+        if (appState.estimationMode === 'hours') {
+          requiredColumns.push('Min', 'Max');
+        } else if (appState.estimationMode === 'fibonacci') {
+          requiredColumns.push('Fibonacci');
+        } else if (appState.estimationMode === 'tshirt') {
+          requiredColumns.push('TShirt');
+        }
+
+        const firstRow = data[0];
+        const missingColumns = requiredColumns.filter((col) => !(col in firstRow));
+
+        if (missingColumns.length > 0) {
+          throw new Error(`Missing required columns: ${missingColumns.join(', ')}. Expected columns: ${requiredColumns.join(', ')}${appState.enableCost ? ', Cost (optional)' : ''}.`);
+        }
+
+        // Validate data types for first few rows
+        for (let i = 0; i < Math.min(3, data.length); i += 1) {
+          const row = data[i];
+          if (appState.estimationMode === 'hours') {
+            if (row.Min && Number.isNaN(Number(row.Min))) {
+              throw new Error(`Invalid Min value "${row.Min}" in row ${i + 1}. Must be a number.`);
+            }
+            if (row.Max && Number.isNaN(Number(row.Max))) {
+              throw new Error(`Invalid Max value "${row.Max}" in row ${i + 1}. Must be a number.`);
+            }
+          }
+          const confidence = Number(row.Confidence);
+          if (row.Confidence && (Number.isNaN(confidence)
+            || confidence < 0 || confidence > 100)) {
+            throw new Error(`Invalid Confidence value "${row.Confidence}" in row ${i + 1}. Must be a number between 0 and 100.`);
+          }
+        }
+
         createEntryTable(data);
       }).catch((error) => {
         const errorDiv = document.createElement('div');
         errorDiv.setAttribute('role', 'alert');
         errorDiv.setAttribute('aria-live', 'assertive');
         errorDiv.classList.add('error-message');
-        errorDiv.textContent = `Failed to parse CSV file: ${error.message}. Please check the file format.`;
+
+        // Provide specific error message or fallback to generic one
+        let errorMessage = error.message;
+        if (!errorMessage || errorMessage.includes('undefined')) {
+          errorMessage = 'Failed to parse CSV file. Please check that the file is properly formatted with columns separated by commas.';
+        }
+        errorDiv.textContent = errorMessage;
 
         const dataWrapper = document.getElementById('dataAreaWrapper');
         const existingError = dataWrapper.querySelector('.error-message');
@@ -1059,13 +1191,13 @@ async function startSimulation(event) {
     }
 
     // Convert Fibonacci numbers to min/max if in Fibonacci mode
-    if (estimationMode === 'fibonacci' && taskDetail.Fibonacci) {
+    if (appState.estimationMode === 'fibonacci' && taskDetail.Fibonacci) {
       const mapping = fibonacciMappings[taskDetail.Fibonacci];
       if (mapping) {
         taskDetail.Min = mapping.min;
         taskDetail.Max = mapping.max;
       }
-    } else if (estimationMode === 'tshirt' && taskDetail.TShirt) {
+    } else if (appState.estimationMode === 'tshirt' && taskDetail.TShirt) {
       const mapping = tshirtMappings[taskDetail.TShirt];
       if (mapping) {
         taskDetail.Min = mapping.min;
@@ -1074,7 +1206,7 @@ async function startSimulation(event) {
     }
 
     // Set default cost to 0 if cost tracking is disabled
-    if (!enableCost && !taskDetail.Cost) {
+    if (!appState.enableCost && !taskDetail.Cost) {
       taskDetail.Cost = 0;
     }
 
@@ -1169,7 +1301,7 @@ async function startSimulation(event) {
     updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
 
     // Only display cost results if cost tracking is enabled
-    if (enableCost) {
+    if (appState.enableCost) {
       updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
       updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
       updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(results.costs.max)}`);
@@ -1196,7 +1328,7 @@ async function startSimulation(event) {
     document.getElementById('timeSaveButtons').style.display = 'block';
 
     // Only build cost histogram if cost tracking is enabled
-    if (enableCost) {
+    if (appState.enableCost) {
       sim.buildHistogram(
         document.getElementById('costHistoGram'),
         results.costs.list,
@@ -1216,8 +1348,6 @@ async function startSimulation(event) {
       document.getElementById('costSaveButtons').style.display = 'none';
     }
   } catch (error) {
-    console.error('Simulation failed:', error);
-
     // Display user-friendly error message
     const errorDiv = document.createElement('div');
     errorDiv.setAttribute('role', 'alert');
@@ -1243,14 +1373,10 @@ async function startSimulation(event) {
 }
 
 /**
- * Setup the Main application UI
- * @returns HTMLElement
+ * Creates the page header with icon, title, and GitHub ribbon.
+ * @returns {HTMLElement} Header section
  */
-function setupUi() {
-  // === Main page structures ===
-  const mainElement = document.createElement('div');
-
-  // Setup page header:
+function createHeader() {
   const headerDiv = document.createElement('div');
   headerDiv.classList.add('page-header', 'section');
 
@@ -1273,12 +1399,14 @@ function setupUi() {
   githubRibbon.appendChild(githubLink);
   headerDiv.appendChild(githubRibbon);
 
-  // Setup data entry section
-  const dataWrapper = document.createElement('div');
-  dataWrapper.classList.add('section');
-  dataWrapper.id = 'dataAreaWrapper';
+  return headerDiv;
+}
 
-  // === Add Estimation Mode Selector ===
+/**
+ * Creates the estimation mode selector with radio buttons and cost toggle.
+ * @returns {HTMLElement} Mode selector section
+ */
+function createModeSelector() {
   const modeSelectorDiv = document.createElement('div');
   modeSelectorDiv.classList.add('section', 'wrapper-mode-selector');
   const modeHeader = createTextElement('H2', 'Estimation Mode', ['header', 'mode-selector']);
@@ -1354,9 +1482,14 @@ function setupUi() {
   modeSelectorDiv.appendChild(fibMappingTable);
   modeSelectorDiv.appendChild(tshirtMappingTable);
 
-  dataWrapper.appendChild(modeSelectorDiv);
+  return modeSelectorDiv;
+}
 
-  // === Add CSV File Loader Section ===
+/**
+ * Creates the CSV file loader section.
+ * @returns {HTMLElement} File loader section
+ */
+function createFileLoader() {
   const fileDiv = document.createElement('div');
   fileDiv.classList.add('section', 'wrapper-file-load');
   const csvHeader = createTextElement('H2', 'Upload Task CSV File', ['header', 'csv-file']);
@@ -1397,9 +1530,15 @@ function setupUi() {
   // Add segments to section
   fileDiv.appendChild(csvHeader);
   fileDiv.appendChild(fieldSet);
-  dataWrapper.appendChild(fileDiv);
 
-  // === Add Direct Input Controls ===
+  return fileDiv;
+}
+
+/**
+ * Creates the direct data entry section.
+ * @returns {HTMLElement} Data entry section
+ */
+function createDataEntrySection() {
   const dataEntryDiv = document.createElement('div');
   dataEntryDiv.classList.add('section', 'wrapper-direct-load');
   const dataEntryHeader = createTextElement('H2', 'Add Tasks By Hand', ['header', 'data-input']);
@@ -1408,9 +1547,15 @@ function setupUi() {
   // Add segments to section.
   dataEntryDiv.appendChild(dataEntryHeader);
   dataEntryDiv.appendChild(dataEntryTable);
-  dataWrapper.append(dataEntryDiv);
 
-  // == Create Output Region ==
+  return dataEntryDiv;
+}
+
+/**
+ * Creates the simulation control panel and results display.
+ * @returns {HTMLElement} Simulation panel section
+ */
+function createSimulationPanel() {
   const simWrapper = createDivWithIdAndClasses('simulationAreaWrapper', ['section', 'container']);
   const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation']);
 
@@ -1533,10 +1678,38 @@ function setupUi() {
   simWrapper.appendChild(simControls);
   simWrapper.appendChild(simResultWrapper);
 
+  return simWrapper;
+}
+
+/**
+ * Setup the Main application UI
+ * @returns HTMLElement
+ */
+function setupUi() {
+  // === Main page structures ===
+  const mainElement = document.createElement('div');
+
+  // Setup data entry section wrapper
+  const dataWrapper = document.createElement('div');
+  dataWrapper.classList.add('section');
+  dataWrapper.id = 'dataAreaWrapper';
+
+  // Build UI sections
+  const header = createHeader();
+  const modeSelector = createModeSelector();
+  const fileLoader = createFileLoader();
+  const dataEntry = createDataEntrySection();
+  const simulationPanel = createSimulationPanel();
+
+  // Assemble data area
+  dataWrapper.appendChild(modeSelector);
+  dataWrapper.appendChild(fileLoader);
+  dataWrapper.appendChild(dataEntry);
+
   // Add all elements to the main application wrapper.
-  mainElement.appendChild(headerDiv);
+  mainElement.appendChild(header);
   mainElement.appendChild(dataWrapper);
-  mainElement.appendChild(simWrapper);
+  mainElement.appendChild(simulationPanel);
 
   return mainElement;
 }
@@ -1565,8 +1738,9 @@ export {
   normalizeTshirtSize,
   saveSvgAsImage,
   isRowEmpty,
+  appState,
 };
 
 // Export getter functions for mutable state
-export const getEstimationMode = () => estimationMode;
-export const getEnableCost = () => enableCost;
+export const getEstimationMode = () => appState.estimationMode;
+export const getEnableCost = () => appState.enableCost;

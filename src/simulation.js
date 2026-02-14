@@ -212,7 +212,8 @@ function getStandardDeviation(numberArray) {
 
   // Divide by n - 1
   // This answer is the variance of the sample.
-  const variance = sdPrep / (valueCount - 1);
+  // Handle edge case where valueCount is 1 to avoid division by zero
+  const variance = valueCount > 1 ? sdPrep / (valueCount - 1) : 0;
 
   const standardDev = Math.sqrt(variance);
   return standardDev;
