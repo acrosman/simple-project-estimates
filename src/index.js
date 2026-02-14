@@ -741,6 +741,7 @@ function handleModeChange(event) {
     if (sampleLink) {
       sampleLink.href = sampleFibData;
       sampleLink.textContent = 'Sample Fibonacci CSV File';
+      sampleLink.download = 'sample-fib.csv';
     }
   } else if (estimationMode === 'tshirt') {
     fibMapping.style.display = 'none';
@@ -748,6 +749,7 @@ function handleModeChange(event) {
     if (sampleLink) {
       sampleLink.href = sampleTshirtData;
       sampleLink.textContent = 'Sample T-Shirt CSV File';
+      sampleLink.download = 'sample-tshirt.csv';
     }
   } else {
     fibMapping.style.display = 'none';
@@ -755,6 +757,7 @@ function handleModeChange(event) {
     if (sampleLink) {
       sampleLink.href = sampleData;
       sampleLink.textContent = 'Sample CSV File';
+      sampleLink.download = 'sample.csv';
     }
   }
 
