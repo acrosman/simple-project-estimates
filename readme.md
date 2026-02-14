@@ -24,12 +24,13 @@ npm start
 
 ### Estimation Modes
 
-The simulator supports two types of project estimates:
+The simulator supports three types of project estimates:
 
 1. **Hours-Based Estimates**: Provide a minimum and maximum hour estimate for each task
 2. **Fibonacci-Based Estimates**: Use Fibonacci story points (1, 2, 3, 5, 8, 13, 21, 34) for each task
+3. **T-Shirt Size Estimates**: Use t-shirt sizes (XS, S, M, L, XL, XXL) for each task
 
-Choose the estimation mode that matches your team's planning methodology. The tool automatically maps Fibonacci numbers to hour ranges for simulation purposes.
+Choose the estimation mode that matches your team's planning methodology. The tool automatically maps Fibonacci numbers and t-shirt sizes to hour ranges for simulation purposes.
 
 ### Entering Your Tasks
 
@@ -38,12 +39,13 @@ You can enter your project tasks in two ways:
 #### Manual Entry
 
 1. Open the application in your browser
-2. Select your estimation mode (Hours or Fibonacci)
+2. Select your estimation mode (Hours, Fibonacci, or T-Shirt)
 3. Fill in the data fields for each task:
    - **Task**: Name or description of the task
    - **Min Time** (hours mode): Minimum hours estimate
    - **Max Time** (hours mode): Maximum hours estimate
    - **Fibonacci** (Fibonacci mode): Story point value (mutually exclusive with hours)
+   - **T-Shirt** (T-Shirt mode): Size value (mutually exclusive with hours/fibonacci)
    - **Confidence**: Your confidence level as a percentage (0-100)
    - **Cost**: Hourly rate for this task
 4. Click "Run Simulation" to generate results
@@ -70,10 +72,20 @@ Page,8,90,120
 Blog Post,8,90,100
 ```
 
+**T-Shirt Mode CSV:**
+
+```
+Task,TShirt,Confidence,Cost
+Setup,S,90,120
+Page,L,90,120
+Blog Post,L,90,100
+```
+
 Sample files are available:
 
 - [Hours-based sample](src/data/sample.csv)
 - [Fibonacci-based sample](src/data/sample-fib.csv)
+- [T-Shirt-based sample](src/data/sample-tshirt.csv)
 
 ### Understanding the Simulation
 
@@ -121,6 +133,15 @@ Each Fibonacci number maps to an hour range:
 - 13 → 8-13 hours
 - 21 → 13-21 hours
 - 34 → 21-34 hours
+
+#### T-Shirt Values
+
+- XS → 1-2 hours
+- S → 2-3 hours
+- M → 3-5 hours
+- L → 5-8 hours
+- XL → 8-13 hours
+- XXL → 13-21 hours
 
 #### Cost Tracking
 
