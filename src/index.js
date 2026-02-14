@@ -1223,7 +1223,7 @@ async function startSimulation(event) {
     errorDiv.setAttribute('role', 'alert');
     errorDiv.setAttribute('aria-live', 'assertive');
     errorDiv.classList.add('error-message');
-    errorDiv.textContent = `Simulation failed: ${error.message}. Please try again or check your input data.`;
+    errorDiv.textContent = 'Simulation failed unexpectedly. Please try again or check your input data.';
 
     const resultsDiv = document.getElementById('results');
     const existingError = resultsDiv.querySelector('.error-message');
