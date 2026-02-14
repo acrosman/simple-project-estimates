@@ -12,6 +12,8 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('generateDataField');
     expect(idx).toHaveProperty('updateElementText');
     expect(idx).toHaveProperty('isRowEmpty');
+    expect(idx).toHaveProperty('normalizeTshirtSize');
+    expect(idx).toHaveProperty('updateTshirtMapping');
     expect(idx).toHaveProperty('getNextFibonacci');
     expect(idx).toHaveProperty('addFibonacciNumber');
   });
@@ -19,6 +21,7 @@ describe('Index Module Exports', () => {
   test('Validate exported state exists', () => {
     expect(idx).toHaveProperty('getEstimationMode');
     expect(idx).toHaveProperty('fibonacciMappings');
+    expect(idx).toHaveProperty('tshirtMappings');
     expect(idx).toHaveProperty('getEnableCost');
   });
 });
@@ -361,6 +364,39 @@ describe('Fibonacci Mappings', () => {
   });
 });
 
+describe('T-Shirt Mappings', () => {
+  test('has expected t-shirt sizes as keys', () => {
+    const tshirtKeys = Object.keys(idx.tshirtMappings);
+    expect(tshirtKeys).toEqual(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
+  });
+
+  test('each t-shirt mapping has min and max properties', () => {
+    Object.values(idx.tshirtMappings).forEach((mapping) => {
+      expect(mapping).toHaveProperty('min');
+      expect(mapping).toHaveProperty('max');
+    });
+  });
+
+  test('t-shirt mappings follow expected hour ranges', () => {
+    expect(idx.tshirtMappings.XS).toEqual({ min: 1, max: 2 });
+    expect(idx.tshirtMappings.S).toEqual({ min: 2, max: 3 });
+    expect(idx.tshirtMappings.M).toEqual({ min: 3, max: 5 });
+    expect(idx.tshirtMappings.L).toEqual({ min: 5, max: 8 });
+    expect(idx.tshirtMappings.XL).toEqual({ min: 8, max: 13 });
+    expect(idx.tshirtMappings.XXL).toEqual({ min: 13, max: 21 });
+  });
+
+  test('normalizes lowercase t-shirt input for mapping lookup', () => {
+    expect(idx.normalizeTshirtSize('xl')).toBe('XL');
+    expect(idx.tshirtMappings[idx.normalizeTshirtSize('xl')]).toEqual({ min: 8, max: 13 });
+  });
+
+  test('trims and normalizes t-shirt input for mapping lookup', () => {
+    expect(idx.normalizeTshirtSize('  xxl  ')).toBe('XXL');
+    expect(idx.tshirtMappings[idx.normalizeTshirtSize('  xxl  ')]).toEqual({ min: 13, max: 21 });
+  });
+});
+
 describe('updateFibonacciMapping', () => {
   beforeEach(() => {
     // Reset mappings to default values before each test
@@ -460,6 +496,69 @@ describe('updateFibonacciMapping', () => {
 
     expect(idx.fibonacciMappings[5].min).toBe(4);
     expect(idx.fibonacciMappings[5].max).toBe(10);
+  });
+});
+
+describe('updateTshirtMapping', () => {
+  beforeEach(() => {
+    idx.tshirtMappings.XS = { min: 1, max: 2 };
+    idx.tshirtMappings.S = { min: 2, max: 3 };
+    idx.tshirtMappings.M = { min: 3, max: 5 };
+    idx.tshirtMappings.L = { min: 5, max: 8 };
+    idx.tshirtMappings.XL = { min: 8, max: 13 };
+    idx.tshirtMappings.XXL = { min: 13, max: 21 };
+  });
+
+  test('updates min value when min input changes', () => {
+    const mockEvent = {
+      target: {
+        dataset: { tshirt: 'XL', type: 'min' },
+        value: '9',
+      },
+    };
+
+    idx.updateTshirtMapping(mockEvent);
+
+    expect(idx.tshirtMappings.XL.min).toBe(9);
+    expect(idx.tshirtMappings.XL.max).toBe(13);
+  });
+
+  test('updates max value when max input changes', () => {
+    const mockEvent = {
+      target: {
+        dataset: { tshirt: 'M', type: 'max' },
+        value: '6',
+      },
+    };
+
+    idx.updateTshirtMapping(mockEvent);
+
+    expect(idx.tshirtMappings.M.max).toBe(6);
+    expect(idx.tshirtMappings.M.min).toBe(3);
+  });
+
+  test('normalizes lowercase size key before updating', () => {
+    const mockEvent = {
+      target: {
+        dataset: { tshirt: 'xxl', type: 'min' },
+        value: '12',
+      },
+    };
+
+    idx.updateTshirtMapping(mockEvent);
+
+    expect(idx.tshirtMappings.XXL.min).toBe(12);
+  });
+
+  test('does not crash for unknown size', () => {
+    const mockEvent = {
+      target: {
+        dataset: { tshirt: 'XXXL', type: 'min' },
+        value: '20',
+      },
+    };
+
+    expect(() => idx.updateTshirtMapping(mockEvent)).not.toThrow();
   });
 });
 

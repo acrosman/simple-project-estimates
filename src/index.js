@@ -3,10 +3,11 @@ import './style.css';
 import Icon from './EstimateIcon.png';
 import sampleData from './data/sample.csv';
 import sampleFibData from './data/sample-fib.csv';
+import sampleTshirtData from './data/sample-tshirt.csv';
 import * as sim from './simulation';
 
 // ============= Global State =================
-let estimationMode = 'hours'; // 'hours' or 'fibonacci'
+let estimationMode = 'hours'; // 'hours', 'fibonacci', or 'tshirt'
 let enableCost = true; // Track cost by default
 const fibonacciMappings = {
   1: { min: 0, max: 1 },
@@ -17,6 +18,14 @@ const fibonacciMappings = {
   13: { min: 8, max: 13 },
   21: { min: 13, max: 21 },
   34: { min: 21, max: 34 },
+};
+const tshirtMappings = {
+  XS: { min: 1, max: 2 },
+  S: { min: 2, max: 3 },
+  M: { min: 3, max: 5 },
+  L: { min: 5, max: 8 },
+  XL: { min: 8, max: 13 },
+  XXL: { min: 13, max: 21 },
 };
 
 // ============= Interface Element Helpers =================
@@ -92,6 +101,68 @@ function isRowEmpty(rowId) {
 }
 
 /**
+ * Normalizes t-shirt size values for mapping lookup.
+ * @param {string} size Raw t-shirt size input.
+ * @returns {string} Normalized uppercase size.
+ */
+function normalizeTshirtSize(size) {
+  if (typeof size !== 'string') {
+    return '';
+  }
+  return size.trim().toUpperCase();
+}
+
+/**
+ * Handles tab navigation inside mapping tables so focus moves min->max per column.
+ * @param {KeyboardEvent} event Keyboard event from mapping input.
+ * @param {string} keyField Data attribute key name (fib|tshirt).
+ * @param {Array<string|number>} orderedKeys Ordered mapping keys.
+ */
+function handleMappingTabNavigation(event, keyField, orderedKeys) {
+  if (event.key !== 'Tab' || event.altKey || event.ctrlKey || event.metaKey) {
+    return;
+  }
+
+  const currentKey = event.target?.dataset?.[keyField];
+  const currentType = event.target?.dataset?.type;
+  if (!currentKey || !currentType) {
+    return;
+  }
+
+  const normalizedCurrentKey = keyField === 'tshirt' ? normalizeTshirtSize(currentKey) : currentKey;
+  const sequence = [];
+  for (const key of orderedKeys) {
+    const normalizedKey = keyField === 'tshirt' ? normalizeTshirtSize(String(key)) : String(key);
+    sequence.push({ key: normalizedKey, type: 'min' });
+    sequence.push({ key: normalizedKey, type: 'max' });
+  }
+
+  const currentIndex = sequence.findIndex((item) => (
+    item.key === normalizedCurrentKey && item.type === currentType
+  ));
+
+  if (currentIndex < 0) {
+    return;
+  }
+
+  const direction = event.shiftKey ? -1 : 1;
+  const nextIndex = currentIndex + direction;
+
+  if (nextIndex < 0 || nextIndex >= sequence.length) {
+    return;
+  }
+
+  const next = sequence[nextIndex];
+  const selector = `input[data-${keyField}="${next.key}"][data-type="${next.type}"]`;
+  const nextInput = document.querySelector(selector);
+
+  if (nextInput) {
+    event.preventDefault();
+    nextInput.focus();
+  }
+}
+
+/**
  * Creates an input field for a specific input control
  * @param {string} label
  * @param {string} fieldValue
@@ -129,9 +200,19 @@ function generateDataField(label, fieldValue, fieldType, rowId, isRequired = fal
  * @param {*} confidence
  * @param {*} hourlyCost
  * @param {*} fibNumber
+ * @param {*} tshirtSize
  * @returns HTMLElement
  */
-function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCost, fibNumber = '') {
+function generateDataRow(
+  rowId,
+  taskName,
+  minTime,
+  maxTime,
+  confidence,
+  hourlyCost,
+  fibNumber = '',
+  tshirtSize = '',
+) {
   const row = document.createElement('div');
   row.classList.add('tr', 'data-row');
   row.setAttribute('role', 'row');
@@ -142,9 +223,12 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
   let min;
   let max;
   let fib;
+  let tshirt;
 
   if (estimationMode === 'fibonacci') {
     fib = generateDataField('Fibonacci', fibNumber, 'number', rowId, true);
+  } else if (estimationMode === 'tshirt') {
+    tshirt = generateDataField('T-Shirt', tshirtSize, 'text', rowId, true);
   } else {
     min = generateDataField('Min Time', minTime, 'number', rowId, true);
     max = generateDataField('Max Time', maxTime, 'number', rowId, true);
@@ -208,6 +292,8 @@ function generateDataRow(rowId, taskName, minTime, maxTime, confidence, hourlyCo
 
   if (estimationMode === 'fibonacci') {
     row.appendChild(fib);
+  } else if (estimationMode === 'tshirt') {
+    row.appendChild(tshirt);
   } else {
     row.appendChild(min);
     row.appendChild(max);
@@ -252,6 +338,8 @@ function createEntryTable(data = []) {
 
   if (estimationMode === 'fibonacci') {
     header.appendChild(createTextElement('div', 'Fibonacci # *', ['th'], 'columnheader'));
+  } else if (estimationMode === 'tshirt') {
+    header.appendChild(createTextElement('div', 'T-Shirt Size *', ['th'], 'columnheader'));
   } else {
     header.appendChild(createTextElement('div', 'Min Time *', ['th'], 'columnheader'));
     header.appendChild(createTextElement('div', 'Max Time *', ['th'], 'columnheader'));
@@ -281,6 +369,17 @@ function createEntryTable(data = []) {
 
       if (estimationMode === 'fibonacci') {
         form.appendChild(generateDataRow(count, row.Task, '', '', confidence, row.Cost, row.Fibonacci));
+      } else if (estimationMode === 'tshirt') {
+        form.appendChild(generateDataRow(
+          count,
+          row.Task,
+          '',
+          '',
+          confidence,
+          row.Cost,
+          '',
+          row.TShirt,
+        ));
       } else {
         form.appendChild(generateDataRow(count, row.Task, row.Min, row.Max, confidence, row.Cost, ''));
       }
@@ -351,6 +450,36 @@ function updateFibonacciMapping(event) {
   }
 
   fibonacciMappings[fibNum][type] = value;
+}
+
+/**
+ * Updates the t-shirt mapping when user changes values.
+ * @param {Event} event
+ */
+function updateTshirtMapping(event) {
+  if (!event || !event.target || !event.target.dataset) {
+    return;
+  }
+
+  const { tshirt, type } = event.target.dataset;
+  const rawValue = event.target.value;
+
+  if (!tshirt || !type) {
+    return;
+  }
+
+  const size = normalizeTshirtSize(tshirt);
+  const value = Number.parseInt(rawValue, 10);
+
+  if (!size || !Number.isFinite(value)) {
+    return;
+  }
+
+  if (!tshirtMappings[size] || !(type in tshirtMappings[size])) {
+    return;
+  }
+
+  tshirtMappings[size][type] = value;
 }
 
 /**
@@ -444,6 +573,9 @@ function createFibonacciMappingTable() {
     minInput.dataset.fib = fibNum;
     minInput.dataset.type = 'min';
     minInput.addEventListener('change', updateFibonacciMapping);
+    minInput.addEventListener('keydown', (event) => {
+      handleMappingTabNavigation(event, 'fib', fibNumbers);
+    });
     minCell.appendChild(minInput);
     minRow.appendChild(minCell);
   }
@@ -467,6 +599,9 @@ function createFibonacciMappingTable() {
     maxInput.dataset.fib = fibNum;
     maxInput.dataset.type = 'max';
     maxInput.addEventListener('change', updateFibonacciMapping);
+    maxInput.addEventListener('keydown', (event) => {
+      handleMappingTabNavigation(event, 'fib', fibNumbers);
+    });
     maxCell.appendChild(maxInput);
     maxRow.appendChild(maxCell);
   }
@@ -486,6 +621,88 @@ function createFibonacciMappingTable() {
   wrapper.appendChild(addFibButton);
 
   wrapper.style.display = 'none'; // Hidden by default
+
+  return wrapper;
+}
+
+/**
+ * Creates the t-shirt mapping configuration interface.
+ * @returns HTMLElement
+ */
+function createTshirtMappingTable() {
+  const wrapper = createDivWithIdAndClasses('tshirtMappingWrapper', ['section', 'fibonacci-mapping']);
+  const header = createTextElement('H3', 'T-Shirt Size to Hours Mapping', ['header', 'fib-mapping']);
+
+  const table = document.createElement('div');
+  table.classList.add('table', 'fib-mapping-table');
+
+  const sizes = Object.keys(tshirtMappings);
+
+  const sizeRow = document.createElement('div');
+  sizeRow.classList.add('tr', 'fib-mapping-row');
+  sizeRow.appendChild(createTextElement('div', 'T-Shirt Size', ['th']));
+
+  for (const size of sizes) {
+    const sizeCell = document.createElement('div');
+    sizeCell.classList.add('td');
+    sizeCell.appendChild(createTextElement('span', size, []));
+    sizeRow.appendChild(sizeCell);
+  }
+  table.appendChild(sizeRow);
+
+  const minRow = document.createElement('div');
+  minRow.classList.add('tr', 'fib-mapping-row');
+  minRow.appendChild(createTextElement('div', 'Min Hours', ['th']));
+
+  for (const size of sizes) {
+    const minCell = document.createElement('div');
+    minCell.classList.add('td');
+    const minInput = document.createElement('input');
+    Object.assign(minInput, {
+      type: 'number',
+      value: tshirtMappings[size].min,
+      name: `tshirt-min-${size}`,
+      'aria-label': `Minimum hours for t-shirt size ${size}`,
+    });
+    minInput.dataset.tshirt = size;
+    minInput.dataset.type = 'min';
+    minInput.addEventListener('change', updateTshirtMapping);
+    minInput.addEventListener('keydown', (event) => {
+      handleMappingTabNavigation(event, 'tshirt', sizes);
+    });
+    minCell.appendChild(minInput);
+    minRow.appendChild(minCell);
+  }
+  table.appendChild(minRow);
+
+  const maxRow = document.createElement('div');
+  maxRow.classList.add('tr', 'fib-mapping-row');
+  maxRow.appendChild(createTextElement('div', 'Max Hours', ['th']));
+
+  for (const size of sizes) {
+    const maxCell = document.createElement('div');
+    maxCell.classList.add('td');
+    const maxInput = document.createElement('input');
+    Object.assign(maxInput, {
+      type: 'number',
+      value: tshirtMappings[size].max,
+      name: `tshirt-max-${size}`,
+      'aria-label': `Maximum hours for t-shirt size ${size}`,
+    });
+    maxInput.dataset.tshirt = size;
+    maxInput.dataset.type = 'max';
+    maxInput.addEventListener('change', updateTshirtMapping);
+    maxInput.addEventListener('keydown', (event) => {
+      handleMappingTabNavigation(event, 'tshirt', sizes);
+    });
+    maxCell.appendChild(maxInput);
+    maxRow.appendChild(maxCell);
+  }
+  table.appendChild(maxRow);
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(table);
+  wrapper.style.display = 'none';
 
   return wrapper;
 }
@@ -515,16 +732,26 @@ function handleModeChange(event) {
   estimationMode = event.target.value;
 
   const fibMapping = document.getElementById('fibonacciMappingWrapper');
+  const tshirtMapping = document.getElementById('tshirtMappingWrapper');
   const sampleLink = document.querySelector('.link-sample');
 
   if (estimationMode === 'fibonacci') {
     fibMapping.style.display = 'block';
+    tshirtMapping.style.display = 'none';
     if (sampleLink) {
       sampleLink.href = sampleFibData;
       sampleLink.textContent = 'Sample Fibonacci CSV File';
     }
+  } else if (estimationMode === 'tshirt') {
+    fibMapping.style.display = 'none';
+    tshirtMapping.style.display = 'block';
+    if (sampleLink) {
+      sampleLink.href = sampleTshirtData;
+      sampleLink.textContent = 'Sample T-Shirt CSV File';
+    }
   } else {
     fibMapping.style.display = 'none';
+    tshirtMapping.style.display = 'none';
     if (sampleLink) {
       sampleLink.href = sampleData;
       sampleLink.textContent = 'Sample CSV File';
@@ -702,6 +929,9 @@ function startSimulation(event) {
         case 'Fibonacci':
           taskDetail.Fibonacci = parseInt(i.value, 10);
           break;
+        case 'T-Shirt':
+          taskDetail.TShirt = normalizeTshirtSize(i.value);
+          break;
         case 'Confidence':
           taskDetail.Confidence = parseFloat(i.value) / 100;
           break;
@@ -720,6 +950,12 @@ function startSimulation(event) {
     // Convert Fibonacci numbers to min/max if in Fibonacci mode
     if (estimationMode === 'fibonacci' && taskDetail.Fibonacci) {
       const mapping = fibonacciMappings[taskDetail.Fibonacci];
+      if (mapping) {
+        taskDetail.Min = mapping.min;
+        taskDetail.Max = mapping.max;
+      }
+    } else if (estimationMode === 'tshirt' && taskDetail.TShirt) {
+      const mapping = tshirtMappings[taskDetail.TShirt];
       if (mapping) {
         taskDetail.Min = mapping.min;
         taskDetail.Max = mapping.max;
@@ -895,11 +1131,25 @@ function setupUi() {
   const fibLabel = createTextElement('label', 'Fibonacci Numbers', []);
   fibLabel.htmlFor = 'modeFibonacci';
 
+  const tshirtRadio = document.createElement('input');
+  Object.assign(tshirtRadio, {
+    type: 'radio',
+    id: 'modeTshirt',
+    name: 'estimationMode',
+    value: 'tshirt',
+  });
+  tshirtRadio.addEventListener('change', handleModeChange);
+  const tshirtLabel = createTextElement('label', 'T-Shirt Sizes', []);
+  tshirtLabel.htmlFor = 'modeTshirt';
+
   modeFieldset.appendChild(hoursRadio);
   modeFieldset.appendChild(hoursLabel);
   modeFieldset.appendChild(document.createElement('br'));
   modeFieldset.appendChild(fibRadio);
   modeFieldset.appendChild(fibLabel);
+  modeFieldset.appendChild(document.createElement('br'));
+  modeFieldset.appendChild(tshirtRadio);
+  modeFieldset.appendChild(tshirtLabel);
 
   // Add cost tracking toggle
   modeFieldset.appendChild(document.createElement('br'));
@@ -922,7 +1172,9 @@ function setupUi() {
 
   // Add Fibonacci mapping configuration
   const fibMappingTable = createFibonacciMappingTable();
+  const tshirtMappingTable = createTshirtMappingTable();
   modeSelectorDiv.appendChild(fibMappingTable);
+  modeSelectorDiv.appendChild(tshirtMappingTable);
 
   dataWrapper.appendChild(modeSelectorDiv);
 
@@ -1125,9 +1377,12 @@ export {
   generateDataField,
   updateElementText,
   updateFibonacciMapping,
+  updateTshirtMapping,
   getNextFibonacci,
   addFibonacciNumber,
   fibonacciMappings,
+  tshirtMappings,
+  normalizeTshirtSize,
   saveSvgAsImage,
   isRowEmpty,
 };
