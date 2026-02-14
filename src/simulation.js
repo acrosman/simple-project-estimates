@@ -1,6 +1,22 @@
 import * as d3 from 'd3';
 
 /**
+ * Configuration constants for histogram visualization
+ */
+const HISTOGRAM_CONFIG = {
+  BAR_CUTOFF: 600, // Switch to scatter plot above this threshold
+  MAX_BUCKETS: 120, // Maximum buckets for preview histograms
+  IMAGE_WIDTH: 800, // Default histogram width
+  IMAGE_HEIGHT: 500, // Default histogram height
+  MARGIN: { // SVG margins
+    top: 10,
+    right: 30,
+    bottom: 50,
+    left: 60,
+  },
+};
+
+/**
  * Get a random number is a given range.
  * @param {int} minimum
  * @param {int} maximum
@@ -146,6 +162,11 @@ function getMedian(data) {
   // Find total count of values.
   const valueCount = getValueCount(data);
 
+  // Handle empty dataset (all zeros in histogram)
+  if (valueCount === 0) {
+    return 0;
+  }
+
   // Walk back to the middle of the result set to see which is median
   const midCount = valueCount / 2;
   let median = 0;
@@ -212,7 +233,8 @@ function getStandardDeviation(numberArray) {
 
   // Divide by n - 1
   // This answer is the variance of the sample.
-  const variance = sdPrep / (valueCount - 1);
+  // Handle edge case where valueCount is 1 to avoid division by zero
+  const variance = valueCount > 1 ? sdPrep / (valueCount - 1) : 0;
 
   const standardDev = Math.sqrt(variance);
   return standardDev;
@@ -252,17 +274,15 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   targetNode.innerHTML = '';
 
   // The number of points before it switches to using a line graph.
-  const barCutoff = 600;
+  const barCutoff = HISTOGRAM_CONFIG.BAR_CUTOFF;
 
   // The width of the image
-  const imageWidth = 800;
-  const imageHeight = 500;
+  const imageWidth = HISTOGRAM_CONFIG.IMAGE_WIDTH;
+  const imageHeight = HISTOGRAM_CONFIG.IMAGE_HEIGHT;
 
   // Image Margins
   const binMargin = 0.2;
-  const margin = {
-    top: 10, right: 30, bottom: 50, left: 60,
-  };
+  const margin = HISTOGRAM_CONFIG.MARGIN;
 
   // Set outer bounds of graph.
   let minBin = min;
@@ -446,16 +466,14 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
     return;
   }
 
-  const imageWidth = 800;
-  const imageHeight = 500;
-  const margin = {
-    top: 10, right: 30, bottom: 50, left: 60,
-  };
+  const imageWidth = HISTOGRAM_CONFIG.IMAGE_WIDTH;
+  const imageHeight = HISTOGRAM_CONFIG.IMAGE_HEIGHT;
+  const margin = HISTOGRAM_CONFIG.MARGIN;
   const width = imageWidth - margin.left - margin.right;
   const height = imageHeight - margin.top - margin.bottom;
 
   const valueRange = (max - min) + 1;
-  const maxBuckets = 120;
+  const maxBuckets = HISTOGRAM_CONFIG.MAX_BUCKETS;
   const bucketCount = Math.max(1, Math.min(maxBuckets, valueRange));
   const bucketSize = Math.max(1, Math.ceil(valueRange / bucketCount));
   const buckets = new Array(bucketCount).fill(0);
@@ -574,12 +592,27 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
 }
 
 /**
- * Runs the main simulation.
- * @param {Integer} passes
- * @param {Object} data
- * @returns
+ * Yields execution to allow UI updates between simulation batches.
+ * @returns {Promise<void>} Promise that resolves on next event loop turn.
  */
-function runSimulation(passes, data) {
+function pauseForUiUpdate() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+/**
+ * Core simulation logic shared between synchronous and asynchronous implementations.
+ * @param {Integer} passes Number of simulation passes to run.
+ * @param {Object} data Task input data.
+ * @param {Object} callbacks Optional callbacks for progress tracking.
+ * @param {Function} callbacks.onBatchComplete Called after each batch of iterations.
+ * @param {number} callbacks.batchSize Size of each batch for progressive execution.
+ * @returns {Object|Promise<Object>} Simulation results (promise if using callbacks).
+ */
+function runSimulationCore(passes, data, callbacks = {}) {
+  const { onBatchComplete, batchSize = 1000 } = callbacks;
+  const totalPasses = parseInt(passes, 10);
   const upperTimeBound = calculateUpperBound(data);
   const upperCostBound = calculateUpperBound(data, true);
   const times = new Array(upperTimeBound + 1).fill(0);
@@ -595,7 +628,6 @@ function runSimulation(passes, data) {
   let maxTime = 0;
   let minCost = -1;
   let maxCost = 0;
-  let endTime = 0;
   let totalTime = 0;
   let totalCost = 0;
   let outcome = {};
@@ -621,8 +653,10 @@ function runSimulation(passes, data) {
     };
   }
 
-  // Run the simulation.
-  for (let i = 0; i < passes; i += 1) {
+  /**
+   * Executes a single simulation iteration.
+   */
+  const runIteration = () => {
     totalTime = 0;
     totalCost = 0;
     outcome = {};
@@ -654,6 +688,7 @@ function runSimulation(passes, data) {
         taskOutcome.costs.max = taskCost;
       }
     }
+
     times[totalTime] += 1;
     costs[totalCost] += 1;
     estimates.times.push(totalTime);
@@ -663,180 +698,84 @@ function runSimulation(passes, data) {
     if (totalTime > maxTime) { maxTime = totalTime; }
     if (totalCost < minCost || minCost === -1) { minCost = totalCost; }
     if (totalCost > maxCost) { maxCost = totalCost; }
-  }
-  endTime = Date.now();
+  };
 
-  const taskResults = Object.values(taskOutcomes).map((task) => {
-    const result = {
-      rowId: task.rowId,
-      name: task.name,
+  /**
+   * Compiles final results from simulation data.
+   * @returns {Object} Complete simulation results with statistics.
+   */
+  const compileResults = () => {
+    const endTime = Date.now();
+    const taskResults = Object.values(taskOutcomes).map((task) => {
+      const result = {
+        rowId: task.rowId,
+        name: task.name,
+        times: {
+          ...task.times,
+          median: getMedian(task.times.list),
+          sd: getStandardDeviation(task.times.list),
+        },
+        costs: {
+          ...task.costs,
+          median: getMedian(task.costs.list),
+          sd: getStandardDeviation(task.costs.list),
+        },
+      };
+
+      result.times.likelyMin = Math.round(result.times.median - result.times.sd);
+      result.times.likelyMax = Math.round(result.times.median + result.times.sd);
+      result.costs.likelyMin = Math.round(result.costs.median - result.costs.sd);
+      result.costs.likelyMax = Math.round(result.costs.median + result.costs.sd);
+
+      return result;
+    });
+
+    const runningTime = endTime - startTime;
+    const results = {
+      runningTime,
+      estimateDetails,
+      taskResults,
       times: {
-        ...task.times,
-        median: getMedian(task.times.list),
-        sd: getStandardDeviation(task.times.list),
+        median: getMedian(times),
+        sd: getStandardDeviation(times),
+        min: minTime,
+        max: maxTime,
+        list: times,
       },
       costs: {
-        ...task.costs,
-        median: getMedian(task.costs.list),
-        sd: getStandardDeviation(task.costs.list),
+        median: getMedian(costs),
+        sd: getStandardDeviation(costs),
+        min: minCost,
+        max: maxCost,
+        list: costs,
       },
     };
 
-    result.times.likelyMin = Math.round(result.times.median - result.times.sd);
-    result.times.likelyMax = Math.round(result.times.median + result.times.sd);
-    result.costs.likelyMin = Math.round(result.costs.median - result.costs.sd);
-    result.costs.likelyMax = Math.round(result.costs.median + result.costs.sd);
+    results.times.likelyMin = Math.round(results.times.median - results.times.sd);
+    results.times.likelyMax = Math.round(results.times.median + results.times.sd);
+    results.costs.likelyMin = Math.round(results.costs.median - results.costs.sd);
+    results.costs.likelyMax = Math.round(results.costs.median + results.costs.sd);
 
-    return result;
-  });
-
-  // Calculate and display the results.
-  const runningTime = endTime - startTime;
-  const results = {
-    runningTime,
-    estimateDetails,
-    taskResults,
-    times: {
-      median: getMedian(times),
-      sd: getStandardDeviation(times),
-      min: minTime,
-      max: maxTime,
-      list: times,
-    },
-    costs: {
-      median: getMedian(costs),
-      sd: getStandardDeviation(costs),
-      min: minCost,
-      max: maxCost,
-      list: costs,
-    },
+    return results;
   };
 
-  results.times.likelyMin = Math.round(results.times.median - results.times.sd);
-  results.times.likelyMax = Math.round(results.times.median + results.times.sd);
-  results.costs.likelyMin = Math.round(results.costs.median - results.costs.sd);
-  results.costs.likelyMax = Math.round(results.costs.median + results.costs.sd);
+  // If using progress callbacks, execute asynchronously with batches
+  if (onBatchComplete) {
+    const runBatch = async (startIndex, currentBatchSize) => {
+      const endIndex = Math.min(startIndex + currentBatchSize, totalPasses);
 
-  return results;
-}
-
-/**
- * Yields execution to allow UI updates between simulation batches.
- * @returns {Promise<void>} Promise that resolves on next event loop turn.
- */
-function pauseForUiUpdate() {
-  return new Promise((resolve) => {
-    setTimeout(resolve, 0);
-  });
-}
-
-/**
- * Runs simulation asynchronously and reports intermediate histogram progress.
- * @param {Integer} passes Number of simulation passes.
- * @param {Object} data Task input data.
- * @param {Function} onProgress Callback invoked with intermediate histogram state.
- * @param {number} progressInterval Number of passes between progress callbacks.
- * @returns {Promise<Object>} Full simulation results.
- */
-async function runSimulationProgressive(passes, data, onProgress = null, progressInterval = 1000) {
-  const totalPasses = parseInt(passes, 10);
-  const updateInterval = Math.max(1, parseInt(progressInterval, 10) || 1000);
-  const upperTimeBound = calculateUpperBound(data);
-  const upperCostBound = calculateUpperBound(data, true);
-  const times = new Array(upperTimeBound + 1).fill(0);
-  const costs = new Array(upperCostBound + 1).fill(0);
-  const taskOutcomes = {};
-  const estimates = {
-    times: [],
-    costs: [],
-  };
-  const estimateDetails = [];
-  const startTime = Date.now();
-  let minTime = -1;
-  let maxTime = 0;
-  let minCost = -1;
-  let maxCost = 0;
-  let endTime = 0;
-  let totalTime = 0;
-  let totalCost = 0;
-  let outcome = {};
-
-  for (const row of data) {
-    const taskTimeUpperBound = taskUpperBound(row.Max, row.Confidence);
-    const taskCostUpperBound = taskTimeUpperBound * row.Cost;
-    const rowId = row.RowId || row.Name;
-    taskOutcomes[rowId] = {
-      rowId,
-      name: row.Name,
-      times: {
-        min: -1,
-        max: 0,
-        list: new Array(taskTimeUpperBound + 1).fill(0),
-      },
-      costs: {
-        min: -1,
-        max: 0,
-        list: new Array(taskCostUpperBound + 1).fill(0),
-      },
-    };
-  }
-
-  const runBatch = (startIndex) => {
-    const endIndex = Math.min(startIndex + updateInterval, totalPasses);
-
-    for (let i = startIndex; i < endIndex; i += 1) {
-      totalTime = 0;
-      totalCost = 0;
-      outcome = {};
-
-      for (const row of data) {
-        const rowId = row.RowId || row.Name;
-        const taskOutcome = taskOutcomes[rowId];
-        const taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
-        const taskCost = taskTime * row.Cost;
-        totalTime += taskTime;
-        totalCost += taskCost;
-        outcome[row.Name] = {
-          time: taskTime,
-          cost: taskCost,
-        };
-
-        taskOutcome.times.list[taskTime] += 1;
-        taskOutcome.costs.list[taskCost] += 1;
-        if (taskOutcome.times.min === -1 || taskTime < taskOutcome.times.min) {
-          taskOutcome.times.min = taskTime;
-        }
-        if (taskTime > taskOutcome.times.max) {
-          taskOutcome.times.max = taskTime;
-        }
-        if (taskOutcome.costs.min === -1 || taskCost < taskOutcome.costs.min) {
-          taskOutcome.costs.min = taskCost;
-        }
-        if (taskCost > taskOutcome.costs.max) {
-          taskOutcome.costs.max = taskCost;
-        }
+      for (let i = startIndex; i < endIndex; i += 1) {
+        runIteration();
       }
 
-      times[totalTime] += 1;
-      costs[totalCost] += 1;
-      estimates.times.push(totalTime);
-      estimates.costs.push(totalCost);
-      estimateDetails.push(outcome);
-      if (totalTime < minTime || minTime === -1) { minTime = totalTime; }
-      if (totalTime > maxTime) { maxTime = totalTime; }
-      if (totalCost < minCost || minCost === -1) { minCost = totalCost; }
-      if (totalCost > maxCost) { maxCost = totalCost; }
-    }
+      const processedPasses = endIndex;
+      const hasMoreBatches = endIndex < totalPasses;
 
-    const processedPasses = endIndex;
-    const hasMoreBatches = endIndex < totalPasses;
-    const shouldUpdate = typeof onProgress === 'function'
-      && (processedPasses % updateInterval === 0 || !hasMoreBatches);
-
-    if (shouldUpdate) {
-      onProgress({
+      // Call progress callback
+      await onBatchComplete({
         processedPasses,
         totalPasses,
+        hasMoreBatches,
         times: {
           list: times,
           min: minTime,
@@ -848,73 +787,58 @@ async function runSimulationProgressive(passes, data, onProgress = null, progres
           max: maxCost,
         },
       });
-    }
 
-    if (!hasMoreBatches) {
+      if (hasMoreBatches) {
+        await pauseForUiUpdate();
+        return runBatch(endIndex, currentBatchSize);
+      }
+
       return Promise.resolve();
-    }
-
-    if (shouldUpdate) {
-      return pauseForUiUpdate().then(() => runBatch(endIndex));
-    }
-
-    return pauseForUiUpdate().then(() => runBatch(endIndex));
-  };
-
-  await runBatch(0);
-  endTime = Date.now();
-
-  const taskResults = Object.values(taskOutcomes).map((task) => {
-    const result = {
-      rowId: task.rowId,
-      name: task.name,
-      times: {
-        ...task.times,
-        median: getMedian(task.times.list),
-        sd: getStandardDeviation(task.times.list),
-      },
-      costs: {
-        ...task.costs,
-        median: getMedian(task.costs.list),
-        sd: getStandardDeviation(task.costs.list),
-      },
     };
 
-    result.times.likelyMin = Math.round(result.times.median - result.times.sd);
-    result.times.likelyMax = Math.round(result.times.median + result.times.sd);
-    result.costs.likelyMin = Math.round(result.costs.median - result.costs.sd);
-    result.costs.likelyMax = Math.round(result.costs.median + result.costs.sd);
+    return runBatch(0, batchSize).then(() => compileResults());
+  }
 
-    return result;
+  // Otherwise, execute synchronously
+  for (let i = 0; i < totalPasses; i += 1) {
+    runIteration();
+  }
+
+  return compileResults();
+}
+
+/**
+ * Runs the main simulation.
+ * @param {Integer} passes
+ * @param {Object} data
+ * @returns
+ */
+function runSimulation(passes, data) {
+  return runSimulationCore(passes, data);
+}
+
+/**
+ * Runs simulation asynchronously and reports intermediate histogram progress.
+ * @param {Integer} passes Number of simulation passes.
+ * @param {Object} data Task input data.
+ * @param {Function} onProgress Callback invoked with intermediate histogram state.
+ * @param {number} progressInterval Number of passes between progress callbacks.
+ * @returns {Promise<Object>} Full simulation results.
+ */
+async function runSimulationProgressive(passes, data, onProgress = null, progressInterval = 1000) {
+  const updateInterval = Math.max(1, parseInt(progressInterval, 10) || 1000);
+
+  return runSimulationCore(passes, data, {
+    batchSize: updateInterval,
+    onBatchComplete: async (progress) => {
+      const shouldUpdate = typeof onProgress === 'function'
+        && (progress.processedPasses % updateInterval === 0 || !progress.hasMoreBatches);
+
+      if (shouldUpdate) {
+        onProgress(progress);
+      }
+    },
   });
-
-  const runningTime = endTime - startTime;
-  const results = {
-    runningTime,
-    estimateDetails,
-    taskResults,
-    times: {
-      median: getMedian(times),
-      sd: getStandardDeviation(times),
-      min: minTime,
-      max: maxTime,
-      list: times,
-    },
-    costs: {
-      median: getMedian(costs),
-      sd: getStandardDeviation(costs),
-      min: minCost,
-      max: maxCost,
-      list: costs,
-    },
-  };
-
-  results.times.likelyMin = Math.round(results.times.median - results.times.sd);
-  results.times.likelyMax = Math.round(results.times.median + results.times.sd);
-  results.costs.likelyMin = Math.round(results.costs.median - results.costs.sd);
-  results.costs.likelyMax = Math.round(results.costs.median + results.costs.sd);
-
-  return results;
 }
 
 export {

@@ -956,3 +956,209 @@ describe('saveSvgAsImage', () => {
     expect(mockElements[0].setAttribute).toHaveBeenCalled();
   });
 });
+describe('validateCsvData', () => {
+  test('throws error when data is null', () => {
+    expect(() => idx.validateCsvData(null, 'hours', false)).toThrow('CSV file is empty or contains no data rows.');
+  });
+
+  test('throws error when data is empty array', () => {
+    expect(() => idx.validateCsvData([], 'hours', false)).toThrow('CSV file is empty or contains no data rows.');
+  });
+
+  test('throws error when required columns are missing - hours mode', () => {
+    const data = [{ Task: 'Test Task', Confidence: 90 }];
+    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Missing required columns: Min, Max');
+  });
+
+  test('throws error when required columns are missing - fibonacci mode', () => {
+    const data = [{ Task: 'Test Task', Confidence: 90 }];
+    expect(() => idx.validateCsvData(data, 'fibonacci', false)).toThrow('Missing required columns: Fibonacci');
+  });
+
+  test('throws error when required columns are missing - tshirt mode', () => {
+    const data = [{ Task: 'Test Task', Confidence: 90 }];
+    expect(() => idx.validateCsvData(data, 'tshirt', false)).toThrow('Missing required columns: TShirt');
+  });
+
+  test('throws error when Min value is not a number', () => {
+    const data = [
+      {
+        Task: 'Test', Min: 'abc', Max: 10, Confidence: 90,
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Min value "abc" in row 1. Must be a number.');
+  });
+
+  test('throws error when Max value is not a number', () => {
+    const data = [
+      {
+        Task: 'Test', Min: 5, Max: 'xyz', Confidence: 90,
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Max value "xyz" in row 1. Must be a number.');
+  });
+
+  test('throws error when Confidence is not a number', () => {
+    const data = [
+      {
+        Task: 'Test', Min: 5, Max: 10, Confidence: 'high',
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Confidence value "high" in row 1. Must be a number between 0 and 100.');
+  });
+
+  test('throws error when Confidence is below 0', () => {
+    const data = [
+      {
+        Task: 'Test', Min: 5, Max: 10, Confidence: -10,
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Confidence value "-10" in row 1. Must be a number between 0 and 100.');
+  });
+
+  test('throws error when Confidence is above 100', () => {
+    const data = [
+      {
+        Task: 'Test', Min: 5, Max: 10, Confidence: 150,
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Confidence value "150" in row 1. Must be a number between 0 and 100.');
+  });
+
+  test('accepts valid hours mode data', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 5, Max: 10, Confidence: 90,
+      },
+      {
+        Task: 'Task 2', Min: 3, Max: 8, Confidence: 80,
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'hours', false)).not.toThrow();
+    const result = idx.validateCsvData(data, 'hours', false);
+    expect(result).toEqual(data);
+  });
+
+  test('accepts valid fibonacci mode data', () => {
+    const data = [
+      {
+        Task: 'Task 1', Fibonacci: 5, Confidence: 90,
+      },
+      {
+        Task: 'Task 2', Fibonacci: 8, Confidence: 80,
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'fibonacci', false)).not.toThrow();
+    const result = idx.validateCsvData(data, 'fibonacci', false);
+    expect(result).toEqual(data);
+  });
+
+  test('accepts valid tshirt mode data', () => {
+    const data = [
+      {
+        Task: 'Task 1', TShirt: 'M', Confidence: 90,
+      },
+      {
+        Task: 'Task 2', TShirt: 'L', Confidence: 80,
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'tshirt', false)).not.toThrow();
+    const result = idx.validateCsvData(data, 'tshirt', false);
+    expect(result).toEqual(data);
+  });
+
+  test('validates only first 3 rows for large datasets', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 5, Max: 10, Confidence: 90,
+      },
+      {
+        Task: 'Task 2', Min: 3, Max: 8, Confidence: 80,
+      },
+      {
+        Task: 'Task 3', Min: 2, Max: 6, Confidence: 70,
+      },
+      {
+        Task: 'Task 4', Min: 'invalid', Max: 15, Confidence: 85,
+      }, // Invalid but in 4th row
+    ];
+    // Should not throw since only first 3 rows are validated
+    expect(() => idx.validateCsvData(data, 'hours', false)).not.toThrow();
+  });
+
+  test('includes Cost message when enableCost is true', () => {
+    const data = [
+      {
+        Task: 'Test Task', Confidence: 90,
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'hours', true)).toThrow('Cost (optional)');
+  });
+
+  test('handles string numbers for Min and Max', () => {
+    const data = [
+      {
+        Task: 'Test', Min: '5', Max: '10', Confidence: '90',
+      },
+    ];
+    expect(() => idx.validateCsvData(data, 'hours', false)).not.toThrow();
+  });
+});
+
+describe('AppState reset()', () => {
+  test('reset() mutates existing objects instead of creating new ones', () => {
+    // Store references to the original mapping objects
+    const fibRef = idx.fibonacciMappings;
+    const tshirtRef = idx.tshirtMappings;
+
+    // Modify the mappings
+    idx.fibonacciMappings[1] = { min: 999, max: 999 };
+    idx.tshirtMappings.XS = { min: 888, max: 888 };
+
+    // Verify modifications
+    expect(idx.fibonacciMappings[1].min).toBe(999);
+    expect(idx.tshirtMappings.XS.min).toBe(888);
+
+    // Call reset
+    idx.appState.reset();
+
+    // Verify the values are reset
+    expect(idx.fibonacciMappings[1]).toEqual({ min: 0, max: 1 });
+    expect(idx.tshirtMappings.XS).toEqual({ min: 1, max: 2 });
+
+    // Verify the objects still reference the same memory addresses
+    expect(fibRef).toBe(idx.fibonacciMappings);
+    expect(tshirtRef).toBe(idx.tshirtMappings);
+  });
+
+  test('reset() clears all existing keys before reassigning', () => {
+    // Add an extra Fibonacci number
+    idx.fibonacciMappings[55] = { min: 34, max: 55 };
+    expect(idx.fibonacciMappings).toHaveProperty('55');
+
+    // Reset should remove the extra key
+    idx.appState.reset();
+
+    // Verify the extra key is gone
+    expect(idx.fibonacciMappings).not.toHaveProperty('55');
+
+    // Verify default keys are present
+    expect(idx.fibonacciMappings).toHaveProperty('1');
+    expect(idx.fibonacciMappings).toHaveProperty('34');
+  });
+
+  test('reset() resets all state properties', () => {
+    // Modify all state properties
+    idx.appState.setEstimationMode('fibonacci');
+    idx.appState.setEnableCost(false);
+    idx.fibonacciMappings[1] = { min: 100, max: 200 };
+
+    // Reset
+    idx.appState.reset();
+
+    // Verify all properties are reset
+    expect(idx.getEstimationMode()).toBe('hours');
+    expect(idx.getEnableCost()).toBe(true);
+    expect(idx.fibonacciMappings[1]).toEqual({ min: 0, max: 1 });
+  });
+});

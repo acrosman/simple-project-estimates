@@ -81,6 +81,13 @@ test('GetMedian: Bell Curve', () => {
   expect(medianValue).toBe(6);
 });
 
+test('GetMedian: All Zeros', () => {
+  const sampleList = [0, 0, 0];
+  const medianValue = sim.getMedian(sampleList);
+  // All-zero histogram represents no data points; getMedian returns 0 in this case
+  expect(medianValue).toBe(0);
+});
+
 test('StdDev: Bell Curve', () => {
   const sampleList = [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
   const stdDev = sim.getStandardDeviation(sampleList);
