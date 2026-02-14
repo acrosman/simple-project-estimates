@@ -322,8 +322,11 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     .attr('aria-label', `Histogram showing distribution of ${xLabel}. Median: ${median.toFixed(2)}, Standard Deviation: ${stdDev.toFixed(2)}, Range: ${min} to ${max}`)
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom)
+    .style('opacity', 0)
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const renderTransition = d3.transition().duration(250).ease(d3.easeCubicOut);
 
   // Add the x axis and x-label.
   svg.append('g')
@@ -364,20 +367,26 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
         }
         return 'bar';
       })
+      .attr('transform', (d, i) => `translate(${x2(i + minBin)},${height})`);
+
+    bar.transition(renderTransition)
       .attr('transform', (d, i) => `translate(${x2(i + minBin)},${y(d)})`);
 
     // Add rectangles of correct size at correct location.
     bar.append('rect')
       .attr('x', x(binMargin))
       .attr('width', x(2 * binMargin))
+      .attr('height', 0)
+      .transition(renderTransition)
       .attr('height', (d) => height - y(d));
   } else {
     // Use Scatter plot instead of bars
-    svg.selectAll('dot')
+    const points = svg.selectAll('dot')
       .data(data)
       .join('circle')
       .attr('cx', (d, i) => x2(i + minBin))
       .attr('cy', (d) => y(d))
+      .attr('opacity', 0)
       .attr('r', (d, i) => {
         if (i === medianIndex) {
           return 3;
@@ -392,6 +401,9 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
         }
         return 'graphXY';
       });
+
+    points.transition(renderTransition)
+      .attr('opacity', 1);
 
     // Draw kernel density estimate curve
     const kdeData = calculateKDE(data, minBin, maxBin);
@@ -408,9 +420,157 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
       .attr('fill', 'none')
       .attr('stroke', '#ef4444')
       .attr('stroke-width', 2.5)
-      .attr('opacity', 0.8)
-      .attr('d', lineGenerator);
+      .attr('opacity', 0)
+      .attr('d', lineGenerator)
+      .transition(renderTransition)
+      .attr('opacity', 0.8);
   }
+
+  d3.select(targetNode)
+    .select('svg')
+    .transition(renderTransition)
+    .style('opacity', 1);
+}
+
+/**
+ * Builds a lightweight histogram preview for progressive simulation updates.
+ * Uses fixed bucket counts and no KDE for fast redraw performance.
+ * @param {HTMLElement} targetNode The DOM element to insert the graph into.
+ * @param {Array<number>} list List of values to display.
+ * @param {number} min Smallest value.
+ * @param {number} max Largest value.
+ * @param {string} xLabel X axis label.
+ */
+function buildHistogramPreview(targetNode, list, min, max, xLabel) {
+  if (min < 0 || max < min) {
+    return;
+  }
+
+  const imageWidth = 800;
+  const imageHeight = 500;
+  const margin = {
+    top: 10, right: 30, bottom: 50, left: 60,
+  };
+  const width = imageWidth - margin.left - margin.right;
+  const height = imageHeight - margin.top - margin.bottom;
+
+  const valueRange = (max - min) + 1;
+  const maxBuckets = 120;
+  const bucketCount = Math.max(1, Math.min(maxBuckets, valueRange));
+  const bucketSize = Math.max(1, Math.ceil(valueRange / bucketCount));
+  const buckets = new Array(bucketCount).fill(0);
+
+  for (let i = min; i <= max; i += 1) {
+    const bucketIndex = Math.min(Math.floor((i - min) / bucketSize), bucketCount - 1);
+    buckets[bucketIndex] += list[i] || 0;
+  }
+
+  let yMax = 0;
+  for (const bucketValue of buckets) {
+    if (bucketValue > yMax) {
+      yMax = bucketValue;
+    }
+  }
+
+  if (yMax < 1) {
+    return;
+  }
+
+  const x = d3.scaleLinear()
+    .domain([0, bucketCount])
+    .range([0, width]);
+
+  const x2 = d3.scaleLinear()
+    .domain([min, max])
+    .range([0, width]);
+
+  const y = d3.scaleLinear()
+    .domain([0, yMax])
+    .range([height, 0]);
+
+  const xAxis = d3.axisBottom().scale(x2).ticks(8);
+  const yAxis = d3.axisLeft().scale(y).ticks(8);
+
+  const container = d3.select(targetNode);
+  let svg = container.select('svg.preview-svg');
+
+  if (svg.empty()) {
+    targetNode.innerHTML = '';
+    svg = container.append('svg')
+      .attr('class', 'preview-svg')
+      .attr('role', 'img');
+
+    const root = svg.append('g')
+      .attr('class', 'preview-root');
+
+    root.append('g').attr('class', 'x axis');
+    root.append('text')
+      .attr('class', 'xLabel')
+      .attr('text-anchor', 'middle');
+
+    root.append('g').attr('class', 'y axis');
+    root.append('text')
+      .attr('class', 'yLabel')
+      .attr('dy', '1em')
+      .attr('transform', 'rotate(-90)')
+      .style('text-anchor', 'middle')
+      .text('Frequency');
+  }
+
+  svg
+    .attr('aria-label', `Histogram preview showing distribution of ${xLabel}. Range: ${min} to ${max}`)
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+
+  const root = svg.select('g.preview-root')
+    .attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const barWidth = Math.max((width / bucketCount) - 1, 1);
+  const renderTransition = d3.transition().duration(180).ease(d3.easeCubicOut);
+
+  root.select('.x.axis')
+    .attr('transform', `translate(0,${height})`)
+    .transition(renderTransition)
+    .call(xAxis);
+
+  root.select('.xLabel')
+    .attr('x', width / 2)
+    .attr('y', height + margin.bottom)
+    .text(xLabel);
+
+  root.select('.y.axis')
+    .transition(renderTransition)
+    .call(yAxis);
+
+  root.select('.yLabel')
+    .attr('y', 0 - margin.left)
+    .attr('x', 0 - (height / 2));
+
+  const bars = root.selectAll('rect.preview-bar')
+    .data(buckets, (d, i) => i);
+
+  bars.join(
+    (enter) => enter.append('rect')
+      .attr('class', 'preview-bar')
+      .attr('x', (d, i) => x(i) + 0.5)
+      .attr('width', barWidth)
+      .attr('y', height)
+      .attr('height', 0)
+      .call((selection) => selection.transition(renderTransition)
+        .attr('y', (d) => y(d))
+        .attr('height', (d) => height - y(d))),
+    (update) => update
+      .call((selection) => selection.transition(renderTransition)
+        .attr('x', (d, i) => x(i) + 0.5)
+        .attr('width', barWidth)
+        .attr('y', (d) => y(d))
+        .attr('height', (d) => height - y(d))),
+    (exit) => exit
+      .call((selection) => selection.transition(renderTransition)
+        .attr('y', height)
+        .attr('height', 0)
+        .remove()),
+  );
 }
 
 /**
@@ -560,8 +720,207 @@ function runSimulation(passes, data) {
   return results;
 }
 
+/**
+ * Yields execution to allow UI updates between simulation batches.
+ * @returns {Promise<void>} Promise that resolves on next event loop turn.
+ */
+function pauseForUiUpdate() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+/**
+ * Runs simulation asynchronously and reports intermediate histogram progress.
+ * @param {Integer} passes Number of simulation passes.
+ * @param {Object} data Task input data.
+ * @param {Function} onProgress Callback invoked with intermediate histogram state.
+ * @param {number} progressInterval Number of passes between progress callbacks.
+ * @returns {Promise<Object>} Full simulation results.
+ */
+async function runSimulationProgressive(passes, data, onProgress = null, progressInterval = 1000) {
+  const totalPasses = parseInt(passes, 10);
+  const updateInterval = Math.max(1, parseInt(progressInterval, 10) || 1000);
+  const upperTimeBound = calculateUpperBound(data);
+  const upperCostBound = calculateUpperBound(data, true);
+  const times = new Array(upperTimeBound + 1).fill(0);
+  const costs = new Array(upperCostBound + 1).fill(0);
+  const taskOutcomes = {};
+  const estimates = {
+    times: [],
+    costs: [],
+  };
+  const estimateDetails = [];
+  const startTime = Date.now();
+  let minTime = -1;
+  let maxTime = 0;
+  let minCost = -1;
+  let maxCost = 0;
+  let endTime = 0;
+  let totalTime = 0;
+  let totalCost = 0;
+  let outcome = {};
+
+  for (const row of data) {
+    const taskTimeUpperBound = taskUpperBound(row.Max, row.Confidence);
+    const taskCostUpperBound = taskTimeUpperBound * row.Cost;
+    const rowId = row.RowId || row.Name;
+    taskOutcomes[rowId] = {
+      rowId,
+      name: row.Name,
+      times: {
+        min: -1,
+        max: 0,
+        list: new Array(taskTimeUpperBound + 1).fill(0),
+      },
+      costs: {
+        min: -1,
+        max: 0,
+        list: new Array(taskCostUpperBound + 1).fill(0),
+      },
+    };
+  }
+
+  const runBatch = (startIndex) => {
+    const endIndex = Math.min(startIndex + updateInterval, totalPasses);
+
+    for (let i = startIndex; i < endIndex; i += 1) {
+      totalTime = 0;
+      totalCost = 0;
+      outcome = {};
+
+      for (const row of data) {
+        const rowId = row.RowId || row.Name;
+        const taskOutcome = taskOutcomes[rowId];
+        const taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
+        const taskCost = taskTime * row.Cost;
+        totalTime += taskTime;
+        totalCost += taskCost;
+        outcome[row.Name] = {
+          time: taskTime,
+          cost: taskCost,
+        };
+
+        taskOutcome.times.list[taskTime] += 1;
+        taskOutcome.costs.list[taskCost] += 1;
+        if (taskOutcome.times.min === -1 || taskTime < taskOutcome.times.min) {
+          taskOutcome.times.min = taskTime;
+        }
+        if (taskTime > taskOutcome.times.max) {
+          taskOutcome.times.max = taskTime;
+        }
+        if (taskOutcome.costs.min === -1 || taskCost < taskOutcome.costs.min) {
+          taskOutcome.costs.min = taskCost;
+        }
+        if (taskCost > taskOutcome.costs.max) {
+          taskOutcome.costs.max = taskCost;
+        }
+      }
+
+      times[totalTime] += 1;
+      costs[totalCost] += 1;
+      estimates.times.push(totalTime);
+      estimates.costs.push(totalCost);
+      estimateDetails.push(outcome);
+      if (totalTime < minTime || minTime === -1) { minTime = totalTime; }
+      if (totalTime > maxTime) { maxTime = totalTime; }
+      if (totalCost < minCost || minCost === -1) { minCost = totalCost; }
+      if (totalCost > maxCost) { maxCost = totalCost; }
+    }
+
+    const processedPasses = endIndex;
+    const hasMoreBatches = endIndex < totalPasses;
+    const shouldUpdate = typeof onProgress === 'function'
+      && (processedPasses % updateInterval === 0 || !hasMoreBatches);
+
+    if (shouldUpdate) {
+      onProgress({
+        processedPasses,
+        totalPasses,
+        times: {
+          list: times,
+          min: minTime,
+          max: maxTime,
+        },
+        costs: {
+          list: costs,
+          min: minCost,
+          max: maxCost,
+        },
+      });
+    }
+
+    if (!hasMoreBatches) {
+      return Promise.resolve();
+    }
+
+    if (shouldUpdate) {
+      return pauseForUiUpdate().then(() => runBatch(endIndex));
+    }
+
+    return runBatch(endIndex);
+  };
+
+  await runBatch(0);
+  endTime = Date.now();
+
+  const taskResults = Object.values(taskOutcomes).map((task) => {
+    const result = {
+      rowId: task.rowId,
+      name: task.name,
+      times: {
+        ...task.times,
+        median: getMedian(task.times.list),
+        sd: getStandardDeviation(task.times.list),
+      },
+      costs: {
+        ...task.costs,
+        median: getMedian(task.costs.list),
+        sd: getStandardDeviation(task.costs.list),
+      },
+    };
+
+    result.times.likelyMin = Math.round(result.times.median - result.times.sd);
+    result.times.likelyMax = Math.round(result.times.median + result.times.sd);
+    result.costs.likelyMin = Math.round(result.costs.median - result.costs.sd);
+    result.costs.likelyMax = Math.round(result.costs.median + result.costs.sd);
+
+    return result;
+  });
+
+  const runningTime = endTime - startTime;
+  const results = {
+    runningTime,
+    estimateDetails,
+    taskResults,
+    times: {
+      median: getMedian(times),
+      sd: getStandardDeviation(times),
+      min: minTime,
+      max: maxTime,
+      list: times,
+    },
+    costs: {
+      median: getMedian(costs),
+      sd: getStandardDeviation(costs),
+      min: minCost,
+      max: maxCost,
+      list: costs,
+    },
+  };
+
+  results.times.likelyMin = Math.round(results.times.median - results.times.sd);
+  results.times.likelyMax = Math.round(results.times.median + results.times.sd);
+  results.costs.likelyMin = Math.round(results.costs.median - results.costs.sd);
+  results.costs.likelyMax = Math.round(results.costs.median + results.costs.sd);
+
+  return results;
+}
+
 export {
   runSimulation,
+  runSimulationProgressive,
+  buildHistogramPreview,
   buildHistogram,
   getRandom,
   getValueCount,
