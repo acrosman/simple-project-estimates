@@ -858,7 +858,7 @@ async function runSimulationProgressive(passes, data, onProgress = null, progres
       return pauseForUiUpdate().then(() => runBatch(endIndex));
     }
 
-    return runBatch(endIndex);
+    return pauseForUiUpdate().then(() => runBatch(endIndex));
   };
 
   await runBatch(0);
