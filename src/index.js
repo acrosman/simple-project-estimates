@@ -1215,6 +1215,24 @@ async function startSimulation(event) {
       document.getElementById('costEstimateHeader').style.display = 'none';
       document.getElementById('costSaveButtons').style.display = 'none';
     }
+  } catch (error) {
+    console.error('Simulation failed:', error);
+
+    // Display user-friendly error message
+    const errorDiv = document.createElement('div');
+    errorDiv.setAttribute('role', 'alert');
+    errorDiv.setAttribute('aria-live', 'assertive');
+    errorDiv.classList.add('error-message');
+    errorDiv.textContent = 'Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.';
+
+    const resultsDiv = document.getElementById('results');
+    if (resultsDiv) {
+      const existingError = resultsDiv.querySelector('.error-message');
+      if (existingError) {
+        existingError.remove();
+      }
+      resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
+    }
   } finally {
     clearInterval(stopwatchInterval);
     if (runButton) {
