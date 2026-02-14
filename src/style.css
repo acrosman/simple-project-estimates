@@ -34,20 +34,6 @@ input[type="button"] {
   display: block;
 }
 
-/* Required Field Indicators */
-input[required]:not([type="button"]) {
-  border-left: 3px solid #005fcc;
-}
-
-input[required]:invalid:not([type="button"]) {
-  border-left-color: #c62828;
-}
-
-/* Visual indicator for required fields in table headers */
-.th::after {
-  color: #c62828;
-}
-
 .save-buttons {
   margin: 1em 0;
 }
@@ -111,14 +97,29 @@ input[required]:invalid:not([type="button"]) {
 }
 
 /* Data Entry Table */
+.data-entry input[type="number"],
+.data-entry input[type="text"] {
+  padding: 0.3em;
+  border: 1px solid #767676;
+  border-radius: 3px;
+}
+
 .data-entry input[type="number"] {
   width: 80px;
-  padding: 0.3em;
 }
 
 .data-entry input[type="text"] {
   min-width: 150px;
-  padding: 0.3em;
+}
+
+/* Required Field Indicators */
+input[required]:not([type="button"]) {
+  border-left-width: 3px;
+  border-left-color: #005fcc;
+}
+
+input[required]:invalid:not([type="button"]) {
+  border-left-color: #c62828;
 }
 
 /* Graph Elements */
