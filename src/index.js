@@ -239,6 +239,13 @@ function generateDataRow(
   const conf = generateDataField('Confidence', confidence, 'number', rowId, true);
   const cost = generateDataField('Cost', hourlyCost, 'number', rowId);
   const rmButton = generateDataField('Clear Row', 'Clear Row', 'button', rowId);
+  const taskGraphCell = document.createElement('div');
+  taskGraphCell.classList.add('td', 'task-row-graph-cell');
+  taskGraphCell.setAttribute('role', 'cell');
+  const taskGraph = document.createElement('div');
+  taskGraph.classList.add('task-row-graph');
+  taskGraph.dataset.rowId = rowId;
+  taskGraphCell.appendChild(taskGraph);
 
   // Add click event handler for the clear button.
   /**
@@ -307,6 +314,7 @@ function generateDataRow(
     row.appendChild(cost);
   }
 
+  row.appendChild(taskGraphCell);
   row.appendChild(rmButton);
 
   return row;
@@ -353,6 +361,7 @@ function createEntryTable(data = []) {
     header.appendChild(createTextElement('div', 'Hourly Cost', ['th'], 'columnheader'));
   }
 
+  header.appendChild(createTextElement('div', 'Task Outcomes', ['th'], 'columnheader'));
   header.appendChild(createTextElement('div', '', ['th'], 'columnheader'));
 
   form.appendChild(header);
@@ -813,6 +822,99 @@ function updateElementText(id, content) {
 }
 
 /**
+ * Builds a compact histogram visualization for a single task row.
+ * @param {HTMLElement} targetNode Graph container for one task row.
+ * @param {Array<number>} list Task histogram data.
+ * @param {number} min Minimum simulated value.
+ * @param {number} max Maximum simulated value.
+ * @param {string} taskName Task display name.
+ */
+function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
+  targetNode.innerHTML = '';
+
+  if (min < 0 || max < min) {
+    return;
+  }
+
+  const graphWidth = 140;
+  const graphHeight = 26;
+  const maxBuckets = 24;
+  const valueRange = max - min + 1;
+  const bucketCount = Math.min(maxBuckets, valueRange);
+  const bucketSize = Math.ceil(valueRange / bucketCount);
+  const buckets = new Array(bucketCount).fill(0);
+
+  for (let i = min; i <= max; i += 1) {
+    const bucketIndex = Math.min(Math.floor((i - min) / bucketSize), bucketCount - 1);
+    buckets[bucketIndex] += list[i];
+  }
+
+  let peak = 0;
+  for (const value of buckets) {
+    if (value > peak) {
+      peak = value;
+    }
+  }
+
+  if (peak === 0) {
+    return;
+  }
+
+  const svgNs = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNs, 'svg');
+  svg.setAttribute('width', String(graphWidth));
+  svg.setAttribute('height', String(graphHeight));
+  svg.setAttribute('viewBox', `0 0 ${graphWidth} ${graphHeight}`);
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', `Task outcome histogram for ${taskName || 'task'}`);
+
+  const gap = 1;
+  const barWidth = Math.max((graphWidth / bucketCount) - gap, 1);
+
+  for (let i = 0; i < buckets.length; i += 1) {
+    const bucketValue = buckets[i];
+    const barHeight = Math.max((bucketValue / peak) * graphHeight, 1);
+    const rect = document.createElementNS(svgNs, 'rect');
+    rect.setAttribute('x', String(i * (barWidth + gap)));
+    rect.setAttribute('y', String(graphHeight - barHeight));
+    rect.setAttribute('width', String(barWidth));
+    rect.setAttribute('height', String(barHeight));
+    rect.setAttribute('class', 'task-row-mini-bar');
+    svg.appendChild(rect);
+  }
+
+  targetNode.appendChild(svg);
+}
+
+/**
+ * Renders mini histograms for all task rows from simulation output.
+ * @param {Array} taskResults Per-task simulation results.
+ */
+function renderTaskRowHistograms(taskResults) {
+  const rowGraphs = document.querySelectorAll('.task-row-graph');
+  for (const graphNode of rowGraphs) {
+    graphNode.innerHTML = '';
+  }
+
+  if (!taskResults || taskResults.length < 1) {
+    return;
+  }
+
+  for (const taskResult of taskResults) {
+    const graphNode = document.querySelector(`.task-row-graph[data-row-id="${taskResult.rowId}"]`);
+    if (graphNode) {
+      buildTaskRowHistogram(
+        graphNode,
+        taskResult.times.list,
+        taskResult.times.min,
+        taskResult.times.max,
+        taskResult.name,
+      );
+    }
+  }
+}
+
+/**
  * Saves an SVG element as a PNG or JPEG image
  * @param {string} svgContainerId ID of the element containing the SVG
  * @param {string} filename Name for the downloaded file
@@ -913,12 +1015,16 @@ function startSimulation(event) {
   const graphSetting = document.getElementById('LimitGraph').checked;
   const data = [];
 
+  // Clear any previous task-level graphs immediately for this run.
+  renderTaskRowHistograms([]);
+
   // Gather the task information.
   const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
   let inputs;
   let taskDetail;
   for (const t of tasks) {
     taskDetail = {};
+    taskDetail.RowId = t.dataset.rowId;
     inputs = t.getElementsByTagName('input');
     for (const i of inputs) {
       switch (i.name) {
@@ -1031,6 +1137,9 @@ function startSimulation(event) {
     updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
     updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
   }
+
+  // Render row-level task distributions as soon as simulation data is available.
+  renderTaskRowHistograms(results.taskResults);
 
   // Build and display histograms.
   sim.buildHistogram(
@@ -1381,6 +1490,8 @@ export {
   createDivWithIdAndClasses,
   generateDataField,
   updateElementText,
+  buildTaskRowHistogram,
+  renderTaskRowHistograms,
   updateFibonacciMapping,
   updateTshirtMapping,
   getNextFibonacci,

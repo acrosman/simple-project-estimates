@@ -135,6 +135,7 @@ test('CalculateKDE: Handles sparse data', () => {
 test('RunSimulation: Single Task', () => {
   const tasks = [
     {
+      RowId: '1',
       Name: 'Test Task',
       Min: 36,
       Max: 73,
@@ -156,6 +157,16 @@ test('RunSimulation: Single Task', () => {
   expect(results.times.likelyMax).not.toBeNaN();
   expect(results.costs.likelyMin).not.toBeNaN();
   expect(results.costs.likelyMax).not.toBeNaN();
+
+  // Task-level outcome histograms should be available for row-level charts.
+  expect(Array.isArray(results.taskResults)).toBe(true);
+  expect(results.taskResults).toHaveLength(1);
+  expect(results.taskResults[0].rowId).toBe('1');
+  expect(results.taskResults[0].name).toBe('Test Task');
+  expect(results.taskResults[0].times.list).toBeDefined();
+  expect(results.taskResults[0].times.min).toBeGreaterThanOrEqual(0);
+  expect(results.taskResults[0].times.max).toBeGreaterThanOrEqual(results.taskResults[0].times.min);
+  expect(results.taskResults[0].times.sd).not.toBeNaN();
 });
 
 // Tests for taskUpperBound function
