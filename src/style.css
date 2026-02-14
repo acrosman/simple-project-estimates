@@ -253,7 +253,7 @@ input[required]:invalid:not([type="button"]) {
     padding: 0;
   }
 
-  /* Hide input controls and non-essential elements - use visibility to completely remove */
+  /* Hide input controls and non-essential elements */
   .wrapper-mode-selector,
   .wrapper-file-load,
   .wrapper-direct-load .header,
@@ -265,11 +265,6 @@ input[required]:invalid:not([type="button"]) {
   button,
   input[type="button"] {
     display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
   }
 
   /* Hide the Simulator heading since controls are hidden */

@@ -6,6 +6,16 @@ import sampleFibData from './data/sample-fib.csv';
 import sampleTshirtData from './data/sample-tshirt.csv';
 import * as sim from './simulation';
 
+/**
+ * Configuration constants for mini task row graphs
+ */
+const MINI_GRAPH_CONFIG = {
+  WIDTH: 140,
+  HEIGHT: 26,
+  MAX_BUCKETS: 24,
+  GAP: 1, // Gap between bars
+};
+
 // ============= Application State Management =================
 /**
  * Manages application state in a testable, encapsulated way.
@@ -358,6 +368,14 @@ function generateDataRow(
     }
   };
   rmButton.firstElementChild.addEventListener('click', rowClearClickHandler);
+
+  // Add keyboard event handler for accessibility
+  rmButton.firstElementChild.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      rowClearClickHandler(e);
+    }
+  });
 
   row.appendChild(task);
 
@@ -864,6 +882,58 @@ function handleModeChange(event) {
 
 // ============= Interface Behaviors ================
 /**
+ * Validates CSV data structure and content. Pure function for testing.
+ * @param {Array} data Parsed CSV data as array of objects
+ * @param {string} estimationMode Current estimation mode ('hours', 'fibonacci', 'tshirt')
+ * @param {boolean} enableCost Whether cost tracking is enabled
+ * @returns {Array} Validated data array
+ * @throws {Error} If validation fails
+ */
+function validateCsvData(data, estimationMode, enableCost) {
+  // Validate CSV data has required structure
+  if (!data || data.length === 0) {
+    throw new Error('CSV file is empty or contains no data rows.');
+  }
+
+  // Check for required columns based on current estimation mode
+  const requiredColumns = ['Task', 'Confidence'];
+  if (estimationMode === 'hours') {
+    requiredColumns.push('Min', 'Max');
+  } else if (estimationMode === 'fibonacci') {
+    requiredColumns.push('Fibonacci');
+  } else if (estimationMode === 'tshirt') {
+    requiredColumns.push('TShirt');
+  }
+
+  const firstRow = data[0];
+  const missingColumns = requiredColumns.filter((col) => !(col in firstRow));
+
+  if (missingColumns.length > 0) {
+    throw new Error(`Missing required columns: ${missingColumns.join(', ')}. Expected columns: ${requiredColumns.join(', ')}${enableCost ? ', Cost (optional)' : ''}.`);
+  }
+
+  // Validate data types for first few rows
+  for (let i = 0; i < Math.min(3, data.length); i += 1) {
+    const row = data[i];
+    if (estimationMode === 'hours') {
+      if (row.Min && Number.isNaN(Number(row.Min))) {
+        throw new Error(`Invalid Min value "${row.Min}" in row ${i + 1}. Must be a number.`);
+      }
+      if (row.Max && Number.isNaN(Number(row.Max))) {
+        throw new Error(`Invalid Max value "${row.Max}" in row ${i + 1}. Must be a number.`);
+      }
+    }
+    const confidence = Number(row.Confidence);
+    if (row.Confidence && (Number.isNaN(confidence)
+      || confidence < 0 || confidence > 100)) {
+      throw new Error(`Invalid Confidence value "${row.Confidence}" in row ${i + 1}. Must be a number between 0 and 100.`);
+    }
+  }
+
+  return data;
+}
+
+/**
  * Client event handler for the import button
  * @param {Event} event Fired event.
  */
@@ -877,47 +947,9 @@ function importCsvFile(event) {
       const dataUrl = evt.target.result;
       // The following call results in an "Access denied" error in IE.
       csv(dataUrl).then((data) => {
-        // Validate CSV data has required structure
-        if (!data || data.length === 0) {
-          throw new Error('CSV file is empty or contains no data rows.');
-        }
-
-        // Check for required columns based on current estimation mode
-        const requiredColumns = ['Task', 'Confidence'];
-        if (appState.estimationMode === 'hours') {
-          requiredColumns.push('Min', 'Max');
-        } else if (appState.estimationMode === 'fibonacci') {
-          requiredColumns.push('Fibonacci');
-        } else if (appState.estimationMode === 'tshirt') {
-          requiredColumns.push('TShirt');
-        }
-
-        const firstRow = data[0];
-        const missingColumns = requiredColumns.filter((col) => !(col in firstRow));
-
-        if (missingColumns.length > 0) {
-          throw new Error(`Missing required columns: ${missingColumns.join(', ')}. Expected columns: ${requiredColumns.join(', ')}${appState.enableCost ? ', Cost (optional)' : ''}.`);
-        }
-
-        // Validate data types for first few rows
-        for (let i = 0; i < Math.min(3, data.length); i += 1) {
-          const row = data[i];
-          if (appState.estimationMode === 'hours') {
-            if (row.Min && Number.isNaN(Number(row.Min))) {
-              throw new Error(`Invalid Min value "${row.Min}" in row ${i + 1}. Must be a number.`);
-            }
-            if (row.Max && Number.isNaN(Number(row.Max))) {
-              throw new Error(`Invalid Max value "${row.Max}" in row ${i + 1}. Must be a number.`);
-            }
-          }
-          const confidence = Number(row.Confidence);
-          if (row.Confidence && (Number.isNaN(confidence)
-            || confidence < 0 || confidence > 100)) {
-            throw new Error(`Invalid Confidence value "${row.Confidence}" in row ${i + 1}. Must be a number between 0 and 100.`);
-          }
-        }
-
-        createEntryTable(data);
+        // Validate CSV data using pure function
+        const validatedData = validateCsvData(data, appState.estimationMode, appState.enableCost);
+        createEntryTable(validatedData);
       }).catch((error) => {
         const errorDiv = document.createElement('div');
         errorDiv.setAttribute('role', 'alert');
@@ -968,9 +1000,9 @@ function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
     return;
   }
 
-  const graphWidth = 140;
-  const graphHeight = 26;
-  const maxBuckets = 24;
+  const graphWidth = MINI_GRAPH_CONFIG.WIDTH;
+  const graphHeight = MINI_GRAPH_CONFIG.HEIGHT;
+  const maxBuckets = MINI_GRAPH_CONFIG.MAX_BUCKETS;
   const valueRange = max - min + 1;
   const bucketCount = Math.min(maxBuckets, valueRange);
   const bucketSize = Math.ceil(valueRange / bucketCount);
@@ -1000,7 +1032,7 @@ function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
   svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label', `Task outcome histogram for ${taskName || 'task'}`);
 
-  const gap = 1;
+  const gap = MINI_GRAPH_CONFIG.GAP;
   const barWidth = Math.max((graphWidth / bucketCount) - gap, 1);
 
   for (let i = 0; i < buckets.length; i += 1) {
@@ -1739,6 +1771,7 @@ export {
   saveSvgAsImage,
   isRowEmpty,
   appState,
+  validateCsvData,
 };
 
 // Export getter functions for mutable state
