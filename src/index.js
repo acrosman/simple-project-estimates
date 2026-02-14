@@ -1223,14 +1223,16 @@ async function startSimulation(event) {
     errorDiv.setAttribute('role', 'alert');
     errorDiv.setAttribute('aria-live', 'assertive');
     errorDiv.classList.add('error-message');
-    errorDiv.textContent = 'Simulation failed unexpectedly. Please try again or check your input data.';
+    errorDiv.textContent = 'Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.';
 
     const resultsDiv = document.getElementById('results');
-    const existingError = resultsDiv.querySelector('.error-message');
-    if (existingError) {
-      existingError.remove();
+    if (resultsDiv) {
+      const existingError = resultsDiv.querySelector('.error-message');
+      if (existingError) {
+        existingError.remove();
+      }
+      resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
     }
-    resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
   } finally {
     clearInterval(stopwatchInterval);
     if (runButton) {
