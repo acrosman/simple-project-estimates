@@ -1009,7 +1009,7 @@ function saveSvgAsImage(svgContainerId, filename, format = 'png') {
  * Triggers the start of the simulation run with the current values.
  * @param {Event} event
  */
-function startSimulation(event) {
+async function startSimulation(event) {
   event.preventDefault();
   const passCount = document.getElementById('simulationPasses').value;
   const graphSetting = document.getElementById('LimitGraph').checked;
@@ -1114,67 +1114,131 @@ function startSimulation(event) {
     return;
   }
 
-  // Run Main simulator.
-  const results = sim.runSimulation(passCount, data);
+  const runButton = document.getElementById('startSimulationButton');
+  const runStartTime = Date.now();
+  const updateRunningTimeDisplay = (runningTime) => {
+    updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${runningTime}`);
+  };
+  const stopwatchInterval = setInterval(() => {
+    updateRunningTimeDisplay(Date.now() - runStartTime);
+  }, 100);
 
-  // Display summary data.
-  const currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  });
-  updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
-  updateElementText('simulationTimeMedian', `Median Time: ${results.times.median}`);
-  updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax}`);
-  updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
-  updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
-  updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
-
-  // Only display cost results if cost tracking is enabled
-  if (enableCost) {
-    updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
-    updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
-    updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(results.costs.max)}`);
-    updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
-    updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
+  if (runButton) {
+    runButton.disabled = true;
+    runButton.value = 'Running...';
   }
 
-  // Render row-level task distributions as soon as simulation data is available.
-  renderTaskRowHistograms(results.taskResults);
+  updateRunningTimeDisplay(0);
 
-  // Build and display histograms.
-  sim.buildHistogram(
-    document.getElementById('timeHistoGram'),
-    results.times.list,
-    results.times.min,
-    results.times.max,
-    results.times.median,
-    results.times.sd,
-    'Hours',
-    graphSetting,
-  );
-  // Show time estimate header and save buttons now that graph is generated
-  document.getElementById('timeEstimateHeader').style.display = 'block';
-  document.getElementById('timeSaveButtons').style.display = 'block';
-
-  // Only build cost histogram if cost tracking is enabled
-  if (enableCost) {
-    sim.buildHistogram(
-      document.getElementById('costHistoGram'),
-      results.costs.list,
-      results.costs.min,
-      results.costs.max,
-      results.costs.median,
-      results.costs.sd,
-      'Cost',
-      graphSetting,
-    );
-    // Show cost estimate header and save buttons now that graph is generated
-    document.getElementById('costEstimateHeader').style.display = 'block';
-    document.getElementById('costSaveButtons').style.display = 'block';
-  } else {
-    // Hide cost estimate header and save buttons if cost tracking is disabled
+  try {
+    // Run main simulator with progressive graph updates.
+    document.getElementById('costHistoGram').innerHTML = '';
     document.getElementById('costEstimateHeader').style.display = 'none';
     document.getElementById('costSaveButtons').style.display = 'none';
+
+    const graphProgressInterval = 1000;
+    const results = await sim.runSimulationProgressive(
+      passCount,
+      data,
+      (progress) => {
+        if (progress.times.min > -1 && progress.times.max >= progress.times.min) {
+          sim.buildHistogramPreview(
+            document.getElementById('timeHistoGram'),
+            progress.times.list,
+            progress.times.min,
+            progress.times.max,
+            'Hours',
+          );
+          document.getElementById('timeEstimateHeader').style.display = 'block';
+          document.getElementById('timeSaveButtons').style.display = 'block';
+        }
+      },
+      graphProgressInterval,
+    );
+
+    // Display summary data.
+    const currencyFormatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    });
+    updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
+    updateElementText('simulationTimeMedian', `Median Time: ${results.times.median}`);
+    updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax}`);
+    updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
+    updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
+    updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
+
+    // Only display cost results if cost tracking is enabled
+    if (enableCost) {
+      updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
+      updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
+      updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(results.costs.max)}`);
+      updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(results.costs.min)}`);
+      updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
+    }
+
+    // Render row-level task distributions as soon as simulation data is available.
+    renderTaskRowHistograms(results.taskResults);
+
+    // Build and display histograms.
+    sim.buildHistogram(
+      document.getElementById('timeHistoGram'),
+      results.times.list,
+      results.times.min,
+      results.times.max,
+      results.times.median,
+      results.times.sd,
+      'Hours',
+      graphSetting,
+    );
+    // Show time estimate header and save buttons now that graph is generated
+    document.getElementById('timeEstimateHeader').style.display = 'block';
+    document.getElementById('timeSaveButtons').style.display = 'block';
+
+    // Only build cost histogram if cost tracking is enabled
+    if (enableCost) {
+      sim.buildHistogram(
+        document.getElementById('costHistoGram'),
+        results.costs.list,
+        results.costs.min,
+        results.costs.max,
+        results.costs.median,
+        results.costs.sd,
+        'Cost',
+        graphSetting,
+      );
+      // Show cost estimate header and save buttons now that graph is generated
+      document.getElementById('costEstimateHeader').style.display = 'block';
+      document.getElementById('costSaveButtons').style.display = 'block';
+    } else {
+      // Hide cost estimate header and save buttons if cost tracking is disabled
+      document.getElementById('costEstimateHeader').style.display = 'none';
+      document.getElementById('costSaveButtons').style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Simulation failed:', error);
+
+    // Display user-friendly error message
+    const errorDiv = document.createElement('div');
+    errorDiv.setAttribute('role', 'alert');
+    errorDiv.setAttribute('aria-live', 'assertive');
+    errorDiv.classList.add('error-message');
+    errorDiv.textContent = 'Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.';
+
+    const resultsDiv = document.getElementById('results');
+    if (resultsDiv) {
+      const existingError = resultsDiv.querySelector('.error-message');
+      if (existingError) {
+        existingError.remove();
+      }
+      resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
+    }
+  } finally {
+    clearInterval(stopwatchInterval);
+    if (runButton) {
+      runButton.disabled = false;
+      runButton.value = 'Run Simulation';
+    }
   }
 }
 

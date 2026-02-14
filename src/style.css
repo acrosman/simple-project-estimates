@@ -159,6 +159,10 @@ input[required]:invalid:not([type="button"]) {
   fill: steelblue;
 }
 
+.preview-bar {
+  fill: steelblue;
+}
+
 .graphXY {
   fill: lightblue;
 }
