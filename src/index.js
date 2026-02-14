@@ -123,8 +123,10 @@ function handleMappingTabNavigation(event, keyField, orderedKeys) {
     return;
   }
 
-  const currentKey = event.target?.dataset?.[keyField];
-  const currentType = event.target?.dataset?.type;
+  const target = event && event.target ? event.target : null;
+  const dataset = target && target.dataset ? target.dataset : null;
+  const currentKey = dataset ? dataset[keyField] : null;
+  const currentType = dataset ? dataset.type : null;
   if (!currentKey || !currentType) {
     return;
   }
