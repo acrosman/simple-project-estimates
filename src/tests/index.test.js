@@ -1104,3 +1104,61 @@ describe('validateCsvData', () => {
     expect(() => idx.validateCsvData(data, 'hours', false)).not.toThrow();
   });
 });
+
+describe('AppState reset()', () => {
+  test('reset() mutates existing objects instead of creating new ones', () => {
+    // Store references to the original mapping objects
+    const fibRef = idx.fibonacciMappings;
+    const tshirtRef = idx.tshirtMappings;
+
+    // Modify the mappings
+    idx.fibonacciMappings[1] = { min: 999, max: 999 };
+    idx.tshirtMappings.XS = { min: 888, max: 888 };
+
+    // Verify modifications
+    expect(idx.fibonacciMappings[1].min).toBe(999);
+    expect(idx.tshirtMappings.XS.min).toBe(888);
+
+    // Call reset
+    idx.appState.reset();
+
+    // Verify the values are reset
+    expect(idx.fibonacciMappings[1]).toEqual({ min: 0, max: 1 });
+    expect(idx.tshirtMappings.XS).toEqual({ min: 1, max: 2 });
+
+    // Verify the objects still reference the same memory addresses
+    expect(fibRef).toBe(idx.fibonacciMappings);
+    expect(tshirtRef).toBe(idx.tshirtMappings);
+  });
+
+  test('reset() clears all existing keys before reassigning', () => {
+    // Add an extra Fibonacci number
+    idx.fibonacciMappings[55] = { min: 34, max: 55 };
+    expect(idx.fibonacciMappings).toHaveProperty('55');
+
+    // Reset should remove the extra key
+    idx.appState.reset();
+
+    // Verify the extra key is gone
+    expect(idx.fibonacciMappings).not.toHaveProperty('55');
+
+    // Verify default keys are present
+    expect(idx.fibonacciMappings).toHaveProperty('1');
+    expect(idx.fibonacciMappings).toHaveProperty('34');
+  });
+
+  test('reset() resets all state properties', () => {
+    // Modify all state properties
+    idx.appState.setEstimationMode('fibonacci');
+    idx.appState.setEnableCost(false);
+    idx.fibonacciMappings[1] = { min: 100, max: 200 };
+
+    // Reset
+    idx.appState.reset();
+
+    // Verify all properties are reset
+    expect(idx.getEstimationMode()).toBe('hours');
+    expect(idx.getEnableCost()).toBe(true);
+    expect(idx.fibonacciMappings[1]).toEqual({ min: 0, max: 1 });
+  });
+});

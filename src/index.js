@@ -74,7 +74,17 @@ class AppState {
   reset() {
     this.estimationMode = 'hours';
     this.enableCost = true;
-    this.fibonacciMappings = {
+
+    // Clear existing mappings
+    Object.keys(this.fibonacciMappings).forEach((key) => {
+      delete this.fibonacciMappings[key];
+    });
+    Object.keys(this.tshirtMappings).forEach((key) => {
+      delete this.tshirtMappings[key];
+    });
+
+    // Reassign default values to the same objects
+    Object.assign(this.fibonacciMappings, {
       1: { min: 0, max: 1 },
       2: { min: 1, max: 2 },
       3: { min: 2, max: 3 },
@@ -83,15 +93,15 @@ class AppState {
       13: { min: 8, max: 13 },
       21: { min: 13, max: 21 },
       34: { min: 21, max: 34 },
-    };
-    this.tshirtMappings = {
+    });
+    Object.assign(this.tshirtMappings, {
       XS: { min: 1, max: 2 },
       S: { min: 2, max: 3 },
       M: { min: 3, max: 5 },
       L: { min: 5, max: 8 },
       XL: { min: 8, max: 13 },
       XXL: { min: 13, max: 21 },
-    };
+    });
   }
 }
 
