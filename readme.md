@@ -166,6 +166,55 @@ Each Fibonacci number maps to an hour range:
 
 The project leverages [D3](https://d3js.org/) for the histogram visualization.
 
+## Advanced Graph Settings
+
+For power users who want to customize the visualization appearance, the tool includes an **Advanced Graph Settings** panel located in the simulation section.
+
+### Accessing Advanced Settings
+
+1. Scroll to the simulation controls area
+2. Click on "Advanced Graph Settings" to expand the panel
+3. Modify any settings you wish to change
+4. Click "Apply Settings" to use your custom values
+5. Click "Reset to Defaults" to restore original values
+
+### Available Settings
+
+#### Main Histogram Settings
+
+- **Width (px)**: Width of the main time/cost histogram graphs (default: 800px, range: 400-2000)
+- **Height (px)**: Height of the main histogram graphs (default: 500px, range: 300-1000)
+- **Bar/Scatter Cutoff**: Number of data points before switching from bar chart to scatter plot (default: 600, range: 100-2000)
+  - Bar charts work well for smaller datasets
+  - Scatter plots with KDE curves are used for large, complex distributions
+- **Max Preview Buckets**: Maximum number of buckets for histogram preview during progressive simulation (default: 120, range: 20-500)
+  - Reduces rendering complexity during live updates as simulation runs
+  - Final histograms display full detail without bucketing (up to the bar/scatter cutoff)
+
+#### Task Row Mini Graph Settings
+
+Each task row displays a compact histogram showing that individual task's distribution:
+
+- **Width (px)**: Width of mini task row graphs (default: 140px, range: 50-300)
+- **Height (px)**: Height of mini task row graphs (default: 26px, range: 10-100)
+- **Max Buckets**: Maximum number of bars in mini graphs (default: 24, range: 5-50)
+- **Bar Gap (px)**: Spacing between bars in mini graphs (default: 1px, range: 0-5)
+
+### When to Adjust Settings
+
+- **Large displays**: Increase width/height for better visibility on high-resolution monitors
+- **Presentations**: Adjust dimensions to match your presentation format
+- **Print layouts**: Modify sizes to optimize for printed reports
+- **Performance tuning**: Reduce max preview buckets if progressive simulation updates are slow
+- **Dense data**: Increase bar/scatter cutoff if you prefer bar charts for larger datasets
+
+### Notes
+
+- Settings persist only for your current session
+- Changes apply to new simulations; existing graphs are not retroactively updated
+- All settings are validated to prevent invalid configurations
+- The collapsible panel keeps the interface clean for casual users
+
 ## Development
 
 ### Prerequisites
