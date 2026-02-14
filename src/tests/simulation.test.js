@@ -1,9 +1,28 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import * as sim from '../simulation';
 
 test('Validate Elements', () => {
   expect(sim).toHaveProperty('runSimulation');
   expect(sim).toHaveProperty('buildHistogram');
+  expect(sim).toHaveProperty('buildTaskRowHistogram');
   expect(sim).toHaveProperty('getRandom');
+  expect(sim).toHaveProperty('GRAPH_CONFIG');
+});
+
+test('Validate GRAPH_CONFIG structure', () => {
+  expect(sim.GRAPH_CONFIG).toHaveProperty('histogram');
+  expect(sim.GRAPH_CONFIG).toHaveProperty('miniGraph');
+  expect(sim.GRAPH_CONFIG.histogram).toHaveProperty('width');
+  expect(sim.GRAPH_CONFIG.histogram).toHaveProperty('height');
+  expect(sim.GRAPH_CONFIG.histogram).toHaveProperty('barCutoff');
+  expect(sim.GRAPH_CONFIG.histogram).toHaveProperty('maxBuckets');
+  expect(sim.GRAPH_CONFIG.miniGraph).toHaveProperty('width');
+  expect(sim.GRAPH_CONFIG.miniGraph).toHaveProperty('height');
+  expect(sim.GRAPH_CONFIG.miniGraph).toHaveProperty('maxBuckets');
+  expect(sim.GRAPH_CONFIG.miniGraph).toHaveProperty('gap');
 });
 
 test('GetRandom', () => {
@@ -497,5 +516,57 @@ describe('buildHistogramPreview', () => {
     const result = sim.buildHistogramPreview(mockTargetNode, list, 1, 3, 'Values');
 
     expect(result).toBeUndefined();
+  });
+});
+
+// Tests for buildTaskRowHistogram function
+describe('buildTaskRowHistogram', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('renders compact histogram svg for valid task distribution', () => {
+    const wrapper = document.createElement('div');
+    document.body.appendChild(wrapper);
+    const histogram = [0, 3, 0, 5, 2, 1];
+
+    sim.buildTaskRowHistogram(wrapper, histogram, 1, 5, 'Task A');
+
+    const svg = wrapper.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('height')).toBe(String(sim.GRAPH_CONFIG.miniGraph.height));
+    expect(svg.querySelectorAll('rect').length).toBeGreaterThan(0);
+  });
+
+  test('does not render when min and max are invalid', () => {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = '<span>old</span>';
+    document.body.appendChild(wrapper);
+
+    sim.buildTaskRowHistogram(wrapper, [0, 1, 2], 5, 2, 'Task B');
+
+    expect(wrapper.querySelector('svg')).toBeNull();
+    expect(wrapper.innerHTML).toBe('');
+  });
+
+  test('does not render when min is negative', () => {
+    const wrapper = document.createElement('div');
+    document.body.appendChild(wrapper);
+
+    sim.buildTaskRowHistogram(wrapper, [0, 1, 2], -1, 5, 'Task C');
+
+    expect(wrapper.querySelector('svg')).toBeNull();
+  });
+
+  test('renders with appropriate accessibility attributes', () => {
+    const wrapper = document.createElement('div');
+    document.body.appendChild(wrapper);
+    const histogram = [0, 2, 3, 1];
+
+    sim.buildTaskRowHistogram(wrapper, histogram, 1, 3, 'Important Task');
+
+    const svg = wrapper.querySelector('svg');
+    expect(svg.getAttribute('role')).toBe('img');
+    expect(svg.getAttribute('aria-label')).toContain('Important Task');
   });
 });

@@ -11,13 +11,14 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('createDivWithIdAndClasses');
     expect(idx).toHaveProperty('generateDataField');
     expect(idx).toHaveProperty('updateElementText');
-    expect(idx).toHaveProperty('buildTaskRowHistogram');
     expect(idx).toHaveProperty('renderTaskRowHistograms');
     expect(idx).toHaveProperty('isRowEmpty');
     expect(idx).toHaveProperty('normalizeTshirtSize');
     expect(idx).toHaveProperty('updateTshirtMapping');
     expect(idx).toHaveProperty('getNextFibonacci');
     expect(idx).toHaveProperty('addFibonacciNumber');
+    expect(idx).toHaveProperty('applyGraphSettings');
+    expect(idx).toHaveProperty('resetGraphSettings');
   });
 
   test('Validate exported state exists', () => {
@@ -323,36 +324,6 @@ describe('updateElementText', () => {
     idx.updateElementText('numericDiv', 'Median: 42');
 
     expect(div.textContent).toBe('Median: 42');
-  });
-});
-
-describe('buildTaskRowHistogram', () => {
-  beforeEach(() => {
-    document.body.innerHTML = '';
-  });
-
-  test('renders compact histogram svg for valid task distribution', () => {
-    const wrapper = document.createElement('div');
-    document.body.appendChild(wrapper);
-    const histogram = [0, 3, 0, 5, 2, 1];
-
-    idx.buildTaskRowHistogram(wrapper, histogram, 1, 5, 'Task A');
-
-    const svg = wrapper.querySelector('svg');
-    expect(svg).not.toBeNull();
-    expect(svg.getAttribute('height')).toBe('26');
-    expect(svg.querySelectorAll('rect').length).toBeGreaterThan(0);
-  });
-
-  test('does not render when min and max are invalid', () => {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = '<span>old</span>';
-    document.body.appendChild(wrapper);
-
-    idx.buildTaskRowHistogram(wrapper, [0, 1, 2], 5, 2, 'Task B');
-
-    expect(wrapper.querySelector('svg')).toBeNull();
-    expect(wrapper.innerHTML).toBe('');
   });
 });
 
