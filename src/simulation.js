@@ -162,6 +162,11 @@ function getMedian(data) {
   // Find total count of values.
   const valueCount = getValueCount(data);
 
+  // Handle empty dataset (all zeros in histogram)
+  if (valueCount === 0) {
+    return 0;
+  }
+
   // Walk back to the middle of the result set to see which is median
   const midCount = valueCount / 2;
   let median = 0;
