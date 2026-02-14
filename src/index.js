@@ -1015,6 +1015,9 @@ function startSimulation(event) {
   const graphSetting = document.getElementById('LimitGraph').checked;
   const data = [];
 
+  // Clear any previous task-level graphs immediately for this run.
+  renderTaskRowHistograms([]);
+
   // Gather the task information.
   const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
   let inputs;
@@ -1135,6 +1138,9 @@ function startSimulation(event) {
     updateElementText('simulationCostStandDev', `Standard Deviation: ${results.costs.sd}`);
   }
 
+  // Render row-level task distributions as soon as simulation data is available.
+  renderTaskRowHistograms(results.taskResults);
+
   // Build and display histograms.
   sim.buildHistogram(
     document.getElementById('timeHistoGram'),
@@ -1170,8 +1176,6 @@ function startSimulation(event) {
     document.getElementById('costEstimateHeader').style.display = 'none';
     document.getElementById('costSaveButtons').style.display = 'none';
   }
-
-  renderTaskRowHistograms(results.taskResults);
 }
 
 /**
