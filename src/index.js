@@ -1708,9 +1708,9 @@ function createAdvancedSettings() {
     step: '10',
     id: 'histogramMaxBuckets',
     value: String(sim.GRAPH_CONFIG.histogram.maxBuckets),
-    name: 'Max Buckets',
+    name: 'Max Preview Buckets',
   };
-  settingsWrapper.appendChild(createLabeledInput('Max Buckets:', histogramMaxBucketsAttr, true));
+  settingsWrapper.appendChild(createLabeledInput('Max Preview Buckets:', histogramMaxBucketsAttr, true));
 
   // Mini graph settings
   const miniGraphHeader = createTextElement('h3', 'Task Row Mini Graph Settings', ['settings-header']);
