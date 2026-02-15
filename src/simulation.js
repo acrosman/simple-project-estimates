@@ -484,7 +484,11 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
   const height = imageHeight - margin.top - margin.bottom;
 
   const valueRange = (max - min) + 1;
-  const maxBuckets = GRAPH_CONFIG.histogram.maxBuckets;
+  const rawMaxBuckets = GRAPH_CONFIG.histogram.maxBuckets;
+  const defaultMaxBuckets = 120;
+  const maxBuckets = Number.isFinite(rawMaxBuckets) && rawMaxBuckets > 0
+    ? Math.floor(rawMaxBuckets)
+    : defaultMaxBuckets;
   const bucketCount = Math.max(1, Math.min(maxBuckets, valueRange));
   const bucketSize = Math.max(1, Math.ceil(valueRange / bucketCount));
   const buckets = new Array(bucketCount).fill(0);
