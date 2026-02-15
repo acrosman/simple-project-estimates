@@ -1158,6 +1158,36 @@ describe('Graph Settings Functions', () => {
     sim.GRAPH_CONFIG.miniGraph.gap = 1;
   };
 
+  // Helper function to set up DOM with default form field values
+  const setupGraphSettingsDOM = (overrides = {}) => {
+    const defaults = {
+      histogramWidth: '800',
+      histogramHeight: '500',
+      histogramBarCutoff: '600',
+      histogramMaxBuckets: '120',
+      miniGraphWidth: '140',
+      miniGraphHeight: '26',
+      miniGraphMaxBuckets: '24',
+      miniGraphGap: '1',
+    };
+    
+    const values = { ...defaults, ...overrides };
+    
+    document.body.innerHTML = `
+      <input id="histogramWidth" value="${values.histogramWidth}" />
+      <input id="histogramHeight" value="${values.histogramHeight}" />
+      <input id="histogramBarCutoff" value="${values.histogramBarCutoff}" />
+      <input id="histogramMaxBuckets" value="${values.histogramMaxBuckets}" />
+      <input id="miniGraphWidth" value="${values.miniGraphWidth}" />
+      <input id="miniGraphHeight" value="${values.miniGraphHeight}" />
+      <input id="miniGraphMaxBuckets" value="${values.miniGraphMaxBuckets}" />
+      <input id="miniGraphGap" value="${values.miniGraphGap}" />
+      <details id="advancedSettings">
+        <summary>Advanced Graph Settings</summary>
+      </details>
+    `;
+  };
+
   beforeEach(() => {
     // Reset before each test to ensure clean state
     resetGraphConfig();
@@ -1170,24 +1200,8 @@ describe('Graph Settings Functions', () => {
 
   describe('applyGraphSettings', () => {
     test('applies valid values to sim.GRAPH_CONFIG', () => {
-      // Verify starting state (beforeEach should have reset this)
-      expect(sim.GRAPH_CONFIG.histogram.width).toBe(800);
-      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1);
-
-      // Explicitly set up DOM for this test
-      document.body.innerHTML = `
-        <input id="histogramWidth" value="800" />
-        <input id="histogramHeight" value="500" />
-        <input id="histogramBarCutoff" value="600" />
-        <input id="histogramMaxBuckets" value="120" />
-        <input id="miniGraphWidth" value="140" />
-        <input id="miniGraphHeight" value="26" />
-        <input id="miniGraphMaxBuckets" value="24" />
-        <input id="miniGraphGap" value="1" />
-        <details id="advancedSettings">
-          <summary>Advanced Graph Settings</summary>
-        </details>
-      `;
+      // Set up DOM with default values
+      setupGraphSettingsDOM();
 
       // Set new values in form fields
       document.getElementById('histogramWidth').value = '1000';
@@ -1214,20 +1228,12 @@ describe('Graph Settings Functions', () => {
     });
 
     test('handles empty input values (NaN)', () => {
-      // Explicitly set up DOM for this test
-      document.body.innerHTML = `
-        <input id="histogramWidth" value="" />
-        <input id="histogramHeight" value="" />
-        <input id="histogramBarCutoff" value="600" />
-        <input id="histogramMaxBuckets" value="120" />
-        <input id="miniGraphWidth" value="140" />
-        <input id="miniGraphHeight" value="26" />
-        <input id="miniGraphMaxBuckets" value="24" />
-        <input id="miniGraphGap" value="" />
-        <details id="advancedSettings">
-          <summary>Advanced Graph Settings</summary>
-        </details>
-      `;
+      // Set up DOM with empty values
+      setupGraphSettingsDOM({
+        histogramWidth: '',
+        histogramHeight: '',
+        miniGraphGap: '',
+      });
 
       // Apply settings
       idx.applyGraphSettings();
@@ -1239,20 +1245,12 @@ describe('Graph Settings Functions', () => {
     });
 
     test('handles non-numeric input values', () => {
-      // Explicitly set up DOM for this test
-      document.body.innerHTML = `
-        <input id="histogramWidth" value="abc" />
-        <input id="histogramHeight" value="xyz" />
-        <input id="histogramBarCutoff" value="600" />
-        <input id="histogramMaxBuckets" value="120" />
-        <input id="miniGraphWidth" value="140" />
-        <input id="miniGraphHeight" value="26" />
-        <input id="miniGraphMaxBuckets" value="24" />
-        <input id="miniGraphGap" value="invalid" />
-        <details id="advancedSettings">
-          <summary>Advanced Graph Settings</summary>
-        </details>
-      `;
+      // Set up DOM with invalid values
+      setupGraphSettingsDOM({
+        histogramWidth: 'abc',
+        histogramHeight: 'xyz',
+        miniGraphGap: 'invalid',
+      });
 
       // Apply settings
       idx.applyGraphSettings();
@@ -1264,20 +1262,12 @@ describe('Graph Settings Functions', () => {
     });
 
     test('handles negative values', () => {
-      // Explicitly set up DOM for this test
-      document.body.innerHTML = `
-        <input id="histogramWidth" value="-100" />
-        <input id="histogramHeight" value="-50" />
-        <input id="histogramBarCutoff" value="600" />
-        <input id="histogramMaxBuckets" value="-10" />
-        <input id="miniGraphWidth" value="140" />
-        <input id="miniGraphHeight" value="26" />
-        <input id="miniGraphMaxBuckets" value="24" />
-        <input id="miniGraphGap" value="1" />
-        <details id="advancedSettings">
-          <summary>Advanced Graph Settings</summary>
-        </details>
-      `;
+      // Set up DOM with negative values
+      setupGraphSettingsDOM({
+        histogramWidth: '-100',
+        histogramHeight: '-50',
+        histogramMaxBuckets: '-10',
+      });
 
       // Apply settings
       idx.applyGraphSettings();
@@ -1289,20 +1279,11 @@ describe('Graph Settings Functions', () => {
     });
 
     test('handles decimal values for integer fields', () => {
-      // Explicitly set up DOM for this test
-      document.body.innerHTML = `
-        <input id="histogramWidth" value="1000.5" />
-        <input id="histogramHeight" value="500" />
-        <input id="histogramBarCutoff" value="600" />
-        <input id="histogramMaxBuckets" value="120.9" />
-        <input id="miniGraphWidth" value="140" />
-        <input id="miniGraphHeight" value="26" />
-        <input id="miniGraphMaxBuckets" value="24" />
-        <input id="miniGraphGap" value="1" />
-        <details id="advancedSettings">
-          <summary>Advanced Graph Settings</summary>
-        </details>
-      `;
+      // Set up DOM with decimal values
+      setupGraphSettingsDOM({
+        histogramWidth: '1000.5',
+        histogramMaxBuckets: '120.9',
+      });
 
       // Apply settings
       idx.applyGraphSettings();
@@ -1313,20 +1294,10 @@ describe('Graph Settings Functions', () => {
     });
 
     test('correctly parses float values for gap', () => {
-      // Explicitly set up DOM for this test
-      document.body.innerHTML = `
-        <input id="histogramWidth" value="800" />
-        <input id="histogramHeight" value="500" />
-        <input id="histogramBarCutoff" value="600" />
-        <input id="histogramMaxBuckets" value="120" />
-        <input id="miniGraphWidth" value="140" />
-        <input id="miniGraphHeight" value="26" />
-        <input id="miniGraphMaxBuckets" value="24" />
-        <input id="miniGraphGap" value="1.5" />
-        <details id="advancedSettings">
-          <summary>Advanced Graph Settings</summary>
-        </details>
-      `;
+      // Set up DOM with decimal gap value
+      setupGraphSettingsDOM({
+        miniGraphGap: '1.5',
+      });
 
       // Apply settings
       idx.applyGraphSettings();
@@ -1336,6 +1307,9 @@ describe('Graph Settings Functions', () => {
     });
 
     test('shows confirmation message', (done) => {
+      // Set up DOM
+      setupGraphSettingsDOM();
+      
       const details = document.getElementById('advancedSettings');
       const summary = details.querySelector('summary');
       const originalText = summary.textContent;
@@ -1356,6 +1330,9 @@ describe('Graph Settings Functions', () => {
 
   describe('resetGraphSettings', () => {
     test('resets sim.GRAPH_CONFIG to default values', () => {
+      // Set up DOM (required for resetGraphSettings to work)
+      setupGraphSettingsDOM();
+      
       // Modify GRAPH_CONFIG
       sim.GRAPH_CONFIG.histogram.width = 1000;
       sim.GRAPH_CONFIG.histogram.height = 600;
@@ -1381,20 +1358,17 @@ describe('Graph Settings Functions', () => {
     });
 
     test('updates form fields to default values', () => {
-      // Explicitly set up DOM for this test
-      document.body.innerHTML = `
-        <input id="histogramWidth" value="1000" />
-        <input id="histogramHeight" value="600" />
-        <input id="histogramBarCutoff" value="800" />
-        <input id="histogramMaxBuckets" value="150" />
-        <input id="miniGraphWidth" value="200" />
-        <input id="miniGraphHeight" value="30" />
-        <input id="miniGraphMaxBuckets" value="30" />
-        <input id="miniGraphGap" value="2" />
-        <details id="advancedSettings">
-          <summary>Advanced Graph Settings</summary>
-        </details>
-      `;
+      // Set up DOM with modified values
+      setupGraphSettingsDOM({
+        histogramWidth: '1000',
+        histogramHeight: '600',
+        histogramBarCutoff: '800',
+        histogramMaxBuckets: '150',
+        miniGraphWidth: '200',
+        miniGraphHeight: '30',
+        miniGraphMaxBuckets: '30',
+        miniGraphGap: '2',
+      });
 
       // Reset settings
       idx.resetGraphSettings();
@@ -1411,20 +1385,11 @@ describe('Graph Settings Functions', () => {
     });
 
     test('resets both GRAPH_CONFIG and form fields together', () => {
-      // Explicitly set up DOM for this test
-      document.body.innerHTML = `
-        <input id="histogramWidth" value="1000" />
-        <input id="histogramHeight" value="500" />
-        <input id="histogramBarCutoff" value="600" />
-        <input id="histogramMaxBuckets" value="120" />
-        <input id="miniGraphWidth" value="140" />
-        <input id="miniGraphHeight" value="26" />
-        <input id="miniGraphMaxBuckets" value="24" />
-        <input id="miniGraphGap" value="2.5" />
-        <details id="advancedSettings">
-          <summary>Advanced Graph Settings</summary>
-        </details>
-      `;
+      // Set up DOM with modified values
+      setupGraphSettingsDOM({
+        histogramWidth: '1000',
+        miniGraphGap: '2.5',
+      });
 
       // Modify GRAPH_CONFIG
       sim.GRAPH_CONFIG.histogram.width = 1000;
@@ -1441,6 +1406,9 @@ describe('Graph Settings Functions', () => {
     });
 
     test('shows confirmation message', (done) => {
+      // Set up DOM
+      setupGraphSettingsDOM();
+      
       const details = document.getElementById('advancedSettings');
       const summary = details.querySelector('summary');
       const originalText = summary.textContent;
