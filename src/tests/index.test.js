@@ -750,6 +750,7 @@ describe('saveSvgAsImage', () => {
   let originalGetComputedStyle;
   let originalURL;
   let originalAlert;
+  let originalGetElementById;
 
   beforeEach(() => {
     // Mock DOM elements
@@ -785,6 +786,7 @@ describe('saveSvgAsImage', () => {
     };
 
     // Mock document methods
+    originalGetElementById = document.getElementById;
     document.getElementById = jest.fn(() => mockContainer);
     originalCreateElement = document.createElement;
     document.createElement = jest.fn((tag) => {
@@ -837,6 +839,7 @@ describe('saveSvgAsImage', () => {
   });
 
   afterEach(() => {
+    document.getElementById = originalGetElementById;
     document.createElement = originalCreateElement;
     window.getComputedStyle = originalGetComputedStyle;
     global.URL = originalURL;
@@ -1131,5 +1134,296 @@ describe('AppState reset()', () => {
     expect(idx.getEstimationMode()).toBe('hours');
     expect(idx.getEnableCost()).toBe(true);
     expect(idx.fibonacciMappings[1]).toEqual({ min: 0, max: 1 });
+  });
+});
+
+describe('Graph Settings Functions', () => {
+  // Import simulation module to access GRAPH_CONFIG
+  let sim;
+
+  beforeAll(async () => {
+    sim = await import('../simulation');
+  });
+
+  // Helper function to reset GRAPH_CONFIG to defaults
+  const resetGraphConfig = () => {
+    if (!sim) return;
+    sim.GRAPH_CONFIG.histogram.width = 800;
+    sim.GRAPH_CONFIG.histogram.height = 500;
+    sim.GRAPH_CONFIG.histogram.barCutoff = 600;
+    sim.GRAPH_CONFIG.histogram.maxBuckets = 120;
+    sim.GRAPH_CONFIG.miniGraph.width = 140;
+    sim.GRAPH_CONFIG.miniGraph.height = 26;
+    sim.GRAPH_CONFIG.miniGraph.maxBuckets = 24;
+    sim.GRAPH_CONFIG.miniGraph.gap = 1;
+  };
+
+  // Helper function to set up DOM with default form field values
+  const setupGraphSettingsDOM = (overrides = {}) => {
+    const defaults = {
+      histogramWidth: '800',
+      histogramHeight: '500',
+      histogramBarCutoff: '600',
+      histogramMaxBuckets: '120',
+      miniGraphWidth: '140',
+      miniGraphHeight: '26',
+      miniGraphMaxBuckets: '24',
+      miniGraphGap: '1',
+    };
+    
+    const values = { ...defaults, ...overrides };
+    
+    document.body.innerHTML = `
+      <input id="histogramWidth" value="${values.histogramWidth}" />
+      <input id="histogramHeight" value="${values.histogramHeight}" />
+      <input id="histogramBarCutoff" value="${values.histogramBarCutoff}" />
+      <input id="histogramMaxBuckets" value="${values.histogramMaxBuckets}" />
+      <input id="miniGraphWidth" value="${values.miniGraphWidth}" />
+      <input id="miniGraphHeight" value="${values.miniGraphHeight}" />
+      <input id="miniGraphMaxBuckets" value="${values.miniGraphMaxBuckets}" />
+      <input id="miniGraphGap" value="${values.miniGraphGap}" />
+      <details id="advancedSettings">
+        <summary>Advanced Graph Settings</summary>
+      </details>
+    `;
+  };
+
+  beforeEach(() => {
+    // Reset before each test to ensure clean state
+    resetGraphConfig();
+  });
+
+  afterEach(() => {
+    // Reset after each test to prevent pollution
+    resetGraphConfig();
+  });
+
+  describe('applyGraphSettings', () => {
+    test('applies valid values to sim.GRAPH_CONFIG', () => {
+      // Set up DOM with default values
+      setupGraphSettingsDOM();
+
+      // Set new values in form fields
+      document.getElementById('histogramWidth').value = '1000';
+      document.getElementById('histogramHeight').value = '600';
+      document.getElementById('histogramBarCutoff').value = '800';
+      document.getElementById('histogramMaxBuckets').value = '150';
+      document.getElementById('miniGraphWidth').value = '200';
+      document.getElementById('miniGraphHeight').value = '30';
+      document.getElementById('miniGraphMaxBuckets').value = '30';
+      document.getElementById('miniGraphGap').value = '2';
+
+      // Apply settings
+      idx.applyGraphSettings();
+
+      // Verify GRAPH_CONFIG was updated
+      expect(sim.GRAPH_CONFIG.histogram.width).toBe(1000);
+      expect(sim.GRAPH_CONFIG.histogram.height).toBe(600);
+      expect(sim.GRAPH_CONFIG.histogram.barCutoff).toBe(800);
+      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(150);
+      expect(sim.GRAPH_CONFIG.miniGraph.width).toBe(200);
+      expect(sim.GRAPH_CONFIG.miniGraph.height).toBe(30);
+      expect(sim.GRAPH_CONFIG.miniGraph.maxBuckets).toBe(30);
+      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(2);
+    });
+
+    test('handles empty input values (NaN)', () => {
+      // Set up DOM with empty values
+      setupGraphSettingsDOM({
+        histogramWidth: '',
+        histogramHeight: '',
+        miniGraphGap: '',
+      });
+
+      // Apply settings
+      idx.applyGraphSettings();
+
+      // Verify GRAPH_CONFIG contains NaN for empty fields
+      expect(Number.isNaN(sim.GRAPH_CONFIG.histogram.width)).toBe(true);
+      expect(Number.isNaN(sim.GRAPH_CONFIG.histogram.height)).toBe(true);
+      expect(Number.isNaN(sim.GRAPH_CONFIG.miniGraph.gap)).toBe(true);
+    });
+
+    test('handles non-numeric input values', () => {
+      // Set up DOM with invalid values
+      setupGraphSettingsDOM({
+        histogramWidth: 'abc',
+        histogramHeight: 'xyz',
+        miniGraphGap: 'invalid',
+      });
+
+      // Apply settings
+      idx.applyGraphSettings();
+
+      // Verify GRAPH_CONFIG contains NaN for invalid fields
+      expect(Number.isNaN(sim.GRAPH_CONFIG.histogram.width)).toBe(true);
+      expect(Number.isNaN(sim.GRAPH_CONFIG.histogram.height)).toBe(true);
+      expect(Number.isNaN(sim.GRAPH_CONFIG.miniGraph.gap)).toBe(true);
+    });
+
+    test('handles negative values', () => {
+      // Set up DOM with negative values
+      setupGraphSettingsDOM({
+        histogramWidth: '-100',
+        histogramHeight: '-50',
+        histogramMaxBuckets: '-10',
+      });
+
+      // Apply settings
+      idx.applyGraphSettings();
+
+      // Verify GRAPH_CONFIG accepts negative values (parseInt doesn't reject them)
+      expect(sim.GRAPH_CONFIG.histogram.width).toBe(-100);
+      expect(sim.GRAPH_CONFIG.histogram.height).toBe(-50);
+      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(-10);
+    });
+
+    test('handles decimal values for integer fields', () => {
+      // Set up DOM with decimal values
+      setupGraphSettingsDOM({
+        histogramWidth: '1000.5',
+        histogramMaxBuckets: '120.9',
+      });
+
+      // Apply settings
+      idx.applyGraphSettings();
+
+      // Verify parseInt truncates decimals
+      expect(sim.GRAPH_CONFIG.histogram.width).toBe(1000);
+      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(120);
+    });
+
+    test('correctly parses float values for gap', () => {
+      // Set up DOM with decimal gap value
+      setupGraphSettingsDOM({
+        miniGraphGap: '1.5',
+      });
+
+      // Apply settings
+      idx.applyGraphSettings();
+
+      // Verify parseFloat preserves decimals
+      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1.5);
+    });
+
+    test('shows confirmation message', (done) => {
+      // Set up DOM
+      setupGraphSettingsDOM();
+      
+      const details = document.getElementById('advancedSettings');
+      const summary = details.querySelector('summary');
+      const originalText = summary.textContent;
+
+      // Apply settings
+      idx.applyGraphSettings();
+
+      // Check confirmation message appears
+      expect(summary.textContent).toBe('Advanced Graph Settings ✓ Applied');
+
+      // Wait for timeout to restore original text
+      setTimeout(() => {
+        expect(summary.textContent).toBe(originalText);
+        done();
+      }, 2100);
+    });
+  });
+
+  describe('resetGraphSettings', () => {
+    test('resets sim.GRAPH_CONFIG to default values', () => {
+      // Set up DOM (required for resetGraphSettings to work)
+      setupGraphSettingsDOM();
+      
+      // Modify GRAPH_CONFIG
+      sim.GRAPH_CONFIG.histogram.width = 1000;
+      sim.GRAPH_CONFIG.histogram.height = 600;
+      sim.GRAPH_CONFIG.histogram.barCutoff = 800;
+      sim.GRAPH_CONFIG.histogram.maxBuckets = 150;
+      sim.GRAPH_CONFIG.miniGraph.width = 200;
+      sim.GRAPH_CONFIG.miniGraph.height = 30;
+      sim.GRAPH_CONFIG.miniGraph.maxBuckets = 30;
+      sim.GRAPH_CONFIG.miniGraph.gap = 2;
+
+      // Reset settings
+      idx.resetGraphSettings();
+
+      // Verify defaults are restored
+      expect(sim.GRAPH_CONFIG.histogram.width).toBe(800);
+      expect(sim.GRAPH_CONFIG.histogram.height).toBe(500);
+      expect(sim.GRAPH_CONFIG.histogram.barCutoff).toBe(600);
+      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(120);
+      expect(sim.GRAPH_CONFIG.miniGraph.width).toBe(140);
+      expect(sim.GRAPH_CONFIG.miniGraph.height).toBe(26);
+      expect(sim.GRAPH_CONFIG.miniGraph.maxBuckets).toBe(24);
+      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1);
+    });
+
+    test('updates form fields to default values', () => {
+      // Set up DOM with modified values
+      setupGraphSettingsDOM({
+        histogramWidth: '1000',
+        histogramHeight: '600',
+        histogramBarCutoff: '800',
+        histogramMaxBuckets: '150',
+        miniGraphWidth: '200',
+        miniGraphHeight: '30',
+        miniGraphMaxBuckets: '30',
+        miniGraphGap: '2',
+      });
+
+      // Reset settings
+      idx.resetGraphSettings();
+
+      // Verify form fields are updated
+      expect(document.getElementById('histogramWidth').value).toBe('800');
+      expect(document.getElementById('histogramHeight').value).toBe('500');
+      expect(document.getElementById('histogramBarCutoff').value).toBe('600');
+      expect(document.getElementById('histogramMaxBuckets').value).toBe('120');
+      expect(document.getElementById('miniGraphWidth').value).toBe('140');
+      expect(document.getElementById('miniGraphHeight').value).toBe('26');
+      expect(document.getElementById('miniGraphMaxBuckets').value).toBe('24');
+      expect(document.getElementById('miniGraphGap').value).toBe('1');
+    });
+
+    test('resets both GRAPH_CONFIG and form fields together', () => {
+      // Set up DOM with modified values
+      setupGraphSettingsDOM({
+        histogramWidth: '1000',
+        miniGraphGap: '2.5',
+      });
+
+      // Modify GRAPH_CONFIG
+      sim.GRAPH_CONFIG.histogram.width = 1000;
+      sim.GRAPH_CONFIG.miniGraph.gap = 2.5;
+
+      // Reset settings
+      idx.resetGraphSettings();
+
+      // Verify both are reset
+      expect(sim.GRAPH_CONFIG.histogram.width).toBe(800);
+      expect(document.getElementById('histogramWidth').value).toBe('800');
+      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1);
+      expect(document.getElementById('miniGraphGap').value).toBe('1');
+    });
+
+    test('shows confirmation message', (done) => {
+      // Set up DOM
+      setupGraphSettingsDOM();
+      
+      const details = document.getElementById('advancedSettings');
+      const summary = details.querySelector('summary');
+      const originalText = summary.textContent;
+
+      // Reset settings
+      idx.resetGraphSettings();
+
+      // Check confirmation message appears
+      expect(summary.textContent).toBe('Advanced Graph Settings ✓ Reset');
+
+      // Wait for timeout to restore original text
+      setTimeout(() => {
+        expect(summary.textContent).toBe(originalText);
+        done();
+      }, 2100);
+    });
   });
 });
