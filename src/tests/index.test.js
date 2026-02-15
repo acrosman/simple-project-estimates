@@ -3,6 +3,7 @@
  */
 
 import * as idx from '../index';
+import * as sim from '../simulation';
 
 describe('Index Module Exports', () => {
   test('Validate exported functions exist', () => {
@@ -1138,13 +1139,6 @@ describe('AppState reset()', () => {
 });
 
 describe('Graph Settings Functions', () => {
-  // Import simulation module to access GRAPH_CONFIG
-  let sim;
-
-  beforeAll(async () => {
-    sim = await import('../simulation');
-  });
-
   // Helper function to reset GRAPH_CONFIG to defaults
   const resetGraphConfig = () => {
     if (!sim) return;
@@ -1170,9 +1164,9 @@ describe('Graph Settings Functions', () => {
       miniGraphMaxBuckets: '24',
       miniGraphGap: '1',
     };
-    
+
     const values = { ...defaults, ...overrides };
-    
+
     document.body.innerHTML = `
       <input id="histogramWidth" value="${values.histogramWidth}" />
       <input id="histogramHeight" value="${values.histogramHeight}" />
@@ -1309,7 +1303,7 @@ describe('Graph Settings Functions', () => {
     test('shows confirmation message', (done) => {
       // Set up DOM
       setupGraphSettingsDOM();
-      
+
       const details = document.getElementById('advancedSettings');
       const summary = details.querySelector('summary');
       const originalText = summary.textContent;
@@ -1332,7 +1326,7 @@ describe('Graph Settings Functions', () => {
     test('resets sim.GRAPH_CONFIG to default values', () => {
       // Set up DOM (required for resetGraphSettings to work)
       setupGraphSettingsDOM();
-      
+
       // Modify GRAPH_CONFIG
       sim.GRAPH_CONFIG.histogram.width = 1000;
       sim.GRAPH_CONFIG.histogram.height = 600;
@@ -1408,7 +1402,7 @@ describe('Graph Settings Functions', () => {
     test('shows confirmation message', (done) => {
       // Set up DOM
       setupGraphSettingsDOM();
-      
+
       const details = document.getElementById('advancedSettings');
       const summary = details.querySelector('summary');
       const originalText = summary.textContent;

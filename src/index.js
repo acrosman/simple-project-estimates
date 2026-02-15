@@ -1519,134 +1519,58 @@ function createDataEntrySection() {
 }
 
 /**
- * Creates the simulation control panel and results display.
- * @returns {HTMLElement} Simulation panel section
+ * Applies user-modified graph settings to GRAPH_CONFIG.
  */
-function createSimulationPanel() {
-  const simWrapper = createDivWithIdAndClasses('simulationAreaWrapper', ['section', 'container']);
-  const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation']);
+function applyGraphSettings() {
+  sim.GRAPH_CONFIG.histogram.width = parseInt(document.getElementById('histogramWidth').value, 10);
+  sim.GRAPH_CONFIG.histogram.height = parseInt(document.getElementById('histogramHeight').value, 10);
+  sim.GRAPH_CONFIG.histogram.barCutoff = parseInt(document.getElementById('histogramBarCutoff').value, 10);
+  sim.GRAPH_CONFIG.histogram.maxBuckets = parseInt(document.getElementById('histogramMaxBuckets').value, 10);
+  sim.GRAPH_CONFIG.miniGraph.width = parseInt(document.getElementById('miniGraphWidth').value, 10);
+  sim.GRAPH_CONFIG.miniGraph.height = parseInt(document.getElementById('miniGraphHeight').value, 10);
+  sim.GRAPH_CONFIG.miniGraph.maxBuckets = parseInt(document.getElementById('miniGraphMaxBuckets').value, 10);
+  sim.GRAPH_CONFIG.miniGraph.gap = parseFloat(document.getElementById('miniGraphGap').value);
 
-  const simControls = createDivWithIdAndClasses('simulatorControlsWrapper', ['section', 'controls-simulation']);
+  // Show confirmation
+  const details = document.getElementById('advancedSettings');
+  const originalSummary = details.querySelector('summary').textContent;
+  details.querySelector('summary').textContent = 'Advanced Graph Settings ✓ Applied';
+  setTimeout(() => {
+    details.querySelector('summary').textContent = originalSummary;
+  }, 2000);
+}
 
-  const simCountFldAttr = {
-    type: 'number',
-    min: '1000',
-    max: '9999999',
-    step: '1000',
-    id: 'simulationPasses',
-    value: '100000',
-    name: 'Simulation Passes',
-  };
-  const simCountCtl = createLabeledInput('Number of times to run the simulation:', simCountFldAttr, true);
+/**
+ * Resets graph settings to default values.
+ */
+function resetGraphSettings() {
+  // Reset to defaults
+  sim.GRAPH_CONFIG.histogram.width = 800;
+  sim.GRAPH_CONFIG.histogram.height = 500;
+  sim.GRAPH_CONFIG.histogram.barCutoff = 600;
+  sim.GRAPH_CONFIG.histogram.maxBuckets = 120;
+  sim.GRAPH_CONFIG.miniGraph.width = 140;
+  sim.GRAPH_CONFIG.miniGraph.height = 26;
+  sim.GRAPH_CONFIG.miniGraph.maxBuckets = 24;
+  sim.GRAPH_CONFIG.miniGraph.gap = 1;
 
-  const simLimitFldAttr = {
-    type: 'checkbox',
-    value: '1',
-    id: 'LimitGraph',
-  };
-  const simLimitCtl = createLabeledInput('Limit graph outliers', simLimitFldAttr, false);
+  // Update form fields
+  document.getElementById('histogramWidth').value = '800';
+  document.getElementById('histogramHeight').value = '500';
+  document.getElementById('histogramBarCutoff').value = '600';
+  document.getElementById('histogramMaxBuckets').value = '120';
+  document.getElementById('miniGraphWidth').value = '140';
+  document.getElementById('miniGraphHeight').value = '26';
+  document.getElementById('miniGraphMaxBuckets').value = '24';
+  document.getElementById('miniGraphGap').value = '1';
 
-  const simRun = document.createElement('input');
-  simRun.type = 'button';
-  simRun.id = 'startSimulationButton';
-  simRun.value = 'Run Simulation';
-  simRun.addEventListener('click', startSimulation);
-
-  simControls.appendChild(simCountCtl);
-  simControls.appendChild(simLimitCtl);
-  simControls.appendChild(simRun);
-
-  // Simulation Time Results elements
-  const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
-  simResultWrapper.appendChild(createDivWithIdAndClasses('simulationRunningTime', ['simulation-result', 'text']));
-  const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
-  const timeHeader = createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']);
-  timeHeader.id = 'timeEstimateHeader';
-  timeHeader.style.display = 'none';
-  simTimeResultWrapper.appendChild(timeHeader);
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMedian', ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandRange', ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMax', ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMin', ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandDev', ['simulation-result', 'time-info', 'text']));
-  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('timeHistoGram', ['simulation-result', 'time-info', 'graph']));
-
-  // Add save buttons for time histogram
-  const timeSaveButtonsDiv = document.createElement('div');
-  timeSaveButtonsDiv.id = 'timeSaveButtons';
-  timeSaveButtonsDiv.classList.add('save-buttons', 'no-print');
-  timeSaveButtonsDiv.style.display = 'none';
-
-  const saveTimePng = document.createElement('input');
-  Object.assign(saveTimePng, {
-    type: 'button',
-    value: 'Save Time Graph as PNG',
-    id: 'saveTimePngBtn',
-  });
-  saveTimePng.addEventListener('click', () => saveSvgAsImage('timeHistoGram', 'time-estimates', 'png'));
-
-  const saveTimeJpeg = document.createElement('input');
-  Object.assign(saveTimeJpeg, {
-    type: 'button',
-    value: 'Save Time Graph as JPEG',
-    id: 'saveTimeJpegBtn',
-  });
-  saveTimeJpeg.addEventListener('click', () => saveSvgAsImage('timeHistoGram', 'time-estimates', 'jpeg'));
-
-  timeSaveButtonsDiv.appendChild(saveTimePng);
-  timeSaveButtonsDiv.appendChild(saveTimeJpeg);
-  simTimeResultWrapper.appendChild(timeSaveButtonsDiv);
-
-  simResultWrapper.appendChild(simTimeResultWrapper);
-
-  // Simulation Cost Results elements
-  const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
-  const costHeader = createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']);
-  costHeader.id = 'costEstimateHeader';
-  costHeader.style.display = 'none';
-  simCostResultWrapper.appendChild(costHeader);
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMedian', ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandRange', ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMax', ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMin', ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandDev', ['simulation-result', 'cost-info', 'text']));
-  simCostResultWrapper.appendChild(createDivWithIdAndClasses('costHistoGram', ['simulation-result', 'cost-info', 'graph']));
-
-  // Add save buttons for cost histogram
-  const costSaveButtonsDiv = document.createElement('div');
-  costSaveButtonsDiv.id = 'costSaveButtons';
-  costSaveButtonsDiv.classList.add('save-buttons', 'no-print');
-  costSaveButtonsDiv.style.display = 'none';
-
-  const saveCostPng = document.createElement('input');
-  Object.assign(saveCostPng, {
-    type: 'button',
-    value: 'Save Cost Graph as PNG',
-    id: 'saveCostPngBtn',
-  });
-  saveCostPng.addEventListener('click', () => saveSvgAsImage('costHistoGram', 'cost-estimates', 'png'));
-
-  const saveCostJpeg = document.createElement('input');
-  Object.assign(saveCostJpeg, {
-    type: 'button',
-    value: 'Save Cost Graph as JPEG',
-    id: 'saveCostJpegBtn',
-  });
-  saveCostJpeg.addEventListener('click', () => saveSvgAsImage('costHistoGram', 'cost-estimates', 'jpeg'));
-
-  costSaveButtonsDiv.appendChild(saveCostPng);
-  costSaveButtonsDiv.appendChild(saveCostJpeg);
-  simCostResultWrapper.appendChild(costSaveButtonsDiv);
-
-  simResultWrapper.appendChild(simCostResultWrapper);
-
-  // Add simulator elements to wrapper.
-  simWrapper.appendChild(simHeader);
-  simWrapper.appendChild(simControls);
-  simWrapper.appendChild(createAdvancedSettings());
-  simWrapper.appendChild(simResultWrapper);
-
-  return simWrapper;
+  // Show confirmation
+  const details = document.getElementById('advancedSettings');
+  const originalSummary = details.querySelector('summary').textContent;
+  details.querySelector('summary').textContent = 'Advanced Graph Settings ✓ Reset';
+  setTimeout(() => {
+    details.querySelector('summary').textContent = originalSummary;
+  }, 2000);
 }
 
 /**
@@ -1789,58 +1713,134 @@ function createAdvancedSettings() {
 }
 
 /**
- * Applies user-modified graph settings to GRAPH_CONFIG.
+ * Creates the simulation control panel and results display.
+ * @returns {HTMLElement} Simulation panel section
  */
-function applyGraphSettings() {
-  sim.GRAPH_CONFIG.histogram.width = parseInt(document.getElementById('histogramWidth').value, 10);
-  sim.GRAPH_CONFIG.histogram.height = parseInt(document.getElementById('histogramHeight').value, 10);
-  sim.GRAPH_CONFIG.histogram.barCutoff = parseInt(document.getElementById('histogramBarCutoff').value, 10);
-  sim.GRAPH_CONFIG.histogram.maxBuckets = parseInt(document.getElementById('histogramMaxBuckets').value, 10);
-  sim.GRAPH_CONFIG.miniGraph.width = parseInt(document.getElementById('miniGraphWidth').value, 10);
-  sim.GRAPH_CONFIG.miniGraph.height = parseInt(document.getElementById('miniGraphHeight').value, 10);
-  sim.GRAPH_CONFIG.miniGraph.maxBuckets = parseInt(document.getElementById('miniGraphMaxBuckets').value, 10);
-  sim.GRAPH_CONFIG.miniGraph.gap = parseFloat(document.getElementById('miniGraphGap').value);
+function createSimulationPanel() {
+  const simWrapper = createDivWithIdAndClasses('simulationAreaWrapper', ['section', 'container']);
+  const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation']);
 
-  // Show confirmation
-  const details = document.getElementById('advancedSettings');
-  const originalSummary = details.querySelector('summary').textContent;
-  details.querySelector('summary').textContent = 'Advanced Graph Settings ✓ Applied';
-  setTimeout(() => {
-    details.querySelector('summary').textContent = originalSummary;
-  }, 2000);
-}
+  const simControls = createDivWithIdAndClasses('simulatorControlsWrapper', ['section', 'controls-simulation']);
 
-/**
- * Resets graph settings to default values.
- */
-function resetGraphSettings() {
-  // Reset to defaults
-  sim.GRAPH_CONFIG.histogram.width = 800;
-  sim.GRAPH_CONFIG.histogram.height = 500;
-  sim.GRAPH_CONFIG.histogram.barCutoff = 600;
-  sim.GRAPH_CONFIG.histogram.maxBuckets = 120;
-  sim.GRAPH_CONFIG.miniGraph.width = 140;
-  sim.GRAPH_CONFIG.miniGraph.height = 26;
-  sim.GRAPH_CONFIG.miniGraph.maxBuckets = 24;
-  sim.GRAPH_CONFIG.miniGraph.gap = 1;
+  const simCountFldAttr = {
+    type: 'number',
+    min: '1000',
+    max: '9999999',
+    step: '1000',
+    id: 'simulationPasses',
+    value: '100000',
+    name: 'Simulation Passes',
+  };
+  const simCountCtl = createLabeledInput('Number of times to run the simulation:', simCountFldAttr, true);
 
-  // Update form fields
-  document.getElementById('histogramWidth').value = '800';
-  document.getElementById('histogramHeight').value = '500';
-  document.getElementById('histogramBarCutoff').value = '600';
-  document.getElementById('histogramMaxBuckets').value = '120';
-  document.getElementById('miniGraphWidth').value = '140';
-  document.getElementById('miniGraphHeight').value = '26';
-  document.getElementById('miniGraphMaxBuckets').value = '24';
-  document.getElementById('miniGraphGap').value = '1';
+  const simLimitFldAttr = {
+    type: 'checkbox',
+    value: '1',
+    id: 'LimitGraph',
+  };
+  const simLimitCtl = createLabeledInput('Limit graph outliers', simLimitFldAttr, false);
 
-  // Show confirmation
-  const details = document.getElementById('advancedSettings');
-  const originalSummary = details.querySelector('summary').textContent;
-  details.querySelector('summary').textContent = 'Advanced Graph Settings ✓ Reset';
-  setTimeout(() => {
-    details.querySelector('summary').textContent = originalSummary;
-  }, 2000);
+  const simRun = document.createElement('input');
+  simRun.type = 'button';
+  simRun.id = 'startSimulationButton';
+  simRun.value = 'Run Simulation';
+  simRun.addEventListener('click', startSimulation);
+
+  simControls.appendChild(simCountCtl);
+  simControls.appendChild(simLimitCtl);
+  simControls.appendChild(simRun);
+
+  // Simulation Time Results elements
+  const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
+  simResultWrapper.appendChild(createDivWithIdAndClasses('simulationRunningTime', ['simulation-result', 'text']));
+  const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
+  const timeHeader = createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']);
+  timeHeader.id = 'timeEstimateHeader';
+  timeHeader.style.display = 'none';
+  simTimeResultWrapper.appendChild(timeHeader);
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMedian', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandRange', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMax', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMin', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandDev', ['simulation-result', 'time-info', 'text']));
+  simTimeResultWrapper.appendChild(createDivWithIdAndClasses('timeHistoGram', ['simulation-result', 'time-info', 'graph']));
+
+  // Add save buttons for time histogram
+  const timeSaveButtonsDiv = document.createElement('div');
+  timeSaveButtonsDiv.id = 'timeSaveButtons';
+  timeSaveButtonsDiv.classList.add('save-buttons', 'no-print');
+  timeSaveButtonsDiv.style.display = 'none';
+
+  const saveTimePng = document.createElement('input');
+  Object.assign(saveTimePng, {
+    type: 'button',
+    value: 'Save Time Graph as PNG',
+    id: 'saveTimePngBtn',
+  });
+  saveTimePng.addEventListener('click', () => saveSvgAsImage('timeHistoGram', 'time-estimates', 'png'));
+
+  const saveTimeJpeg = document.createElement('input');
+  Object.assign(saveTimeJpeg, {
+    type: 'button',
+    value: 'Save Time Graph as JPEG',
+    id: 'saveTimeJpegBtn',
+  });
+  saveTimeJpeg.addEventListener('click', () => saveSvgAsImage('timeHistoGram', 'time-estimates', 'jpeg'));
+
+  timeSaveButtonsDiv.appendChild(saveTimePng);
+  timeSaveButtonsDiv.appendChild(saveTimeJpeg);
+  simTimeResultWrapper.appendChild(timeSaveButtonsDiv);
+
+  simResultWrapper.appendChild(simTimeResultWrapper);
+
+  // Simulation Cost Results elements
+  const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
+  const costHeader = createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']);
+  costHeader.id = 'costEstimateHeader';
+  costHeader.style.display = 'none';
+  simCostResultWrapper.appendChild(costHeader);
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMedian', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandRange', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMax', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMin', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandDev', ['simulation-result', 'cost-info', 'text']));
+  simCostResultWrapper.appendChild(createDivWithIdAndClasses('costHistoGram', ['simulation-result', 'cost-info', 'graph']));
+
+  // Add save buttons for cost histogram
+  const costSaveButtonsDiv = document.createElement('div');
+  costSaveButtonsDiv.id = 'costSaveButtons';
+  costSaveButtonsDiv.classList.add('save-buttons', 'no-print');
+  costSaveButtonsDiv.style.display = 'none';
+
+  const saveCostPng = document.createElement('input');
+  Object.assign(saveCostPng, {
+    type: 'button',
+    value: 'Save Cost Graph as PNG',
+    id: 'saveCostPngBtn',
+  });
+  saveCostPng.addEventListener('click', () => saveSvgAsImage('costHistoGram', 'cost-estimates', 'png'));
+
+  const saveCostJpeg = document.createElement('input');
+  Object.assign(saveCostJpeg, {
+    type: 'button',
+    value: 'Save Cost Graph as JPEG',
+    id: 'saveCostJpegBtn',
+  });
+  saveCostJpeg.addEventListener('click', () => saveSvgAsImage('costHistoGram', 'cost-estimates', 'jpeg'));
+
+  costSaveButtonsDiv.appendChild(saveCostPng);
+  costSaveButtonsDiv.appendChild(saveCostJpeg);
+  simCostResultWrapper.appendChild(costSaveButtonsDiv);
+
+  simResultWrapper.appendChild(simCostResultWrapper);
+
+  // Add simulator elements to wrapper.
+  simWrapper.appendChild(simHeader);
+  simWrapper.appendChild(simControls);
+  simWrapper.appendChild(createAdvancedSettings());
+  simWrapper.appendChild(simResultWrapper);
+
+  return simWrapper;
 }
 
 /**

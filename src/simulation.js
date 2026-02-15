@@ -285,15 +285,12 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   targetNode.innerHTML = '';
 
   // The number of points before it switches to using a line graph.
-  const barCutoff = GRAPH_CONFIG.histogram.barCutoff;
-
-  // The width of the image
-  const imageWidth = GRAPH_CONFIG.histogram.width;
-  const imageHeight = GRAPH_CONFIG.histogram.height;
+  const {
+    barCutoff, width: imageWidth, height: imageHeight, margin,
+  } = GRAPH_CONFIG.histogram;
 
   // Image Margins
   const binMargin = 0.2;
-  const margin = GRAPH_CONFIG.histogram.margin;
 
   // Set outer bounds of graph.
   let minBin = min;
@@ -477,9 +474,9 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
     return;
   }
 
-  const imageWidth = GRAPH_CONFIG.histogram.width;
-  const imageHeight = GRAPH_CONFIG.histogram.height;
-  const margin = GRAPH_CONFIG.histogram.margin;
+  const {
+    width: imageWidth, height: imageHeight, margin,
+  } = GRAPH_CONFIG.histogram;
   const width = imageWidth - margin.left - margin.right;
   const height = imageHeight - margin.top - margin.bottom;
 
@@ -621,9 +618,9 @@ function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
     return;
   }
 
-  const graphWidth = GRAPH_CONFIG.miniGraph.width;
-  const graphHeight = GRAPH_CONFIG.miniGraph.height;
-  const maxBuckets = GRAPH_CONFIG.miniGraph.maxBuckets;
+  const {
+    width: graphWidth, height: graphHeight, maxBuckets, gap,
+  } = GRAPH_CONFIG.miniGraph;
   const valueRange = max - min + 1;
   const bucketCount = Math.min(maxBuckets, valueRange);
   const bucketSize = Math.ceil(valueRange / bucketCount);
@@ -653,7 +650,6 @@ function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
   svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label', `Task outcome histogram for ${taskName || 'task'}`);
 
-  const gap = GRAPH_CONFIG.miniGraph.gap;
   const barWidth = Math.max((graphWidth / bucketCount) - gap, 1);
 
   for (let i = 0; i < buckets.length; i += 1) {
