@@ -750,6 +750,7 @@ describe('saveSvgAsImage', () => {
   let originalGetComputedStyle;
   let originalURL;
   let originalAlert;
+  let originalGetElementById;
 
   beforeEach(() => {
     // Mock DOM elements
@@ -785,6 +786,7 @@ describe('saveSvgAsImage', () => {
     };
 
     // Mock document methods
+    originalGetElementById = document.getElementById;
     document.getElementById = jest.fn(() => mockContainer);
     originalCreateElement = document.createElement;
     document.createElement = jest.fn((tag) => {
@@ -837,6 +839,7 @@ describe('saveSvgAsImage', () => {
   });
 
   afterEach(() => {
+    document.getElementById = originalGetElementById;
     document.createElement = originalCreateElement;
     window.getComputedStyle = originalGetComputedStyle;
     global.URL = originalURL;
@@ -1142,8 +1145,35 @@ describe('Graph Settings Functions', () => {
     sim = await import('../simulation');
   });
 
+  // Helper function to reset GRAPH_CONFIG to defaults
+  const resetGraphConfig = () => {
+    if (!sim) return;
+    sim.GRAPH_CONFIG.histogram.width = 800;
+    sim.GRAPH_CONFIG.histogram.height = 500;
+    sim.GRAPH_CONFIG.histogram.barCutoff = 600;
+    sim.GRAPH_CONFIG.histogram.maxBuckets = 120;
+    sim.GRAPH_CONFIG.miniGraph.width = 140;
+    sim.GRAPH_CONFIG.miniGraph.height = 26;
+    sim.GRAPH_CONFIG.miniGraph.maxBuckets = 24;
+    sim.GRAPH_CONFIG.miniGraph.gap = 1;
+  };
+
+  beforeEach(() => {
+    // Reset before each test to ensure clean state
+    resetGraphConfig();
+  });
+
+  afterEach(() => {
+    // Reset after each test to prevent pollution
+    resetGraphConfig();
+  });
+
   describe('applyGraphSettings', () => {
     test('applies valid values to sim.GRAPH_CONFIG', () => {
+      // Verify starting state (beforeEach should have reset this)
+      expect(sim.GRAPH_CONFIG.histogram.width).toBe(800);
+      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1);
+
       // Explicitly set up DOM for this test
       document.body.innerHTML = `
         <input id="histogramWidth" value="800" />
@@ -1255,7 +1285,7 @@ describe('Graph Settings Functions', () => {
       // Verify GRAPH_CONFIG accepts negative values (parseInt doesn't reject them)
       expect(sim.GRAPH_CONFIG.histogram.width).toBe(-100);
       expect(sim.GRAPH_CONFIG.histogram.height).toBe(-50);
-      expect(sim.GRAPH_CONFIG.miniGraph.maxBuckets).toBe(-10);
+      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(-10);
     });
 
     test('handles decimal values for integer fields', () => {
