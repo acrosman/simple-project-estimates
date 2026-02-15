@@ -129,7 +129,7 @@ function createTextElement(wrapperTag, text, classList = [], role = null) {
 function createLabeledInput(labelText, inputAttributes, labelFirst = true) {
   const wrapper = document.createElement('div');
   const fldLabel = createTextElement('label', labelText);
-  fldLabel.htmlFor = inputAttributes.name;
+  fldLabel.htmlFor = inputAttributes.id || inputAttributes.name;
   const field = document.createElement('input');
   Object.assign(field, inputAttributes);
 
