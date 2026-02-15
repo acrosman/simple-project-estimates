@@ -1,18 +1,29 @@
 import * as d3 from 'd3';
 
 /**
- * Configuration constants for histogram visualization
+ * Configuration constants for all graph visualization.
+ * Consolidates settings for main histograms, preview histograms, and task row mini graphs.
  */
-const HISTOGRAM_CONFIG = {
-  BAR_CUTOFF: 600, // Switch to scatter plot above this threshold
-  MAX_BUCKETS: 120, // Maximum buckets for preview histograms
-  IMAGE_WIDTH: 800, // Default histogram width
-  IMAGE_HEIGHT: 500, // Default histogram height
-  MARGIN: { // SVG margins
-    top: 10,
-    right: 30,
-    bottom: 50,
-    left: 60,
+const GRAPH_CONFIG = {
+  // Main histogram settings
+  histogram: {
+    barCutoff: 600, // Switch to scatter plot above this threshold
+    maxBuckets: 120, // Maximum buckets for preview histograms
+    width: 800, // Default histogram width
+    height: 500, // Default histogram height
+    margin: { // SVG margins
+      top: 10,
+      right: 30,
+      bottom: 50,
+      left: 60,
+    },
+  },
+  // Task row mini graph settings
+  miniGraph: {
+    width: 140,
+    height: 26,
+    maxBuckets: 24,
+    gap: 1, // Gap between bars
   },
 };
 
@@ -274,15 +285,12 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   targetNode.innerHTML = '';
 
   // The number of points before it switches to using a line graph.
-  const barCutoff = HISTOGRAM_CONFIG.BAR_CUTOFF;
-
-  // The width of the image
-  const imageWidth = HISTOGRAM_CONFIG.IMAGE_WIDTH;
-  const imageHeight = HISTOGRAM_CONFIG.IMAGE_HEIGHT;
+  const {
+    barCutoff, width: imageWidth, height: imageHeight, margin,
+  } = GRAPH_CONFIG.histogram;
 
   // Image Margins
   const binMargin = 0.2;
-  const margin = HISTOGRAM_CONFIG.MARGIN;
 
   // Set outer bounds of graph.
   let minBin = min;
@@ -466,14 +474,18 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
     return;
   }
 
-  const imageWidth = HISTOGRAM_CONFIG.IMAGE_WIDTH;
-  const imageHeight = HISTOGRAM_CONFIG.IMAGE_HEIGHT;
-  const margin = HISTOGRAM_CONFIG.MARGIN;
+  const {
+    width: imageWidth, height: imageHeight, margin,
+  } = GRAPH_CONFIG.histogram;
   const width = imageWidth - margin.left - margin.right;
   const height = imageHeight - margin.top - margin.bottom;
 
   const valueRange = (max - min) + 1;
-  const maxBuckets = HISTOGRAM_CONFIG.MAX_BUCKETS;
+  const rawMaxBuckets = GRAPH_CONFIG.histogram.maxBuckets;
+  const defaultMaxBuckets = 120;
+  const maxBuckets = Number.isFinite(rawMaxBuckets) && rawMaxBuckets > 0
+    ? Math.floor(rawMaxBuckets)
+    : defaultMaxBuckets;
   const bucketCount = Math.max(1, Math.min(maxBuckets, valueRange));
   const bucketSize = Math.max(1, Math.ceil(valueRange / bucketCount));
   const buckets = new Array(bucketCount).fill(0);
@@ -589,6 +601,70 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
         .attr('height', 0)
         .remove()),
   );
+}
+
+/**
+ * Builds a compact histogram visualization for a single task row.
+ * @param {HTMLElement} targetNode Graph container for one task row.
+ * @param {Array<number>} list Task histogram data.
+ * @param {number} min Minimum simulated value.
+ * @param {number} max Maximum simulated value.
+ * @param {string} taskName Task display name.
+ */
+function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
+  targetNode.innerHTML = '';
+
+  if (min < 0 || max < min) {
+    return;
+  }
+
+  const {
+    width: graphWidth, height: graphHeight, maxBuckets, gap,
+  } = GRAPH_CONFIG.miniGraph;
+  const valueRange = max - min + 1;
+  const bucketCount = Math.min(maxBuckets, valueRange);
+  const bucketSize = Math.ceil(valueRange / bucketCount);
+  const buckets = new Array(bucketCount).fill(0);
+
+  for (let i = min; i <= max; i += 1) {
+    const bucketIndex = Math.min(Math.floor((i - min) / bucketSize), bucketCount - 1);
+    buckets[bucketIndex] += list[i];
+  }
+
+  let peak = 0;
+  for (const value of buckets) {
+    if (value > peak) {
+      peak = value;
+    }
+  }
+
+  if (peak === 0) {
+    return;
+  }
+
+  const svgNs = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNs, 'svg');
+  svg.setAttribute('width', String(graphWidth));
+  svg.setAttribute('height', String(graphHeight));
+  svg.setAttribute('viewBox', `0 0 ${graphWidth} ${graphHeight}`);
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', `Task outcome histogram for ${taskName || 'task'}`);
+
+  const barWidth = Math.max((graphWidth / bucketCount) - gap, 1);
+
+  for (let i = 0; i < buckets.length; i += 1) {
+    const bucketValue = buckets[i];
+    const barHeight = Math.max((bucketValue / peak) * graphHeight, 1);
+    const rect = document.createElementNS(svgNs, 'rect');
+    rect.setAttribute('x', String(i * (barWidth + gap)));
+    rect.setAttribute('y', String(graphHeight - barHeight));
+    rect.setAttribute('width', String(barWidth));
+    rect.setAttribute('height', String(barHeight));
+    rect.setAttribute('class', 'task-row-mini-bar');
+    svg.appendChild(rect);
+  }
+
+  targetNode.appendChild(svg);
 }
 
 /**
@@ -846,10 +922,12 @@ export {
   runSimulationProgressive,
   buildHistogramPreview,
   buildHistogram,
+  buildTaskRowHistogram,
   getRandom,
   getValueCount,
   getMedian,
   getStandardDeviation,
   calculateKDE,
   taskUpperBound,
+  GRAPH_CONFIG,
 };
