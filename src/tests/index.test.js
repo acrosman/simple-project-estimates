@@ -397,7 +397,7 @@ describe('Fibonacci Configuration', () => {
   test('fibonacci calendar mappings have correct default values', () => {
     idx.appState.reset();
     const mappings = idx.appState.getFibonacciCalendarMappings();
-    expect(mappings[1]).toEqual({ min: 0.5, max: 1 });
+    expect(mappings[1]).toEqual({ min: 1, max: 1 });
     expect(mappings[8]).toEqual({ min: 5, max: 8 });
     expect(mappings[21]).toEqual({ min: 13, max: 21 });
   });

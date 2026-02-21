@@ -665,49 +665,55 @@ describe('fibonacciToVelocityDays', () => {
   test('calculates correctly with typical velocity (25 points per 10 days)', () => {
     const result = sim.fibonacciToVelocityDays(8, 25, 10);
     // 8 points / 2.5 points per day = 3.2 days base
-    // min: 3.2 * 0.7 = 2.24
-    // max: 3.2 * 1.3 = 4.16
-    expect(result.min).toBeCloseTo(2.24, 2);
-    expect(result.max).toBeCloseTo(4.16, 2);
+    // min: round(3.2 * 0.7) = round(2.24) = 2
+    // max: round(3.2 * 1.3) = round(4.16) = 4
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(4);
   });
 
   test('calculates correctly with low velocity (15 points per 10 days)', () => {
     const result = sim.fibonacciToVelocityDays(5, 15, 10);
     // 5 points / 1.5 points per day = 3.33 days base
-    // min: 3.33 * 0.7 = 2.33
-    // max: 3.33 * 1.3 = 4.33
-    expect(result.min).toBeCloseTo(2.33, 2);
-    expect(result.max).toBeCloseTo(4.33, 2);
+    // min: round(3.33 * 0.7) = round(2.33) = 2
+    // max: round(3.33 * 1.3) = round(4.33) = 4
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(4);
   });
 
   test('calculates correctly with high velocity (40 points per 10 days)', () => {
     const result = sim.fibonacciToVelocityDays(13, 40, 10);
     // 13 points / 4 points per day = 3.25 days base
-    // min: 3.25 * 0.7 = 2.275
-    // max: 3.25 * 1.3 = 4.225
-    expect(result.min).toBeCloseTo(2.275, 2);
-    expect(result.max).toBeCloseTo(4.225, 2);
+    // min: round(3.25 * 0.7) = round(2.275) = 2
+    // max: round(3.25 * 1.3) = round(4.225) = 4
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(4);
   });
 
   test('calculates correctly with different sprint length (14 days)', () => {
     const result = sim.fibonacciToVelocityDays(8, 35, 14);
     // 8 points / 2.5 points per day = 3.2 days base
-    expect(result.min).toBeCloseTo(2.24, 2);
-    expect(result.max).toBeCloseTo(4.16, 2);
+    // min: round(3.2 * 0.7) = round(2.24) = 2
+    // max: round(3.2 * 1.3) = round(4.16) = 4
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(4);
   });
 
   test('handles small story points (1 point)', () => {
     const result = sim.fibonacciToVelocityDays(1, 25, 10);
     // 1 point / 2.5 points per day = 0.4 days base
-    expect(result.min).toBeCloseTo(0.28, 2);
-    expect(result.max).toBeCloseTo(0.52, 2);
+    // min: round(0.4 * 0.7) = round(0.28) = 0
+    // max: round(0.4 * 1.3) = round(0.52) = 1
+    expect(result.min).toBe(0);
+    expect(result.max).toBe(1);
   });
 
   test('handles large story points (34 points)', () => {
     const result = sim.fibonacciToVelocityDays(34, 25, 10);
     // 34 points / 2.5 points per day = 13.6 days base
-    expect(result.min).toBeCloseTo(9.52, 2);
-    expect(result.max).toBeCloseTo(17.68, 2);
+    // min: round(13.6 * 0.7) = round(9.52) = 10
+    // max: round(13.6 * 1.3) = round(17.68) = 18
+    expect(result.min).toBe(10);
+    expect(result.max).toBe(18);
   });
 
   test('returns zero for invalid inputs (negative fibonacci)', () => {
@@ -731,7 +737,9 @@ describe('fibonacciToVelocityDays', () => {
   test('handles string inputs by parsing', () => {
     const result = sim.fibonacciToVelocityDays('5', '20', '10');
     // 5 points / 2 points per day = 2.5 days base
-    expect(result.min).toBeCloseTo(1.75, 2);
-    expect(result.max).toBeCloseTo(3.25, 2);
+    // min: round(2.5 * 0.7) = round(1.75) = 2
+    // max: round(2.5 * 1.3) = round(3.25) = 3
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(3);
   });
 });

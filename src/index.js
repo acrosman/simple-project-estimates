@@ -16,7 +16,7 @@ class AppState {
     this.enableCost = true; // Track cost by default
     this.fibonacciMode = 'calendar-days'; // 'calendar-days' or 'velocity-based'
     this.fibonacciCalendarMappings = {
-      1: { min: 0.5, max: 1 },
+      1: { min: 0, max: 1 },
       2: { min: 1, max: 2 },
       3: { min: 2, max: 3 },
       5: { min: 3, max: 5 },
@@ -106,7 +106,7 @@ class AppState {
 
     // Reassign default values to the same objects
     Object.assign(this.fibonacciCalendarMappings, {
-      1: { min: 0.5, max: 1 },
+      1: { min: 1, max: 1 },
       2: { min: 1, max: 2 },
       3: { min: 2, max: 3 },
       5: { min: 3, max: 5 },
@@ -1372,6 +1372,9 @@ async function startSimulation(event) {
     return;
   }
 
+  // Determine the correct time unit based on estimation mode
+  const timeUnit = (appState.estimationMode === 'fibonacci' || appState.estimationMode === 'tshirt') ? 'Days' : 'Hours';
+
   const runButton = document.getElementById('startSimulationButton');
   const runStartTime = Date.now();
   const updateRunningTimeDisplay = (runningTime) => {
@@ -1405,7 +1408,7 @@ async function startSimulation(event) {
             progress.times.list,
             progress.times.min,
             progress.times.max,
-            'Hours',
+            timeUnit,
           );
           document.getElementById('timeEstimateHeader').style.display = 'block';
           document.getElementById('timeSaveButtons').style.display = 'block';
@@ -1420,10 +1423,10 @@ async function startSimulation(event) {
       currency: 'USD',
     });
     updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
-    updateElementText('simulationTimeMedian', `Median Time: ${results.times.median}`);
-    updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax}`);
-    updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
-    updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
+    updateElementText('simulationTimeMedian', `Median Time: ${results.times.median} ${timeUnit.toLowerCase()}`);
+    updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax} ${timeUnit.toLowerCase()}`);
+    updateElementText('simulationTimeMax', `Max Time: ${results.times.max} ${timeUnit.toLowerCase()}`);
+    updateElementText('simulationTimeMin', `Min Time: ${results.times.min} ${timeUnit.toLowerCase()}`);
     updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
 
     // Only display cost results if cost tracking is enabled
@@ -1446,7 +1449,7 @@ async function startSimulation(event) {
       results.times.max,
       results.times.median,
       results.times.sd,
-      'Hours',
+      timeUnit,
       graphSetting,
     );
     // Show time estimate header and save buttons now that graph is generated

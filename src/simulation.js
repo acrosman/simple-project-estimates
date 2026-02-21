@@ -75,24 +75,28 @@ function taskUpperBound(maxEstimate, confidence) {
  * @returns
  */
 function generateEstimate(minimum, maximum, confidence) {
-  const max = parseInt(maximum, 10);
-  const min = parseInt(minimum, 10);
+  const max = parseFloat(maximum);
+  const min = parseFloat(minimum);
   const base = getRandom(1, 1000);
   const boundary = confidence * 1000;
   const midBoundary = Math.floor((1000 - boundary) / 2);
-  const range = (max - min) + 1;
+  const range = max - min;
   const maxOverrun = taskUpperBound(max, confidence);
   let total = 0;
 
   if (base < boundary) {
-    total = (base % range) + min;
+    // Generate random value within the min-max range
+    total = (Math.random() * range) + min;
   } else if ((base - boundary) < midBoundary) {
-    total = min === 0 ? 0 : base % min;
+    // Underrun: random value between 0 and min
+    total = min === 0 ? 0 : Math.random() * min;
   } else {
-    total = getRandom(max, maxOverrun);
+    // Overrun: random value between max and maxOverrun
+    total = max + (Math.random() * (maxOverrun - max));
   }
 
-  return total;
+  // Round to whole numbers (integers) for cleaner histogram storage
+  return Math.round(total);
 }
 
 /**
@@ -931,7 +935,7 @@ function fibonacciToCalendarDays(fibonacci, mappings) {
   }
 
   // Fallback for any non-standard Fibonacci numbers
-  return { min: fib * 0.8, max: fib };
+  return { min: Math.round(fib * 0.8), max: fib };
 }
 
 /**
@@ -958,9 +962,9 @@ function fibonacciToVelocityDays(fibonacci, pointsPerSprint, sprintLengthDays) {
   // Base calculation: story points / velocity
   const baseDays = fib / pointsPerDay;
 
-  // Apply variance: ±30% to account for uncertainty
-  const min = baseDays * 0.7;
-  const max = baseDays * 1.3;
+  // Apply variance: ±30% to account for uncertainty, rounded to whole days
+  const min = Math.round(baseDays * 0.7);
+  const max = Math.round(baseDays * 1.3);
 
   return { min, max };
 }
