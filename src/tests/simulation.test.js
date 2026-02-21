@@ -10,6 +10,7 @@ test('Validate Elements', () => {
   expect(sim).toHaveProperty('buildTaskRowHistogram');
   expect(sim).toHaveProperty('getRandom');
   expect(sim).toHaveProperty('GRAPH_CONFIG');
+  expect(sim).toHaveProperty('GRAPH_CONFIG_DEFAULTS');
 });
 
 test('Validate GRAPH_CONFIG structure', () => {
@@ -23,6 +24,24 @@ test('Validate GRAPH_CONFIG structure', () => {
   expect(sim.GRAPH_CONFIG.miniGraph).toHaveProperty('height');
   expect(sim.GRAPH_CONFIG.miniGraph).toHaveProperty('maxBuckets');
   expect(sim.GRAPH_CONFIG.miniGraph).toHaveProperty('gap');
+});
+
+test('GRAPH_CONFIG_DEFAULTS matches GRAPH_CONFIG initial structure', () => {
+  expect(sim.GRAPH_CONFIG_DEFAULTS).toHaveProperty('histogram');
+  expect(sim.GRAPH_CONFIG_DEFAULTS).toHaveProperty('miniGraph');
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram.width).toBe(800);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram.height).toBe(500);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram.barCutoff).toBe(600);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram.maxBuckets).toBe(120);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram).toHaveProperty('margin');
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram.margin.top).toBe(10);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram.margin.right).toBe(30);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram.margin.bottom).toBe(50);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.histogram.margin.left).toBe(60);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.miniGraph.width).toBe(140);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.miniGraph.height).toBe(26);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.miniGraph.maxBuckets).toBe(24);
+  expect(sim.GRAPH_CONFIG_DEFAULTS.miniGraph.gap).toBe(1);
 });
 
 test('GetRandom', () => {

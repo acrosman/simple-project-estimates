@@ -753,7 +753,7 @@ function updateTshirtMapping(event) {
  */
 function createFibonacciConfigPanel() {
   const wrapper = createDivWithIdAndClasses('fibonacciConfigWrapper', ['section', 'fibonacci-config']);
-  const header = createTextElement('H3', 'Fibonacci Estimation Configuration', ['header', 'fib-config']);
+  const header = createTextElement('h3', 'Fibonacci Estimation Configuration', ['header', 'fib-config']);
 
   // Mode selector
   const modeSection = document.createElement('div');
@@ -891,7 +891,7 @@ function createFibonacciConfigPanel() {
  */
 function createTshirtMappingTable() {
   const wrapper = createDivWithIdAndClasses('tshirtMappingWrapper', ['section', 'fibonacci-mapping']);
-  const header = createTextElement('H3', 'T-Shirt Size to Fibonacci Mapping', ['header', 'fib-mapping']);
+  const header = createTextElement('h3', 'T-Shirt Size to Fibonacci Mapping', ['header', 'fib-mapping']);
   const helpText = createTextElement('p', 'Map t-shirt sizes to Fibonacci story points. These will be converted to days using the Fibonacci calendar day mappings.', ['help-text']);
 
   const table = document.createElement('div');
@@ -955,7 +955,7 @@ function handleCostToggle(event) {
   const costResults = document.getElementById('simulationCostResultsWrapper');
 
   if (costResults) {
-    costResults.style.display = appState.enableCost ? 'block' : 'none';
+    costResults.style.display = appState.getEnableCost() ? 'block' : 'none';
   }
 
   // Recreate the data entry table with the new cost setting
@@ -1566,7 +1566,7 @@ function createHeader() {
 function createModeSelector() {
   const modeSelectorDiv = document.createElement('div');
   modeSelectorDiv.classList.add('section', 'wrapper-mode-selector');
-  const modeHeader = createTextElement('H2', 'Estimation Mode', ['header', 'mode-selector']);
+  const modeHeader = createTextElement('h2', 'Estimation Mode', ['header', 'mode-selector']);
 
   const modeFieldset = document.createElement('fieldset');
   modeFieldset.appendChild(createTextElement('legend', 'Select estimation type', []));
@@ -1649,7 +1649,7 @@ function createModeSelector() {
 function createFileLoader() {
   const fileDiv = document.createElement('div');
   fileDiv.classList.add('section', 'wrapper-file-load');
-  const csvHeader = createTextElement('H2', 'Upload Task CSV File', ['header', 'csv-file']);
+  const csvHeader = createTextElement('h2', 'Upload Task CSV File', ['header', 'csv-file']);
   const fieldSet = document.createElement('fieldset');
 
   // File Input.
@@ -1698,7 +1698,7 @@ function createFileLoader() {
 function createDataEntrySection() {
   const dataEntryDiv = document.createElement('div');
   dataEntryDiv.classList.add('section', 'wrapper-direct-load');
-  const dataEntryHeader = createTextElement('H2', 'Add Tasks By Hand', ['header', 'data-input']);
+  const dataEntryHeader = createTextElement('h2', 'Add Tasks By Hand', ['header', 'data-input']);
   const dataEntryTable = createEntryTable();
 
   // Add segments to section.
@@ -1734,25 +1734,27 @@ function applyGraphSettings() {
  * Resets graph settings to default values.
  */
 function resetGraphSettings() {
-  // Reset to defaults
-  sim.GRAPH_CONFIG.histogram.width = 800;
-  sim.GRAPH_CONFIG.histogram.height = 500;
-  sim.GRAPH_CONFIG.histogram.barCutoff = 600;
-  sim.GRAPH_CONFIG.histogram.maxBuckets = 120;
-  sim.GRAPH_CONFIG.miniGraph.width = 140;
-  sim.GRAPH_CONFIG.miniGraph.height = 26;
-  sim.GRAPH_CONFIG.miniGraph.maxBuckets = 24;
-  sim.GRAPH_CONFIG.miniGraph.gap = 1;
+  const { histogram: h, miniGraph: m } = sim.GRAPH_CONFIG_DEFAULTS;
 
-  // Update form fields
-  document.getElementById('histogramWidth').value = '800';
-  document.getElementById('histogramHeight').value = '500';
-  document.getElementById('histogramBarCutoff').value = '600';
-  document.getElementById('histogramMaxBuckets').value = '120';
-  document.getElementById('miniGraphWidth').value = '140';
-  document.getElementById('miniGraphHeight').value = '26';
-  document.getElementById('miniGraphMaxBuckets').value = '24';
-  document.getElementById('miniGraphGap').value = '1';
+  // Reset GRAPH_CONFIG to original defaults.
+  sim.GRAPH_CONFIG.histogram.width = h.width;
+  sim.GRAPH_CONFIG.histogram.height = h.height;
+  sim.GRAPH_CONFIG.histogram.barCutoff = h.barCutoff;
+  sim.GRAPH_CONFIG.histogram.maxBuckets = h.maxBuckets;
+  sim.GRAPH_CONFIG.miniGraph.width = m.width;
+  sim.GRAPH_CONFIG.miniGraph.height = m.height;
+  sim.GRAPH_CONFIG.miniGraph.maxBuckets = m.maxBuckets;
+  sim.GRAPH_CONFIG.miniGraph.gap = m.gap;
+
+  // Sync form fields to match the reset values.
+  document.getElementById('histogramWidth').value = String(h.width);
+  document.getElementById('histogramHeight').value = String(h.height);
+  document.getElementById('histogramBarCutoff').value = String(h.barCutoff);
+  document.getElementById('histogramMaxBuckets').value = String(h.maxBuckets);
+  document.getElementById('miniGraphWidth').value = String(m.width);
+  document.getElementById('miniGraphHeight').value = String(m.height);
+  document.getElementById('miniGraphMaxBuckets').value = String(m.maxBuckets);
+  document.getElementById('miniGraphGap').value = String(m.gap);
 
   // Show confirmation
   const details = document.getElementById('advancedSettings');
@@ -1908,7 +1910,7 @@ function createAdvancedSettings() {
  */
 function createSimulationPanel() {
   const simWrapper = createDivWithIdAndClasses('simulationAreaWrapper', ['section', 'container']);
-  const simHeader = createTextElement('H2', 'Simulator', ['header', 'simulation']);
+  const simHeader = createTextElement('h2', 'Simulator', ['header', 'simulation']);
 
   const simControls = createDivWithIdAndClasses('simulatorControlsWrapper', ['section', 'controls-simulation']);
 
@@ -1944,7 +1946,7 @@ function createSimulationPanel() {
   const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
   simResultWrapper.appendChild(createDivWithIdAndClasses('simulationRunningTime', ['simulation-result', 'text']));
   const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
-  const timeHeader = createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']);
+  const timeHeader = createTextElement('h3', 'Time Estimates', ['result-display', 'time-info']);
   timeHeader.id = 'timeEstimateHeader';
   timeHeader.style.display = 'none';
   simTimeResultWrapper.appendChild(timeHeader);
@@ -1985,7 +1987,7 @@ function createSimulationPanel() {
 
   // Simulation Cost Results elements
   const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
-  const costHeader = createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']);
+  const costHeader = createTextElement('h3', 'Cost Estimates', ['result-display', 'cost-info']);
   costHeader.id = 'costEstimateHeader';
   costHeader.style.display = 'none';
   simCostResultWrapper.appendChild(costHeader);
