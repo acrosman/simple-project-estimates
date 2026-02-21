@@ -1946,7 +1946,7 @@ function createSimulationPanel() {
   const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
   simResultWrapper.appendChild(createDivWithIdAndClasses('simulationRunningTime', ['simulation-result', 'text']));
   const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
-  const timeHeader = createTextElement('H3', 'Time Estimates', ['result-display', 'time-info']);
+  const timeHeader = createTextElement('h3', 'Time Estimates', ['result-display', 'time-info']);
   timeHeader.id = 'timeEstimateHeader';
   timeHeader.style.display = 'none';
   simTimeResultWrapper.appendChild(timeHeader);
@@ -1987,7 +1987,7 @@ function createSimulationPanel() {
 
   // Simulation Cost Results elements
   const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
-  const costHeader = createTextElement('H3', 'Cost Estimates', ['result-display', 'cost-info']);
+  const costHeader = createTextElement('h3', 'Cost Estimates', ['result-display', 'cost-info']);
   costHeader.id = 'costEstimateHeader';
   costHeader.style.display = 'none';
   simCostResultWrapper.appendChild(costHeader);
