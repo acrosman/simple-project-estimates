@@ -690,11 +690,20 @@ function pauseForUiUpdate() {
  * @param {number} callbacks.batchSize Size of each batch for progressive execution.
  * @returns {Object|Promise<Object>} Simulation results (promise if using callbacks).
  */
-function runSimulationCore(passes, data, callbacks = {}) {
+/**
+ * Runs the core simulation logic.
+ * @param {number} passes - Number of times to run the simulation
+ * @param {Array} data - Array of task objects with Min, Max, Confidence, Cost
+ * @param {Object} callbacks - Optional callbacks for progress updates
+ * @param {number} hoursPerTimeUnit - Hours per time unit (1 for hours mode, 8 for days mode)
+ * @returns {Object} Simulation results
+ */
+function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
   const { onBatchComplete, batchSize = 1000 } = callbacks;
   const totalPasses = parseInt(passes, 10);
+  const costMultiplier = parseFloat(hoursPerTimeUnit) || 1;
   const upperTimeBound = calculateUpperBound(data);
-  const upperCostBound = calculateUpperBound(data, true);
+  const upperCostBound = calculateUpperBound(data, true) * costMultiplier;
   const times = new Array(upperTimeBound + 1).fill(0);
   const costs = new Array(upperCostBound + 1).fill(0);
   const taskOutcomes = {};
@@ -715,7 +724,7 @@ function runSimulationCore(passes, data, callbacks = {}) {
   // Setup task-level outcome histograms for row-level visualization.
   for (const row of data) {
     const taskTimeUpperBound = taskUpperBound(row.Max, row.Confidence);
-    const taskCostUpperBound = taskTimeUpperBound * row.Cost;
+    const taskCostUpperBound = taskTimeUpperBound * row.Cost * costMultiplier;
     const rowId = row.RowId || row.Name;
     taskOutcomes[rowId] = {
       rowId,
@@ -745,7 +754,7 @@ function runSimulationCore(passes, data, callbacks = {}) {
       const rowId = row.RowId || row.Name;
       const taskOutcome = taskOutcomes[rowId];
       const taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
-      const taskCost = taskTime * row.Cost;
+      const taskCost = taskTime * row.Cost * costMultiplier;
       totalTime += taskTime;
       totalCost += taskCost;
       outcome[row.Name] = {
@@ -893,8 +902,15 @@ function runSimulationCore(passes, data, callbacks = {}) {
  * @param {Object} data
  * @returns
  */
-function runSimulation(passes, data) {
-  return runSimulationCore(passes, data);
+/**
+ * Runs the simulation for a given number of passes.
+ * @param {number} passes - Number of simulation iterations
+ * @param {Array} data - Task data
+ * @param {number} hoursPerTimeUnit - Hours per time unit (1 for hours, 8 for days)
+ * @returns {Object} Simulation results
+ */
+function runSimulation(passes, data, hoursPerTimeUnit = 1) {
+  return runSimulationCore(passes, data, {}, hoursPerTimeUnit);
 }
 
 /**
@@ -903,9 +919,10 @@ function runSimulation(passes, data) {
  * @param {Object} data Task input data.
  * @param {Function} onProgress Callback invoked with intermediate histogram state.
  * @param {number} progressInterval Number of passes between progress callbacks.
+ * @param {number} hoursPerTimeUnit Hours per time unit (1 for hours mode, 8 for days mode).
  * @returns {Promise<Object>} Full simulation results.
  */
-async function runSimulationProgressive(passes, data, onProgress = null, progressInterval = 1000) {
+async function runSimulationProgressive(passes, data, onProgress = null, progressInterval = 1000, hoursPerTimeUnit = 1) {
   const updateInterval = Math.max(1, parseInt(progressInterval, 10) || 1000);
 
   return runSimulationCore(passes, data, {
@@ -918,7 +935,7 @@ async function runSimulationProgressive(passes, data, onProgress = null, progres
         onProgress(progress);
       }
     },
-  });
+  }, hoursPerTimeUnit);
 }
 
 /**

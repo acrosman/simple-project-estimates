@@ -1374,6 +1374,8 @@ async function startSimulation(event) {
 
   // Determine the correct time unit based on estimation mode
   const timeUnit = (appState.estimationMode === 'fibonacci' || appState.estimationMode === 'tshirt') ? 'Days' : 'Hours';
+  // When using days, need to multiply hourly cost by 8 hours/day
+  const hoursPerTimeUnit = timeUnit === 'Days' ? 8 : 1;
 
   const runButton = document.getElementById('startSimulationButton');
   const runStartTime = Date.now();
@@ -1415,6 +1417,7 @@ async function startSimulation(event) {
         }
       },
       graphProgressInterval,
+      hoursPerTimeUnit,
     );
 
     // Display summary data.
