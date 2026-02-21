@@ -30,12 +30,12 @@ class AppState {
       sprintLengthDays: 10,
     };
     this.tshirtMappings = {
-      XS: { min: 1, max: 2 },
-      S: { min: 2, max: 3 },
-      M: { min: 3, max: 5 },
-      L: { min: 5, max: 8 },
-      XL: { min: 8, max: 13 },
-      XXL: { min: 13, max: 21 },
+      XS: 1,
+      S: 2,
+      M: 3,
+      L: 5,
+      XL: 8,
+      XXL: 13,
     };
   }
 
@@ -116,12 +116,12 @@ class AppState {
       34: { min: 21, max: 34 },
     });
     Object.assign(this.tshirtMappings, {
-      XS: { min: 1, max: 2 },
-      S: { min: 2, max: 3 },
-      M: { min: 3, max: 5 },
-      L: { min: 5, max: 8 },
-      XL: { min: 8, max: 13 },
-      XXL: { min: 13, max: 21 },
+      XS: 1,
+      S: 2,
+      M: 3,
+      L: 5,
+      XL: 8,
+      XXL: 13,
     });
   }
 }
@@ -631,37 +631,25 @@ function updateTshirtMapping(event) {
     return;
   }
 
-  const { tshirt, type } = event.target.dataset;
+  const { tshirt } = event.target.dataset;
   const rawValue = event.target.value;
 
-  if (!tshirt || !type) {
+  if (!tshirt) {
     return;
   }
 
   const size = normalizeTshirtSize(tshirt);
   const value = Number.parseInt(rawValue, 10);
 
-  if (!size || !Number.isFinite(value)) {
+  if (!size || !Number.isFinite(value) || value < 0) {
     return;
   }
 
-  if (!tshirtMappings[size] || !(type in tshirtMappings[size])) {
+  if (!tshirtMappings.hasOwnProperty(size)) {
     return;
   }
 
-  tshirtMappings[size][type] = value;
-
-  // Validate that min <= max (only if we have a real DOM element)
-  if (tshirtMappings[size].min > tshirtMappings[size].max) {
-    if (event.target.setCustomValidity) {
-      event.target.setCustomValidity('Min must be less than or equal to Max');
-      if (event.target.reportValidity) {
-        event.target.reportValidity();
-      }
-    }
-  } else if (event.target.setCustomValidity) {
-    event.target.setCustomValidity('');
-  }
+  tshirtMappings[size] = value;
 }
 
 /**
@@ -896,7 +884,8 @@ function createFibonacciCalendarMappingTable() {
  */
 function createTshirtMappingTable() {
   const wrapper = createDivWithIdAndClasses('tshirtMappingWrapper', ['section', 'fibonacci-mapping']);
-  const header = createTextElement('H3', 'T-Shirt Size to Hours Mapping', ['header', 'fib-mapping']);
+  const header = createTextElement('H3', 'T-Shirt Size to Fibonacci Mapping', ['header', 'fib-mapping']);
+  const helpText = createTextElement('p', 'Map t-shirt sizes to Fibonacci story points. These will be converted to days using the Fibonacci calendar day mappings.', ['help-text']);
 
   const table = document.createElement('div');
   table.classList.add('table', 'fib-mapping-table');
@@ -915,57 +904,34 @@ function createTshirtMappingTable() {
   }
   table.appendChild(sizeRow);
 
-  const minRow = document.createElement('div');
-  minRow.classList.add('tr', 'fib-mapping-row');
-  minRow.appendChild(createTextElement('div', 'Min Hours', ['th']));
+  const fibRow = document.createElement('div');
+  fibRow.classList.add('tr', 'fib-mapping-row');
+  fibRow.appendChild(createTextElement('div', 'Fibonacci Points', ['th']));
 
   for (const size of sizes) {
-    const minCell = document.createElement('div');
-    minCell.classList.add('td');
-    const minInput = document.createElement('input');
-    Object.assign(minInput, {
+    const fibCell = document.createElement('div');
+    fibCell.classList.add('td');
+    const fibInput = document.createElement('input');
+    Object.assign(fibInput, {
       type: 'number',
-      value: tshirtMappings[size].min,
-      name: `tshirt-min-${size}`,
-      'aria-label': `Minimum hours for t-shirt size ${size}`,
+      value: tshirtMappings[size],
+      name: `tshirt-fib-${size}`,
+      min: 0,
+      step: 1,
+      'aria-label': `Fibonacci points for t-shirt size ${size}`,
     });
-    minInput.dataset.tshirt = size;
-    minInput.dataset.type = 'min';
-    minInput.addEventListener('change', updateTshirtMapping);
-    minInput.addEventListener('keydown', (event) => {
+    fibInput.dataset.tshirt = size;
+    fibInput.addEventListener('change', updateTshirtMapping);
+    fibInput.addEventListener('keydown', (event) => {
       handleMappingTabNavigation(event, 'tshirt', sizes);
     });
-    minCell.appendChild(minInput);
-    minRow.appendChild(minCell);
+    fibCell.appendChild(fibInput);
+    fibRow.appendChild(fibCell);
   }
-  table.appendChild(minRow);
-
-  const maxRow = document.createElement('div');
-  maxRow.classList.add('tr', 'fib-mapping-row');
-  maxRow.appendChild(createTextElement('div', 'Max Hours', ['th']));
-
-  for (const size of sizes) {
-    const maxCell = document.createElement('div');
-    maxCell.classList.add('td');
-    const maxInput = document.createElement('input');
-    Object.assign(maxInput, {
-      type: 'number',
-      value: tshirtMappings[size].max,
-      name: `tshirt-max-${size}`,
-      'aria-label': `Maximum hours for t-shirt size ${size}`,
-    });
-    maxInput.dataset.tshirt = size;
-    maxInput.dataset.type = 'max';
-    maxInput.addEventListener('change', updateTshirtMapping);
-    maxInput.addEventListener('keydown', (event) => {
-      handleMappingTabNavigation(event, 'tshirt', sizes);
-    });
-    maxCell.appendChild(maxInput);
-    maxRow.appendChild(maxCell);
-  }
-  table.appendChild(maxRow);
+  table.appendChild(fibRow);
 
   wrapper.appendChild(header);
+  wrapper.appendChild(helpText);
   wrapper.appendChild(table);
   wrapper.style.display = 'none';
 
@@ -1324,10 +1290,14 @@ async function startSimulation(event) {
         taskDetail.Max = mapping.max;
       }
     } else if (appState.estimationMode === 'tshirt' && taskDetail.TShirt) {
-      const mapping = tshirtMappings[taskDetail.TShirt];
-      if (mapping) {
-        taskDetail.Min = mapping.min;
-        taskDetail.Max = mapping.max;
+      const fibonacciValue = tshirtMappings[taskDetail.TShirt];
+      if (fibonacciValue) {
+        // Convert T-shirt size to Fibonacci, then Fibonacci to days
+        const mapping = sim.fibonacciToCalendarDays(fibonacciValue, fibonacciCalendarMappings);
+        if (mapping) {
+          taskDetail.Min = mapping.min;
+          taskDetail.Max = mapping.max;
+        }
       }
     }
 

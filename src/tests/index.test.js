@@ -438,30 +438,30 @@ describe('T-Shirt Mappings', () => {
     expect(tshirtKeys).toEqual(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
   });
 
-  test('each t-shirt mapping has min and max properties', () => {
-    Object.values(idx.tshirtMappings).forEach((mapping) => {
-      expect(mapping).toHaveProperty('min');
-      expect(mapping).toHaveProperty('max');
+  test('each t-shirt mapping has a Fibonacci number', () => {
+    Object.values(idx.tshirtMappings).forEach((fibValue) => {
+      expect(typeof fibValue).toBe('number');
+      expect(fibValue).toBeGreaterThan(0);
     });
   });
 
-  test('t-shirt mappings follow expected hour ranges', () => {
-    expect(idx.tshirtMappings.XS).toEqual({ min: 1, max: 2 });
-    expect(idx.tshirtMappings.S).toEqual({ min: 2, max: 3 });
-    expect(idx.tshirtMappings.M).toEqual({ min: 3, max: 5 });
-    expect(idx.tshirtMappings.L).toEqual({ min: 5, max: 8 });
-    expect(idx.tshirtMappings.XL).toEqual({ min: 8, max: 13 });
-    expect(idx.tshirtMappings.XXL).toEqual({ min: 13, max: 21 });
+  test('t-shirt mappings follow expected Fibonacci values', () => {
+    expect(idx.tshirtMappings.XS).toBe(1);
+    expect(idx.tshirtMappings.S).toBe(2);
+    expect(idx.tshirtMappings.M).toBe(3);
+    expect(idx.tshirtMappings.L).toBe(5);
+    expect(idx.tshirtMappings.XL).toBe(8);
+    expect(idx.tshirtMappings.XXL).toBe(13);
   });
 
   test('normalizes lowercase t-shirt input for mapping lookup', () => {
     expect(idx.normalizeTshirtSize('xl')).toBe('XL');
-    expect(idx.tshirtMappings[idx.normalizeTshirtSize('xl')]).toEqual({ min: 8, max: 13 });
+    expect(idx.tshirtMappings[idx.normalizeTshirtSize('xl')]).toBe(8);
   });
 
   test('trims and normalizes t-shirt input for mapping lookup', () => {
     expect(idx.normalizeTshirtSize('  xxl  ')).toBe('XXL');
-    expect(idx.tshirtMappings[idx.normalizeTshirtSize('  xxl  ')]).toEqual({ min: 13, max: 21 });
+    expect(idx.tshirtMappings[idx.normalizeTshirtSize('  xxl  ')]).toBe(13);
   });
 });
 
@@ -672,59 +672,57 @@ describe('updateFibonacciCalendarMapping', () => {
 
 describe('updateTshirtMapping', () => {
   beforeEach(() => {
-    idx.tshirtMappings.XS = { min: 1, max: 2 };
-    idx.tshirtMappings.S = { min: 2, max: 3 };
-    idx.tshirtMappings.M = { min: 3, max: 5 };
-    idx.tshirtMappings.L = { min: 5, max: 8 };
-    idx.tshirtMappings.XL = { min: 8, max: 13 };
-    idx.tshirtMappings.XXL = { min: 13, max: 21 };
+    idx.tshirtMappings.XS = 1;
+    idx.tshirtMappings.S = 2;
+    idx.tshirtMappings.M = 3;
+    idx.tshirtMappings.L = 5;
+    idx.tshirtMappings.XL = 8;
+    idx.tshirtMappings.XXL = 13;
   });
 
-  test('updates min value when min input changes', () => {
+  test('updates Fibonacci value when input changes', () => {
     const mockEvent = {
       target: {
-        dataset: { tshirt: 'XL', type: 'min' },
-        value: '9',
+        dataset: { tshirt: 'XL' },
+        value: '13',
       },
     };
 
     idx.updateTshirtMapping(mockEvent);
 
-    expect(idx.tshirtMappings.XL.min).toBe(9);
-    expect(idx.tshirtMappings.XL.max).toBe(13);
+    expect(idx.tshirtMappings.XL).toBe(13);
   });
 
-  test('updates max value when max input changes', () => {
+  test('updates different size value', () => {
     const mockEvent = {
       target: {
-        dataset: { tshirt: 'M', type: 'max' },
-        value: '6',
+        dataset: { tshirt: 'M' },
+        value: '5',
       },
     };
 
     idx.updateTshirtMapping(mockEvent);
 
-    expect(idx.tshirtMappings.M.max).toBe(6);
-    expect(idx.tshirtMappings.M.min).toBe(3);
+    expect(idx.tshirtMappings.M).toBe(5);
   });
 
   test('normalizes lowercase size key before updating', () => {
     const mockEvent = {
       target: {
-        dataset: { tshirt: 'xxl', type: 'min' },
-        value: '12',
+        dataset: { tshirt: 'xxl' },
+        value: '21',
       },
     };
 
     idx.updateTshirtMapping(mockEvent);
 
-    expect(idx.tshirtMappings.XXL.min).toBe(12);
+    expect(idx.tshirtMappings.XXL).toBe(21);
   });
 
   test('does not crash for unknown size', () => {
     const mockEvent = {
       target: {
-        dataset: { tshirt: 'XXXL', type: 'min' },
+        dataset: { tshirt: 'XXXL' },
         value: '20',
       },
     };
@@ -1090,16 +1088,16 @@ describe('AppState reset()', () => {
     const tshirtRef = idx.tshirtMappings;
 
     // Modify the mapping
-    idx.tshirtMappings.XS = { min: 888, max: 888 };
+    idx.tshirtMappings.XS = 888;
 
     // Verify modification
-    expect(idx.tshirtMappings.XS.min).toBe(888);
+    expect(idx.tshirtMappings.XS).toBe(888);
 
     // Call reset
     idx.appState.reset();
 
     // Verify the values are reset
-    expect(idx.tshirtMappings.XS).toEqual({ min: 1, max: 2 });
+    expect(idx.tshirtMappings.XS).toBe(1);
 
     // Verify the object still references the same memory address
     expect(tshirtRef).toBe(idx.tshirtMappings);
@@ -1107,7 +1105,7 @@ describe('AppState reset()', () => {
 
   test('reset() clears all existing keys before reassigning', () => {
     // Add an extra t-shirt size
-    idx.tshirtMappings.XXXL = { min: 21, max: 34 };
+    idx.tshirtMappings.XXXL = 34;
     expect(idx.tshirtMappings).toHaveProperty('XXXL');
 
     // Reset should remove the extra key
@@ -1127,7 +1125,7 @@ describe('AppState reset()', () => {
     idx.appState.setEnableCost(false);
     idx.appState.setFibonacciMode('velocity-based');
     idx.appState.setVelocityConfig(40, 14);
-    idx.tshirtMappings.XS = { min: 100, max: 200 };
+    idx.tshirtMappings.XS = 100;
 
     // Reset
     idx.appState.reset();
@@ -1137,7 +1135,7 @@ describe('AppState reset()', () => {
     expect(idx.getEnableCost()).toBe(true);
     expect(idx.appState.getFibonacciMode()).toBe('calendar-days');
     expect(idx.appState.getVelocityConfig()).toEqual({ pointsPerSprint: 25, sprintLengthDays: 10 });
-    expect(idx.tshirtMappings.XS).toEqual({ min: 1, max: 2 });
+    expect(idx.tshirtMappings.XS).toBe(1);
   });
 });
 
