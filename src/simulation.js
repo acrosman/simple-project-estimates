@@ -922,7 +922,13 @@ function runSimulation(passes, data, hoursPerTimeUnit = 1) {
  * @param {number} hoursPerTimeUnit Hours per time unit (1 for hours mode, 8 for days mode).
  * @returns {Promise<Object>} Full simulation results.
  */
-async function runSimulationProgressive(passes, data, onProgress = null, progressInterval = 1000, hoursPerTimeUnit = 1) {
+async function runSimulationProgressive(
+  passes,
+  data,
+  onProgress = null,
+  progressInterval = 1000,
+  hoursPerTimeUnit = 1,
+) {
   const updateInterval = Math.max(1, parseInt(progressInterval, 10) || 1000);
 
   return runSimulationCore(passes, data, {
