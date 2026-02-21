@@ -1,6 +1,6 @@
 import { csv } from 'd3-fetch';
 import './style.css';
-import Icon from './EstimateIcon.png';
+import Icon from './logo.jpg';
 import sampleData from './data/sample.csv';
 import sampleFibData from './data/sample-fib.csv';
 import sampleTshirtData from './data/sample-tshirt.csv';
@@ -1493,12 +1493,10 @@ function createHeader() {
   const simIcon = new Image();
   simIcon.src = Icon;
   simIcon.alt = 'Project Estimate Simulator icon';
+  simIcon.width = 100;
+  simIcon.height = 100;
   simIcon.classList.add('project-icon');
   headerDiv.appendChild(simIcon);
-
-  // Set header
-  const mainHeader = createTextElement('H1', 'Project Estimate Simulator', ['header', 'main']);
-  headerDiv.appendChild(mainHeader);
 
   // Fork Me ribbon
   const githubRibbon = createDivWithIdAndClasses('forkOnGithub', ['github-ribbon']);
