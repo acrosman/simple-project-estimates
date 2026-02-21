@@ -350,6 +350,12 @@ function generateDataRow(
   taskGraph.dataset.rowId = rowId;
   taskGraphCell.appendChild(taskGraph);
 
+  // Add statistics display for min, max, median
+  const taskStats = document.createElement('div');
+  taskStats.classList.add('task-row-stats');
+  taskStats.dataset.rowId = rowId;
+  taskGraphCell.appendChild(taskStats);
+
   // Add click event handler for the clear button.
   /**
    * Click Event Handler for the clear row button.
@@ -1112,9 +1118,17 @@ function renderTaskRowHistograms(taskResults) {
     graphNode.innerHTML = '';
   }
 
+  const rowStats = document.querySelectorAll('.task-row-stats');
+  for (const statsNode of rowStats) {
+    statsNode.innerHTML = '';
+  }
+
   if (!taskResults || taskResults.length < 1) {
     return;
   }
+
+  // Determine time unit based on estimation mode
+  const timeUnit = (appState.estimationMode === 'fibonacci' || appState.estimationMode === 'tshirt') ? 'days' : 'hours';
 
   for (const taskResult of taskResults) {
     const graphNode = document.querySelector(`.task-row-graph[data-row-id="${taskResult.rowId}"]`);
@@ -1126,6 +1140,12 @@ function renderTaskRowHistograms(taskResults) {
         taskResult.times.max,
         taskResult.name,
       );
+    }
+
+    // Add statistics display
+    const statsNode = document.querySelector(`.task-row-stats[data-row-id="${taskResult.rowId}"]`);
+    if (statsNode) {
+      statsNode.innerHTML = `Min: ${taskResult.times.min} | Med: ${taskResult.times.median} | Max: ${taskResult.times.max} ${timeUnit}`;
     }
   }
 }
@@ -1370,11 +1390,28 @@ async function startSimulation(event) {
 
   updateRunningTimeDisplay(0);
 
+  // Clear previous statistics at the start of a new simulation
+  updateElementText('simulationTimeMedian', '');
+  updateElementText('simulationTimeStandRange', '');
+  updateElementText('simulationTimeMax', '');
+  updateElementText('simulationTimeMin', '');
+  updateElementText('simulationTimeStandDev', '');
+  updateElementText('simulationCostMedian', '');
+  updateElementText('simulationCostStandRange', '');
+  updateElementText('simulationCostMax', '');
+  updateElementText('simulationCostMin', '');
+  updateElementText('simulationCostStandDev', '');
+
   try {
     // Run main simulator with progressive graph updates.
     document.getElementById('costHistoGram').innerHTML = '';
     document.getElementById('costEstimateHeader').style.display = 'none';
     document.getElementById('costSaveButtons').style.display = 'none';
+
+    const currencyFormatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    });
 
     const graphProgressInterval = 1000;
     const results = await sim.runSimulationProgressive(
@@ -1382,6 +1419,7 @@ async function startSimulation(event) {
       data,
       (progress) => {
         if (progress.times.min > -1 && progress.times.max >= progress.times.min) {
+          // Update time histogram preview
           sim.buildHistogramPreview(
             document.getElementById('timeHistoGram'),
             progress.times.list,
@@ -1391,17 +1429,29 @@ async function startSimulation(event) {
           );
           document.getElementById('timeEstimateHeader').style.display = 'block';
           document.getElementById('timeSaveButtons').style.display = 'block';
+
+          // Update time statistics during progressive updates
+          updateElementText('simulationTimeMedian', `Median Time: ${progress.times.median} ${timeUnit.toLowerCase()}`);
+          updateElementText('simulationTimeStandRange', `Likely Range: ${progress.times.likelyMin} - ${progress.times.likelyMax} ${timeUnit.toLowerCase()}`);
+          updateElementText('simulationTimeMax', `Max Time: ${progress.times.max} ${timeUnit.toLowerCase()}`);
+          updateElementText('simulationTimeMin', `Min Time: ${progress.times.min} ${timeUnit.toLowerCase()}`);
+          updateElementText('simulationTimeStandDev', `Standard Deviation: ${progress.times.sd}`);
+
+          // Update cost statistics during progressive updates if enabled
+          if (appState.enableCost && progress.costs.min > -1) {
+            updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(progress.costs.median)}`);
+            updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(progress.costs.likelyMin)} - ${currencyFormatter.format(progress.costs.likelyMax)}`);
+            updateElementText('simulationCostMax', `Max cost: ${currencyFormatter.format(progress.costs.max)}`);
+            updateElementText('simulationCostMin', `Min cost: ${currencyFormatter.format(progress.costs.min)}`);
+            updateElementText('simulationCostStandDev', `Standard Deviation: ${progress.costs.sd}`);
+          }
         }
       },
       graphProgressInterval,
       hoursPerTimeUnit,
     );
 
-    // Display summary data.
-    const currencyFormatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    });
+    // Display final summary data (one last update with complete results)
     updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
     updateElementText('simulationTimeMedian', `Median Time: ${results.times.median} ${timeUnit.toLowerCase()}`);
     updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax} ${timeUnit.toLowerCase()}`);

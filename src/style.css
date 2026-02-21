@@ -238,6 +238,13 @@ input[type="button"] {
   display: block;
 }
 
+.task-row-stats {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
 .task-row-mini-bar {
   fill: lightblue;
 }
