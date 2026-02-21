@@ -89,14 +89,17 @@ All parameters and settings in the project should be configurable via the UI and
 // 90% conf: upper = max × 1
 // 80% conf: upper = max × 2
 // 70% conf: upper = max × 3
-upperBound = maxEstimate × Math.abs(Math.floor(10 - (confidence × 10)))
+const confidencePercent = Math.round(confidence * 100);
+const multiplier = Math.max(1, Math.ceil((100 - confidencePercent) / 10));
+upperBound = maxEstimate * multiplier;
 ```
 
 ### Simulation Logic
 
 - Generate random 1-1000
 - If within confidence threshold: pick value between min-max
-- If outside: 50% chance of underrun (0-min) or overrun (max-upperBound)
+- If outside confidence threshold: 75% chance of overrun (max-upperBound), 25% chance of underrun (lowerBound-min)
+  - Lower confidence also lowers the underrun floor: `lowerBound = min / multiplier`
 - Repeat for all tasks, sum totals, store in histogram array
 
 ### Histogram Data Structure

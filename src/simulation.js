@@ -28,6 +28,28 @@ const GRAPH_CONFIG = {
 };
 
 /**
+ * Immutable snapshot of the original default graph configuration values.
+ * Use this in reset operations rather than repeating the literal defaults.
+ */
+const GRAPH_CONFIG_DEFAULTS = Object.freeze({
+  histogram: Object.freeze({
+    barCutoff: 600,
+    maxBuckets: 120,
+    width: 800,
+    height: 500,
+    margin: Object.freeze({
+      top: 10, right: 30, bottom: 50, left: 60,
+    }),
+  }),
+  miniGraph: Object.freeze({
+    width: 140,
+    height: 26,
+    maxBuckets: 24,
+    gap: 1,
+  }),
+});
+
+/**
  * Get a random number is a given range.
  * @param {int} minimum
  * @param {int} maximum
@@ -249,8 +271,8 @@ function getMedian(data) {
  * The assumption here is that this is histogram-style data so each cell
  * is a count of results at that value.
  * Hat Tip: http://statisticshelper.com/standard-deviation-calculator-with-step-by-step-solution
- * @param {*} numberArray
- * @returns
+ * @param {Array<number>} numberArray Histogram-style frequency array.
+ * @returns {number} Sample standard deviation.
  */
 function getStandardDeviation(numberArray) {
   // Calculate the average.
@@ -277,9 +299,9 @@ function getStandardDeviation(numberArray) {
 
 /**
  * Calculate the longest time the simulator may come up with.
- * @param {*} tasks: The list of tasks being tested.
- * @param {boolean} useCost: Calculates the cost instead of time boundary.
- * @returns
+ * @param {Array<Object>} tasks The list of tasks being tested.
+ * @param {boolean} useCost Calculates the cost instead of time boundary.
+ * @returns {number} Combined worst-case upper bound across all tasks.
  */
 function calculateUpperBound(tasks, useCost = false) {
   let total = 0;
@@ -506,10 +528,9 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
 
   const valueRange = (max - min) + 1;
   const rawMaxBuckets = GRAPH_CONFIG.histogram.maxBuckets;
-  const defaultMaxBuckets = 120;
-  const maxBuckets = Number.isFinite(rawMaxBuckets) && rawMaxBuckets > 0
+  const maxBuckets = (Number.isFinite(rawMaxBuckets) && rawMaxBuckets > 0)
     ? Math.floor(rawMaxBuckets)
-    : defaultMaxBuckets;
+    : 120; // fallback if config value is invalid
   const bucketCount = Math.max(1, Math.min(maxBuckets, valueRange));
   const bucketSize = Math.max(1, Math.ceil(valueRange / bucketCount));
   const buckets = new Array(bucketCount).fill(0);
@@ -703,20 +724,13 @@ function pauseForUiUpdate() {
 
 /**
  * Core simulation logic shared between synchronous and asynchronous implementations.
- * @param {Integer} passes Number of simulation passes to run.
- * @param {Object} data Task input data.
- * @param {Object} callbacks Optional callbacks for progress tracking.
- * @param {Function} callbacks.onBatchComplete Called after each batch of iterations.
- * @param {number} callbacks.batchSize Size of each batch for progressive execution.
- * @returns {Object|Promise<Object>} Simulation results (promise if using callbacks).
- */
-/**
- * Runs the core simulation logic.
  * @param {number} passes - Number of times to run the simulation
  * @param {Array} data - Array of task objects with Min, Max, Confidence, Cost
  * @param {Object} callbacks - Optional callbacks for progress updates
+ * @param {Function} callbacks.onBatchComplete - Called after each batch of iterations.
+ * @param {number} callbacks.batchSize - Size of each batch for progressive execution.
  * @param {number} hoursPerTimeUnit - Hours per time unit (1 for hours mode, 8 for days mode)
- * @returns {Object} Simulation results
+ * @returns {Object|Promise<Object>} Simulation results (promise if using callbacks).
  */
 function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
   const { onBatchComplete, batchSize = 1000 } = callbacks;
@@ -727,10 +741,6 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
   const times = new Array(upperTimeBound + 1).fill(0);
   const costs = new Array(upperCostBound + 1).fill(0);
   const taskOutcomes = {};
-  const estimates = {
-    times: [],
-    costs: [],
-  };
   const estimateDetails = [];
   const startTime = Date.now();
   let minTime = -1;
@@ -800,8 +810,6 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
 
     times[totalTime] += 1;
     costs[totalCost] += 1;
-    estimates.times.push(totalTime);
-    estimates.costs.push(totalCost);
     estimateDetails.push(outcome);
     if (totalTime < minTime || minTime === -1) { minTime = totalTime; }
     if (totalTime > maxTime) { maxTime = totalTime; }
@@ -931,12 +939,6 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
 }
 
 /**
- * Runs the main simulation.
- * @param {Integer} passes
- * @param {Object} data
- * @returns
- */
-/**
  * Runs the simulation for a given number of passes.
  * @param {number} passes - Number of simulation iterations
  * @param {Array} data - Task data
@@ -1042,4 +1044,5 @@ export {
   fibonacciToCalendarDays,
   fibonacciToVelocityDays,
   GRAPH_CONFIG,
+  GRAPH_CONFIG_DEFAULTS,
 };
