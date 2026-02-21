@@ -380,6 +380,7 @@ input[required]:invalid:not([type="button"]) {
   #forkOnGithub,
   .save-buttons,
   .no-print,
+  .advanced-settings,
   button,
   input[type="button"] {
     display: none !important;
