@@ -861,6 +861,12 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
       const hasMoreBatches = endIndex < totalPasses;
 
       // Call progress callback
+      // Calculate current statistics for progressive display
+      const currentTimeMedian = getMedian(times);
+      const currentTimeSd = getStandardDeviation(times);
+      const currentCostMedian = getMedian(costs);
+      const currentCostSd = getStandardDeviation(costs);
+
       await onBatchComplete({
         processedPasses,
         totalPasses,
@@ -869,11 +875,19 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
           list: times,
           min: minTime,
           max: maxTime,
+          median: currentTimeMedian,
+          sd: currentTimeSd,
+          likelyMin: Math.round(currentTimeMedian - currentTimeSd),
+          likelyMax: Math.round(currentTimeMedian + currentTimeSd),
         },
         costs: {
           list: costs,
           min: minCost,
           max: maxCost,
+          median: currentCostMedian,
+          sd: currentCostSd,
+          likelyMin: Math.round(currentCostMedian - currentCostSd),
+          likelyMax: Math.round(currentCostMedian + currentCostSd),
         },
       });
 
