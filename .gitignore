@@ -78,5 +78,6 @@ typings/
 #IntelliJ settings
 .idea/
 
-#VSCode settings
-.vscode
+#VSCode user settings (personal)
+.vscode/*.code-snippets
+.vscode/launch.json
