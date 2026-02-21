@@ -76,6 +76,10 @@ function functionName(paramName) {
 }
 ```
 
+### Simulation Parameters
+
+All parameters and settings in the project should be configurable via the UI and passed as arguments to the relevant functions. Avoid hardcoding values in the logic.
+
 ## Key Algorithms
 
 ### Risk Calculation
