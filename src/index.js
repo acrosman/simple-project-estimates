@@ -1339,11 +1339,13 @@ async function startSimulation(event) {
     errorDiv.textContent = 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.';
 
     const resultsDiv = document.getElementById('results');
-    const existingError = resultsDiv.querySelector('.error-message');
-    if (existingError) {
-      existingError.remove();
+    if (resultsDiv) {
+      const existingError = resultsDiv.querySelector('.error-message');
+      if (existingError) {
+        existingError.remove();
+      }
+      resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
     }
-    resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
     return;
   }
 
