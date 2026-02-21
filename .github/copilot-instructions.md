@@ -300,8 +300,6 @@ svg
 - `npm run lint` - Check code style
 - `npm run build` - Create dist bundle
 
-Run tests in VSCode whenever possible. Don't use npm by default for that purpose.
-
 ### Key Functions to Remember
 
 - `runSimulation(tasks, runs, useCost)` - Main simulation entry
