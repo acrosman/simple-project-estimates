@@ -14,7 +14,8 @@ class AppState {
   constructor() {
     this.estimationMode = 'hours'; // 'hours', 'fibonacci', or 'tshirt'
     this.enableCost = true; // Track cost by default
-    this.fibonacciMappings = {
+    this.fibonacciMode = 'calendar-days'; // 'calendar-days' or 'velocity-based'
+    this.fibonacciCalendarMappings = {
       1: { min: 0, max: 1 },
       2: { min: 1, max: 2 },
       3: { min: 2, max: 3 },
@@ -24,13 +25,17 @@ class AppState {
       21: { min: 13, max: 21 },
       34: { min: 21, max: 34 },
     };
+    this.velocityConfig = {
+      pointsPerSprint: 25,
+      sprintLengthDays: 10,
+    };
     this.tshirtMappings = {
-      XS: { min: 1, max: 2 },
-      S: { min: 2, max: 3 },
-      M: { min: 3, max: 5 },
-      L: { min: 5, max: 8 },
-      XL: { min: 8, max: 13 },
-      XXL: { min: 13, max: 21 },
+      XS: 1,
+      S: 2,
+      M: 3,
+      L: 5,
+      XL: 8,
+      XXL: 13,
     };
   }
 
@@ -50,8 +55,27 @@ class AppState {
     return this.enableCost;
   }
 
-  getFibonacciMappings() {
-    return this.fibonacciMappings;
+  setFibonacciMode(mode) {
+    this.fibonacciMode = mode;
+  }
+
+  getFibonacciMode() {
+    return this.fibonacciMode;
+  }
+
+  setVelocityConfig(pointsPerSprint, sprintLengthDays) {
+    this.velocityConfig = {
+      pointsPerSprint: parseFloat(pointsPerSprint) || 25,
+      sprintLengthDays: parseFloat(sprintLengthDays) || 10,
+    };
+  }
+
+  getVelocityConfig() {
+    return this.velocityConfig;
+  }
+
+  getFibonacciCalendarMappings() {
+    return this.fibonacciCalendarMappings;
   }
 
   getTshirtMappings() {
@@ -64,18 +88,25 @@ class AppState {
   reset() {
     this.estimationMode = 'hours';
     this.enableCost = true;
+    this.fibonacciMode = 'calendar-days';
+    this.velocityConfig = {
+      pointsPerSprint: 25,
+      sprintLengthDays: 10,
+    };
 
-    // Clear existing mappings
-    Object.keys(this.fibonacciMappings).forEach((key) => {
-      delete this.fibonacciMappings[key];
+    // Clear existing fibonacci calendar mappings
+    Object.keys(this.fibonacciCalendarMappings).forEach((key) => {
+      delete this.fibonacciCalendarMappings[key];
     });
+
+    // Clear existing tshirt mappings
     Object.keys(this.tshirtMappings).forEach((key) => {
       delete this.tshirtMappings[key];
     });
 
     // Reassign default values to the same objects
-    Object.assign(this.fibonacciMappings, {
-      1: { min: 0, max: 1 },
+    Object.assign(this.fibonacciCalendarMappings, {
+      1: { min: 1, max: 1 },
       2: { min: 1, max: 2 },
       3: { min: 2, max: 3 },
       5: { min: 3, max: 5 },
@@ -85,12 +116,12 @@ class AppState {
       34: { min: 21, max: 34 },
     });
     Object.assign(this.tshirtMappings, {
-      XS: { min: 1, max: 2 },
-      S: { min: 2, max: 3 },
-      M: { min: 3, max: 5 },
-      L: { min: 5, max: 8 },
-      XL: { min: 8, max: 13 },
-      XXL: { min: 13, max: 21 },
+      XS: 1,
+      S: 2,
+      M: 3,
+      L: 5,
+      XL: 8,
+      XXL: 13,
     });
   }
 }
@@ -98,7 +129,7 @@ class AppState {
 const appState = new AppState();
 
 // Maintain backward compatibility with existing code
-const { fibonacciMappings, tshirtMappings } = appState;
+const { fibonacciCalendarMappings, tshirtMappings } = appState;
 
 // ============= Interface Element Helpers =================
 /**
@@ -514,10 +545,45 @@ function createEntryTable(data = []) {
 }
 
 /**
- * Updates the Fibonacci mapping when user changes values
+ * Handles Fibonacci mode changes (calendar-days vs velocity-based)
  * @param {Event} event
  */
-function updateFibonacciMapping(event) {
+function handleFibonacciModeChange(event) {
+  const mode = event.target.value;
+  appState.setFibonacciMode(mode);
+
+  // Show/hide calendar mapping table based on mode
+  const calendarMapping = document.getElementById('fibonacciCalendarMappingWrapper');
+  if (calendarMapping) {
+    calendarMapping.style.display = mode === 'calendar-days' ? 'block' : 'none';
+  }
+
+  // Show/hide velocity configuration based on mode
+  const velocityConfig = document.getElementById('velocityConfigWrapper');
+  if (velocityConfig) {
+    velocityConfig.style.display = mode === 'velocity-based' ? 'block' : 'none';
+  }
+}
+
+/**
+ * Updates velocity configuration when user changes values.
+ */
+function handleVelocityConfigChange() {
+  const pointsInput = document.getElementById('velocityPoints');
+  const daysInput = document.getElementById('velocityDays');
+
+  if (pointsInput && daysInput) {
+    const points = parseFloat(pointsInput.value) || 25;
+    const days = parseFloat(daysInput.value) || 10;
+    appState.setVelocityConfig(points, days);
+  }
+}
+
+/**
+ * Updates the Fibonacci calendar day mapping when user changes values.
+ * @param {Event} event
+ */
+function updateFibonacciCalendarMapping(event) {
   if (!event || !event.target || !event.target.dataset) {
     return;
   }
@@ -530,20 +596,20 @@ function updateFibonacciMapping(event) {
   }
 
   const fibNum = Number.parseInt(fib, 10);
-  const value = Number.parseInt(rawValue, 10);
+  const value = Number.parseFloat(rawValue);
 
   if (!Number.isFinite(fibNum) || !Number.isFinite(value)) {
     return;
   }
 
-  if (!fibonacciMappings[fibNum] || !(type in fibonacciMappings[fibNum])) {
+  if (!fibonacciCalendarMappings[fibNum] || !(type in fibonacciCalendarMappings[fibNum])) {
     return;
   }
 
-  fibonacciMappings[fibNum][type] = value;
+  fibonacciCalendarMappings[fibNum][type] = value;
 
   // Validate that min <= max (only if we have a real DOM element)
-  if (fibonacciMappings[fibNum].min > fibonacciMappings[fibNum].max) {
+  if (fibonacciCalendarMappings[fibNum].min > fibonacciCalendarMappings[fibNum].max) {
     if (event.target.setCustomValidity) {
       event.target.setCustomValidity('Min must be less than or equal to Max');
       if (event.target.reportValidity) {
@@ -553,6 +619,96 @@ function updateFibonacciMapping(event) {
   } else if (event.target.setCustomValidity) {
     event.target.setCustomValidity('');
   }
+}
+
+/**
+ * Creates the Fibonacci calendar days mapping configuration table.
+ * @returns HTMLElement
+ */
+function createFibonacciCalendarMappingTable() {
+  const wrapper = createDivWithIdAndClasses('fibonacciCalendarMappingWrapper', ['config-section', 'calendar-mapping']);
+  wrapper.style.display = appState.getFibonacciMode() === 'calendar-days' ? 'block' : 'none';
+
+  const header = createTextElement('h4', 'Story Points to Calendar Days Mapping', ['config-subheader']);
+  wrapper.appendChild(header);
+
+  const helpText = createTextElement('p', 'Customize how many calendar days each story point value represents:', ['help-text']);
+  wrapper.appendChild(helpText);
+
+  const table = document.createElement('div');
+  table.classList.add('table', 'fib-mapping-table');
+
+  // Get Fibonacci numbers dynamically from the mappings object
+  const fibNumbers = Object.keys(fibonacciCalendarMappings)
+    .map((n) => parseInt(n, 10))
+    .sort((a, b) => a - b);
+
+  // Row 1: Fibonacci Numbers
+  const fibRow = document.createElement('div');
+  fibRow.classList.add('tr', 'fib-mapping-row');
+  fibRow.appendChild(createTextElement('div', 'Story Points', ['th']));
+
+  for (const fibNum of fibNumbers) {
+    const fibCell = document.createElement('div');
+    fibCell.classList.add('td');
+    fibCell.appendChild(createTextElement('span', fibNum.toString(), []));
+    fibRow.appendChild(fibCell);
+  }
+  table.appendChild(fibRow);
+
+  // Row 2: Min Days
+  const minRow = document.createElement('div');
+  minRow.classList.add('tr', 'fib-mapping-row');
+  minRow.appendChild(createTextElement('div', 'Min Days', ['th']));
+
+  for (const fibNum of fibNumbers) {
+    const minCell = document.createElement('div');
+    minCell.classList.add('td');
+    const minInput = document.createElement('input');
+    Object.assign(minInput, {
+      type: 'number',
+      value: fibonacciCalendarMappings[fibNum].min,
+      name: `fib-cal-min-${fibNum}`,
+      step: '0.5',
+      min: '0',
+      'aria-label': `Minimum days for ${fibNum} story points`,
+    });
+    minInput.dataset.fib = fibNum;
+    minInput.dataset.type = 'min';
+    minInput.addEventListener('change', updateFibonacciCalendarMapping);
+    minCell.appendChild(minInput);
+    minRow.appendChild(minCell);
+  }
+  table.appendChild(minRow);
+
+  // Row 3: Max Days
+  const maxRow = document.createElement('div');
+  maxRow.classList.add('tr', 'fib-mapping-row');
+  maxRow.appendChild(createTextElement('div', 'Max Days', ['th']));
+
+  for (const fibNum of fibNumbers) {
+    const maxCell = document.createElement('div');
+    maxCell.classList.add('td');
+    const maxInput = document.createElement('input');
+    Object.assign(maxInput, {
+      type: 'number',
+      value: fibonacciCalendarMappings[fibNum].max,
+      name: `fib-cal-max-${fibNum}`,
+      step: '0.5',
+      min: '0',
+      'aria-label': `Maximum days for ${fibNum} story points`,
+    });
+    maxInput.dataset.fib = fibNum;
+    maxInput.dataset.type = 'max';
+    maxInput.addEventListener('change', updateFibonacciCalendarMapping);
+    maxCell.appendChild(maxInput);
+    maxRow.appendChild(maxCell);
+  }
+  table.appendChild(maxRow);
+
+  wrapper.appendChild(table);
+
+  return wrapper;
 }
 
 /**
@@ -564,177 +720,160 @@ function updateTshirtMapping(event) {
     return;
   }
 
-  const { tshirt, type } = event.target.dataset;
+  const { tshirt } = event.target.dataset;
   const rawValue = event.target.value;
 
-  if (!tshirt || !type) {
+  if (!tshirt) {
     return;
   }
 
   const size = normalizeTshirtSize(tshirt);
   const value = Number.parseInt(rawValue, 10);
 
-  if (!size || !Number.isFinite(value)) {
+  if (!size || !Number.isFinite(value) || value < 0) {
     return;
   }
 
-  if (!tshirtMappings[size] || !(type in tshirtMappings[size])) {
+  if (!Object.hasOwn(tshirtMappings, size)) {
     return;
   }
 
-  tshirtMappings[size][type] = value;
-
-  // Validate that min <= max (only if we have a real DOM element)
-  if (tshirtMappings[size].min > tshirtMappings[size].max) {
-    if (event.target.setCustomValidity) {
-      event.target.setCustomValidity('Min must be less than or equal to Max');
-      if (event.target.reportValidity) {
-        event.target.reportValidity();
-      }
-    }
-  } else if (event.target.setCustomValidity) {
-    event.target.setCustomValidity('');
-  }
+  tshirtMappings[size] = value;
 }
 
 /**
- * Gets the next Fibonacci number in the sequence
- * @returns number
- */
-function getNextFibonacci() {
-  const currentNumbers = Object.keys(fibonacciMappings)
-    .map((n) => parseInt(n, 10))
-    .sort((a, b) => a - b);
-  const len = currentNumbers.length;
-  if (len < 2) return 1;
-  return currentNumbers[len - 1] + currentNumbers[len - 2];
-}
-
-/**
- * Adds the next Fibonacci number to the mappings
- */
-function addFibonacciNumber() {
-  const nextFib = getNextFibonacci();
-  const currentNumbers = Object.keys(fibonacciMappings)
-    .map((n) => parseInt(n, 10))
-    .sort((a, b) => a - b);
-  const lastFib = currentNumbers[currentNumbers.length - 1];
-
-  // Set default min as previous max, and max as the new fib number
-  fibonacciMappings[nextFib] = {
-    min: fibonacciMappings[lastFib].max,
-    max: nextFib,
-  };
-
-  // Rebuild the Fibonacci mapping table
-  const existingWrapper = document.getElementById('fibonacciMappingWrapper');
-  if (existingWrapper) {
-    const parent = existingWrapper.parentNode;
-    // eslint-disable-next-line no-use-before-define
-    const newWrapper = createFibonacciMappingTable();
-    parent.replaceChild(newWrapper, existingWrapper);
-
-    // If we're in fibonacci mode, keep it visible
-    if (appState.estimationMode === 'fibonacci') {
-      newWrapper.style.display = 'block';
-    }
-  }
-}
-
-/**
- * Creates the Fibonacci mapping configuration interface
+ * Creates the Fibonacci configuration interface (mode selector + velocity config)
  * @returns HTMLElement
  */
-function createFibonacciMappingTable() {
-  const wrapper = createDivWithIdAndClasses('fibonacciMappingWrapper', ['section', 'fibonacci-mapping']);
-  const header = createTextElement('H3', 'Fibonacci Number to Hours Mapping', ['header', 'fib-mapping']);
+function createFibonacciConfigPanel() {
+  const wrapper = createDivWithIdAndClasses('fibonacciConfigWrapper', ['section', 'fibonacci-config']);
+  const header = createTextElement('H3', 'Fibonacci Estimation Configuration', ['header', 'fib-config']);
 
-  const table = document.createElement('div');
-  table.classList.add('table', 'fib-mapping-table');
+  // Mode selector
+  const modeSection = document.createElement('div');
+  modeSection.classList.add('config-section');
 
-  // Get Fibonacci numbers dynamically from the mappings object
-  const fibNumbers = Object.keys(fibonacciMappings)
-    .map((n) => parseInt(n, 10))
-    .sort((a, b) => a - b);
+  const modeLabel = createTextElement('label', 'Fibonacci Mapping Mode:', ['config-label']);
+  modeSection.appendChild(modeLabel);
 
-  // Row 1: Fibonacci Numbers
-  const fibRow = document.createElement('div');
-  fibRow.classList.add('tr', 'fib-mapping-row');
-  fibRow.appendChild(createTextElement('div', 'Fibonacci #', ['th']));
+  const modeDescription = createTextElement('p', 'Choose how Fibonacci story points are converted to time estimates:', ['help-text']);
+  modeSection.appendChild(modeDescription);
 
-  for (const fibNum of fibNumbers) {
-    const fibCell = document.createElement('div');
-    fibCell.classList.add('td');
-    fibCell.appendChild(createTextElement('span', fibNum.toString(), []));
-    fibRow.appendChild(fibCell);
-  }
-  table.appendChild(fibRow);
+  const modeSelector = document.createElement('div');
+  modeSelector.classList.add('radio-group');
 
-  // Row 2: Min Hours
-  const minRow = document.createElement('div');
-  minRow.classList.add('tr', 'fib-mapping-row');
-  minRow.appendChild(createTextElement('div', 'Min Hours', ['th']));
-
-  for (const fibNum of fibNumbers) {
-    const minCell = document.createElement('div');
-    minCell.classList.add('td');
-    const minInput = document.createElement('input');
-    Object.assign(minInput, {
-      type: 'number',
-      value: fibonacciMappings[fibNum].min,
-      name: `fib-min-${fibNum}`,
-      'aria-label': `Minimum hours for Fibonacci ${fibNum}`,
-    });
-    minInput.dataset.fib = fibNum;
-    minInput.dataset.type = 'min';
-    minInput.addEventListener('change', updateFibonacciMapping);
-    minInput.addEventListener('keydown', (event) => {
-      handleMappingTabNavigation(event, 'fib', fibNumbers);
-    });
-    minCell.appendChild(minInput);
-    minRow.appendChild(minCell);
-  }
-  table.appendChild(minRow);
-
-  // Row 3: Max Hours
-  const maxRow = document.createElement('div');
-  maxRow.classList.add('tr', 'fib-mapping-row');
-  maxRow.appendChild(createTextElement('div', 'Max Hours', ['th']));
-
-  for (const fibNum of fibNumbers) {
-    const maxCell = document.createElement('div');
-    maxCell.classList.add('td');
-    const maxInput = document.createElement('input');
-    Object.assign(maxInput, {
-      type: 'number',
-      value: fibonacciMappings[fibNum].max,
-      name: `fib-max-${fibNum}`,
-      'aria-label': `Maximum hours for Fibonacci ${fibNum}`,
-    });
-    maxInput.dataset.fib = fibNum;
-    maxInput.dataset.type = 'max';
-    maxInput.addEventListener('change', updateFibonacciMapping);
-    maxInput.addEventListener('keydown', (event) => {
-      handleMappingTabNavigation(event, 'fib', fibNumbers);
-    });
-    maxCell.appendChild(maxInput);
-    maxRow.appendChild(maxCell);
-  }
-  table.appendChild(maxRow);
-
-  wrapper.appendChild(header);
-  wrapper.appendChild(table);
-
-  // Add button to add more Fibonacci numbers
-  const addFibButton = document.createElement('input');
-  Object.assign(addFibButton, {
-    type: 'button',
-    value: 'Add Next Fibonacci Number',
-    id: 'addFibNumberBtn',
+  // Calendar Days option
+  const calendarOption = document.createElement('div');
+  calendarOption.classList.add('radio-option');
+  const calendarRadio = document.createElement('input');
+  Object.assign(calendarRadio, {
+    type: 'radio',
+    id: 'fibModeCalendar',
+    name: 'fibonacciMode',
+    value: 'calendar-days',
+    checked: appState.getFibonacciMode() === 'calendar-days',
   });
-  addFibButton.addEventListener('click', addFibonacciNumber);
-  wrapper.appendChild(addFibButton);
+  calendarRadio.addEventListener('change', handleFibonacciModeChange);
 
+  const calendarLabel = createTextElement('label', 'Calendar Days (Customizable Mapping)', []);
+  calendarLabel.htmlFor = 'fibModeCalendar';
+
+  const calendarHelp = createTextElement('span', 'Configure story point to calendar day mappings below', ['option-help']);
+
+  calendarOption.appendChild(calendarRadio);
+  calendarOption.appendChild(calendarLabel);
+  calendarOption.appendChild(calendarHelp);
+  modeSelector.appendChild(calendarOption);
+
+  // Velocity-Based option
+  const velocityOption = document.createElement('div');
+  velocityOption.classList.add('radio-option');
+  const velocityRadio = document.createElement('input');
+  Object.assign(velocityRadio, {
+    type: 'radio',
+    id: 'fibModeVelocity',
+    name: 'fibonacciMode',
+    value: 'velocity-based',
+    checked: appState.getFibonacciMode() === 'velocity-based',
+  });
+  velocityRadio.addEventListener('change', handleFibonacciModeChange);
+
+  const velocityLabel = createTextElement('label', 'Velocity-Based (Team-Specific)', []);
+  velocityLabel.htmlFor = 'fibModeVelocity';
+
+  const velocityHelp = createTextElement('span', 'Based on your team\'s historical velocity', ['option-help']);
+
+  velocityOption.appendChild(velocityRadio);
+  velocityOption.appendChild(velocityLabel);
+  velocityOption.appendChild(velocityHelp);
+  modeSelector.appendChild(velocityOption);
+
+  modeSection.appendChild(modeSelector);
+  wrapper.appendChild(header);
+  wrapper.appendChild(modeSection);
+
+  // Calendar days mapping table (shown only for calendar-days mode)
+  const calendarMappingTable = createFibonacciCalendarMappingTable();
+  wrapper.appendChild(calendarMappingTable);
+
+  // Velocity configuration (shown only for velocity-based mode)
+  const velocityConfigWrapper = createDivWithIdAndClasses('velocityConfigWrapper', ['config-section', 'velocity-config']);
+  velocityConfigWrapper.style.display = appState.getFibonacciMode() === 'velocity-based' ? 'block' : 'none';
+
+  const velocityConfigHeader = createTextElement('h4', 'Team Velocity Configuration', ['config-subheader']);
+  velocityConfigWrapper.appendChild(velocityConfigHeader);
+
+  const velocityConfigHelp = createTextElement('p', 'Enter your team\'s average velocity to calculate realistic time estimates:', ['help-text']);
+  velocityConfigWrapper.appendChild(velocityConfigHelp);
+
+  // Points per sprint input
+  const pointsGroup = document.createElement('div');
+  pointsGroup.classList.add('input-group');
+  const pointsLabel = createTextElement('label', 'Points Per Sprint:', ['config-label']);
+  pointsLabel.htmlFor = 'velocityPoints';
+  const pointsInput = document.createElement('input');
+  Object.assign(pointsInput, {
+    type: 'number',
+    id: 'velocityPoints',
+    name: 'velocityPoints',
+    value: appState.getVelocityConfig().pointsPerSprint,
+    min: 1,
+    step: 1,
+    'aria-label': 'Points completed per sprint',
+  });
+  pointsInput.addEventListener('change', handleVelocityConfigChange);
+  pointsGroup.appendChild(pointsLabel);
+  pointsGroup.appendChild(pointsInput);
+  velocityConfigWrapper.appendChild(pointsGroup);
+
+  // Sprint length input
+  const daysGroup = document.createElement('div');
+  daysGroup.classList.add('input-group');
+  const daysLabel = createTextElement('label', 'Sprint Length (Working Days):', ['config-label']);
+  daysLabel.htmlFor = 'velocityDays';
+  const daysInput = document.createElement('input');
+  Object.assign(daysInput, {
+    type: 'number',
+    id: 'velocityDays',
+    name: 'velocityDays',
+    value: appState.getVelocityConfig().sprintLengthDays,
+    min: 1,
+    step: 1,
+    'aria-label': 'Sprint duration in working days',
+  });
+  daysInput.addEventListener('change', handleVelocityConfigChange);
+  daysGroup.appendChild(daysLabel);
+  daysGroup.appendChild(daysInput);
+  velocityConfigWrapper.appendChild(daysGroup);
+
+  const velocityExample = createTextElement(
+    'p',
+    'Example: 25 points in 10 days = 2.5 points/day. An 8-point story would be estimated at 2.24-4.16 days.',
+    ['help-text', 'example'],
+  );
+  velocityConfigWrapper.appendChild(velocityExample);
+
+  wrapper.appendChild(velocityConfigWrapper);
   wrapper.style.display = 'none'; // Hidden by default
 
   return wrapper;
@@ -746,7 +885,8 @@ function createFibonacciMappingTable() {
  */
 function createTshirtMappingTable() {
   const wrapper = createDivWithIdAndClasses('tshirtMappingWrapper', ['section', 'fibonacci-mapping']);
-  const header = createTextElement('H3', 'T-Shirt Size to Hours Mapping', ['header', 'fib-mapping']);
+  const header = createTextElement('H3', 'T-Shirt Size to Fibonacci Mapping', ['header', 'fib-mapping']);
+  const helpText = createTextElement('p', 'Map t-shirt sizes to Fibonacci story points. These will be converted to days using the Fibonacci calendar day mappings.', ['help-text']);
 
   const table = document.createElement('div');
   table.classList.add('table', 'fib-mapping-table');
@@ -765,57 +905,34 @@ function createTshirtMappingTable() {
   }
   table.appendChild(sizeRow);
 
-  const minRow = document.createElement('div');
-  minRow.classList.add('tr', 'fib-mapping-row');
-  minRow.appendChild(createTextElement('div', 'Min Hours', ['th']));
+  const fibRow = document.createElement('div');
+  fibRow.classList.add('tr', 'fib-mapping-row');
+  fibRow.appendChild(createTextElement('div', 'Fibonacci Points', ['th']));
 
   for (const size of sizes) {
-    const minCell = document.createElement('div');
-    minCell.classList.add('td');
-    const minInput = document.createElement('input');
-    Object.assign(minInput, {
+    const fibCell = document.createElement('div');
+    fibCell.classList.add('td');
+    const fibInput = document.createElement('input');
+    Object.assign(fibInput, {
       type: 'number',
-      value: tshirtMappings[size].min,
-      name: `tshirt-min-${size}`,
-      'aria-label': `Minimum hours for t-shirt size ${size}`,
+      value: tshirtMappings[size],
+      name: `tshirt-fib-${size}`,
+      min: 0,
+      step: 1,
+      'aria-label': `Fibonacci points for t-shirt size ${size}`,
     });
-    minInput.dataset.tshirt = size;
-    minInput.dataset.type = 'min';
-    minInput.addEventListener('change', updateTshirtMapping);
-    minInput.addEventListener('keydown', (event) => {
+    fibInput.dataset.tshirt = size;
+    fibInput.addEventListener('change', updateTshirtMapping);
+    fibInput.addEventListener('keydown', (event) => {
       handleMappingTabNavigation(event, 'tshirt', sizes);
     });
-    minCell.appendChild(minInput);
-    minRow.appendChild(minCell);
+    fibCell.appendChild(fibInput);
+    fibRow.appendChild(fibCell);
   }
-  table.appendChild(minRow);
-
-  const maxRow = document.createElement('div');
-  maxRow.classList.add('tr', 'fib-mapping-row');
-  maxRow.appendChild(createTextElement('div', 'Max Hours', ['th']));
-
-  for (const size of sizes) {
-    const maxCell = document.createElement('div');
-    maxCell.classList.add('td');
-    const maxInput = document.createElement('input');
-    Object.assign(maxInput, {
-      type: 'number',
-      value: tshirtMappings[size].max,
-      name: `tshirt-max-${size}`,
-      'aria-label': `Maximum hours for t-shirt size ${size}`,
-    });
-    maxInput.dataset.tshirt = size;
-    maxInput.dataset.type = 'max';
-    maxInput.addEventListener('change', updateTshirtMapping);
-    maxInput.addEventListener('keydown', (event) => {
-      handleMappingTabNavigation(event, 'tshirt', sizes);
-    });
-    maxCell.appendChild(maxInput);
-    maxRow.appendChild(maxCell);
-  }
-  table.appendChild(maxRow);
+  table.appendChild(fibRow);
 
   wrapper.appendChild(header);
+  wrapper.appendChild(helpText);
   wrapper.appendChild(table);
   wrapper.style.display = 'none';
 
@@ -846,12 +963,12 @@ function handleCostToggle(event) {
 function handleModeChange(event) {
   appState.setEstimationMode(event.target.value);
 
-  const fibMapping = document.getElementById('fibonacciMappingWrapper');
+  const fibConfig = document.getElementById('fibonacciConfigWrapper');
   const tshirtMapping = document.getElementById('tshirtMappingWrapper');
   const sampleLink = document.querySelector('.link-sample');
 
   if (appState.estimationMode === 'fibonacci') {
-    fibMapping.style.display = 'block';
+    fibConfig.style.display = 'block';
     tshirtMapping.style.display = 'none';
     if (sampleLink) {
       sampleLink.href = sampleFibData;
@@ -859,7 +976,7 @@ function handleModeChange(event) {
       sampleLink.download = 'sample-fib.csv';
     }
   } else if (appState.estimationMode === 'tshirt') {
-    fibMapping.style.display = 'none';
+    fibConfig.style.display = 'none';
     tshirtMapping.style.display = 'block';
     if (sampleLink) {
       sampleLink.href = sampleTshirtData;
@@ -867,7 +984,7 @@ function handleModeChange(event) {
       sampleLink.download = 'sample-tshirt.csv';
     }
   } else {
-    fibMapping.style.display = 'none';
+    fibConfig.style.display = 'none';
     tshirtMapping.style.display = 'none';
     if (sampleLink) {
       sampleLink.href = sampleData;
@@ -1159,16 +1276,33 @@ async function startSimulation(event) {
 
     // Convert Fibonacci numbers to min/max if in Fibonacci mode
     if (appState.estimationMode === 'fibonacci' && taskDetail.Fibonacci) {
-      const mapping = fibonacciMappings[taskDetail.Fibonacci];
+      const fibMode = appState.getFibonacciMode();
+      let mapping;
+
+      if (fibMode === 'calendar-days') {
+        mapping = sim.fibonacciToCalendarDays(taskDetail.Fibonacci, fibonacciCalendarMappings);
+      } else if (fibMode === 'velocity-based') {
+        const { pointsPerSprint, sprintLengthDays } = appState.getVelocityConfig();
+        mapping = sim.fibonacciToVelocityDays(
+          taskDetail.Fibonacci,
+          pointsPerSprint,
+          sprintLengthDays,
+        );
+      }
+
       if (mapping) {
         taskDetail.Min = mapping.min;
         taskDetail.Max = mapping.max;
       }
     } else if (appState.estimationMode === 'tshirt' && taskDetail.TShirt) {
-      const mapping = tshirtMappings[taskDetail.TShirt];
-      if (mapping) {
-        taskDetail.Min = mapping.min;
-        taskDetail.Max = mapping.max;
+      const fibonacciValue = tshirtMappings[taskDetail.TShirt];
+      if (fibonacciValue) {
+        // Convert T-shirt size to Fibonacci, then Fibonacci to days
+        const mapping = sim.fibonacciToCalendarDays(fibonacciValue, fibonacciCalendarMappings);
+        if (mapping) {
+          taskDetail.Min = mapping.min;
+          taskDetail.Max = mapping.max;
+        }
       }
     }
 
@@ -1205,13 +1339,20 @@ async function startSimulation(event) {
     errorDiv.textContent = 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.';
 
     const resultsDiv = document.getElementById('results');
-    const existingError = resultsDiv.querySelector('.error-message');
-    if (existingError) {
-      existingError.remove();
+    if (resultsDiv) {
+      const existingError = resultsDiv.querySelector('.error-message');
+      if (existingError) {
+        existingError.remove();
+      }
+      resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
     }
-    resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
     return;
   }
+
+  // Determine the correct time unit based on estimation mode
+  const timeUnit = (appState.estimationMode === 'fibonacci' || appState.estimationMode === 'tshirt') ? 'Days' : 'Hours';
+  // When using days, need to multiply hourly cost by 8 hours/day
+  const hoursPerTimeUnit = timeUnit === 'Days' ? 8 : 1;
 
   const runButton = document.getElementById('startSimulationButton');
   const runStartTime = Date.now();
@@ -1246,13 +1387,14 @@ async function startSimulation(event) {
             progress.times.list,
             progress.times.min,
             progress.times.max,
-            'Hours',
+            timeUnit,
           );
           document.getElementById('timeEstimateHeader').style.display = 'block';
           document.getElementById('timeSaveButtons').style.display = 'block';
         }
       },
       graphProgressInterval,
+      hoursPerTimeUnit,
     );
 
     // Display summary data.
@@ -1261,10 +1403,10 @@ async function startSimulation(event) {
       currency: 'USD',
     });
     updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
-    updateElementText('simulationTimeMedian', `Median Time: ${results.times.median}`);
-    updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax}`);
-    updateElementText('simulationTimeMax', `Max Time: ${results.times.max}`);
-    updateElementText('simulationTimeMin', `Min Time: ${results.times.min}`);
+    updateElementText('simulationTimeMedian', `Median Time: ${results.times.median} ${timeUnit.toLowerCase()}`);
+    updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax} ${timeUnit.toLowerCase()}`);
+    updateElementText('simulationTimeMax', `Max Time: ${results.times.max} ${timeUnit.toLowerCase()}`);
+    updateElementText('simulationTimeMin', `Min Time: ${results.times.min} ${timeUnit.toLowerCase()}`);
     updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
 
     // Only display cost results if cost tracking is enabled
@@ -1287,7 +1429,7 @@ async function startSimulation(event) {
       results.times.max,
       results.times.median,
       results.times.sd,
-      'Hours',
+      timeUnit,
       graphSetting,
     );
     // Show time estimate header and save buttons now that graph is generated
@@ -1443,10 +1585,10 @@ function createModeSelector() {
   modeSelectorDiv.appendChild(modeHeader);
   modeSelectorDiv.appendChild(modeFieldset);
 
-  // Add Fibonacci mapping configuration
-  const fibMappingTable = createFibonacciMappingTable();
+  // Add Fibonacci configuration panel and t-shirt mapping
+  const fibConfigPanel = createFibonacciConfigPanel();
   const tshirtMappingTable = createTshirtMappingTable();
-  modeSelectorDiv.appendChild(fibMappingTable);
+  modeSelectorDiv.appendChild(fibConfigPanel);
   modeSelectorDiv.appendChild(tshirtMappingTable);
 
   return modeSelectorDiv;
@@ -1890,11 +2032,11 @@ export {
   generateDataField,
   updateElementText,
   renderTaskRowHistograms,
-  updateFibonacciMapping,
+  handleFibonacciModeChange,
+  handleVelocityConfigChange,
+  updateFibonacciCalendarMapping,
   updateTshirtMapping,
-  getNextFibonacci,
-  addFibonacciNumber,
-  fibonacciMappings,
+  fibonacciCalendarMappings,
   tshirtMappings,
   normalizeTshirtSize,
   saveSvgAsImage,

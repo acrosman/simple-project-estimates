@@ -570,3 +570,176 @@ describe('buildTaskRowHistogram', () => {
     expect(svg.getAttribute('aria-label')).toContain('Important Task');
   });
 });
+
+// ============= Fibonacci Mapping Tests ================
+
+describe('fibonacciToCalendarDays', () => {
+  const testMappings = {
+    1: { min: 0.5, max: 1 },
+    2: { min: 1, max: 2 },
+    3: { min: 2, max: 3 },
+    5: { min: 3, max: 5 },
+    8: { min: 5, max: 8 },
+    13: { min: 8, max: 13 },
+    21: { min: 13, max: 21 },
+    34: { min: 21, max: 34 },
+  };
+
+  test('maps 1 point correctly with provided mappings', () => {
+    const result = sim.fibonacciToCalendarDays(1, testMappings);
+    expect(result.min).toBe(0.5);
+    expect(result.max).toBe(1);
+  });
+
+  test('maps 2 points correctly with provided mappings', () => {
+    const result = sim.fibonacciToCalendarDays(2, testMappings);
+    expect(result.min).toBe(1);
+    expect(result.max).toBe(2);
+  });
+
+  test('maps 3 points correctly with provided mappings', () => {
+    const result = sim.fibonacciToCalendarDays(3, testMappings);
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(3);
+  });
+
+  test('maps 5 points correctly with provided mappings', () => {
+    const result = sim.fibonacciToCalendarDays(5, testMappings);
+    expect(result.min).toBe(3);
+    expect(result.max).toBe(5);
+  });
+
+  test('maps 8 points correctly with provided mappings', () => {
+    const result = sim.fibonacciToCalendarDays(8, testMappings);
+    expect(result.min).toBe(5);
+    expect(result.max).toBe(8);
+  });
+
+  test('maps 13 points correctly with provided mappings', () => {
+    const result = sim.fibonacciToCalendarDays(13, testMappings);
+    expect(result.min).toBe(8);
+    expect(result.max).toBe(13);
+  });
+
+  test('maps 21 points correctly with provided mappings', () => {
+    const result = sim.fibonacciToCalendarDays(21, testMappings);
+    expect(result.min).toBe(13);
+    expect(result.max).toBe(21);
+  });
+
+  test('maps 34 points correctly with provided mappings', () => {
+    const result = sim.fibonacciToCalendarDays(34, testMappings);
+    expect(result.min).toBe(21);
+    expect(result.max).toBe(34);
+  });
+
+  test('handles non-standard Fibonacci values with fallback', () => {
+    const result = sim.fibonacciToCalendarDays(10, testMappings);
+    expect(result.min).toBe(8);
+    expect(result.max).toBe(10);
+  });
+
+  test('handles string input by parsing', () => {
+    const result = sim.fibonacciToCalendarDays('8', testMappings);
+    expect(result.min).toBe(5);
+    expect(result.max).toBe(8);
+  });
+
+  test('uses custom mappings when provided', () => {
+    const customMappings = {
+      8: { min: 10, max: 20 },
+    };
+    const result = sim.fibonacciToCalendarDays(8, customMappings);
+    expect(result.min).toBe(10);
+    expect(result.max).toBe(20);
+  });
+
+  test('returns fallback when mappings are null', () => {
+    const result = sim.fibonacciToCalendarDays(10, null);
+    expect(result.min).toBe(8);
+    expect(result.max).toBe(10);
+  });
+});
+
+describe('fibonacciToVelocityDays', () => {
+  test('calculates correctly with typical velocity (25 points per 10 days)', () => {
+    const result = sim.fibonacciToVelocityDays(8, 25, 10);
+    // 8 points / 2.5 points per day = 3.2 days base
+    // min: round(3.2 * 0.7) = round(2.24) = 2
+    // max: round(3.2 * 1.3) = round(4.16) = 4
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(4);
+  });
+
+  test('calculates correctly with low velocity (15 points per 10 days)', () => {
+    const result = sim.fibonacciToVelocityDays(5, 15, 10);
+    // 5 points / 1.5 points per day = 3.33 days base
+    // min: round(3.33 * 0.7) = round(2.33) = 2
+    // max: round(3.33 * 1.3) = round(4.33) = 4
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(4);
+  });
+
+  test('calculates correctly with high velocity (40 points per 10 days)', () => {
+    const result = sim.fibonacciToVelocityDays(13, 40, 10);
+    // 13 points / 4 points per day = 3.25 days base
+    // min: round(3.25 * 0.7) = round(2.275) = 2
+    // max: round(3.25 * 1.3) = round(4.225) = 4
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(4);
+  });
+
+  test('calculates correctly with different sprint length (14 days)', () => {
+    const result = sim.fibonacciToVelocityDays(8, 35, 14);
+    // 8 points / 2.5 points per day = 3.2 days base
+    // min: round(3.2 * 0.7) = round(2.24) = 2
+    // max: round(3.2 * 1.3) = round(4.16) = 4
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(4);
+  });
+
+  test('handles small story points (1 point)', () => {
+    const result = sim.fibonacciToVelocityDays(1, 25, 10);
+    // 1 point / 2.5 points per day = 0.4 days base
+    // min: round(0.4 * 0.7) = round(0.28) = 0
+    // max: round(0.4 * 1.3) = round(0.52) = 1
+    expect(result.min).toBe(0);
+    expect(result.max).toBe(1);
+  });
+
+  test('handles large story points (34 points)', () => {
+    const result = sim.fibonacciToVelocityDays(34, 25, 10);
+    // 34 points / 2.5 points per day = 13.6 days base
+    // min: round(13.6 * 0.7) = round(9.52) = 10
+    // max: round(13.6 * 1.3) = round(17.68) = 18
+    expect(result.min).toBe(10);
+    expect(result.max).toBe(18);
+  });
+
+  test('returns zero for invalid inputs (negative fibonacci)', () => {
+    const result = sim.fibonacciToVelocityDays(-5, 25, 10);
+    expect(result.min).toBe(0);
+    expect(result.max).toBe(0);
+  });
+
+  test('returns zero for invalid inputs (zero velocity)', () => {
+    const result = sim.fibonacciToVelocityDays(8, 0, 10);
+    expect(result.min).toBe(0);
+    expect(result.max).toBe(0);
+  });
+
+  test('returns zero for invalid inputs (negative sprint length)', () => {
+    const result = sim.fibonacciToVelocityDays(8, 25, -10);
+    expect(result.min).toBe(0);
+    expect(result.max).toBe(0);
+  });
+
+  test('handles string inputs by parsing', () => {
+    const result = sim.fibonacciToVelocityDays('5', '20', '10');
+    // 5 points / 2 points per day = 2.5 days base
+    // min: round(2.5 * 0.7) = round(1.75) = 2
+    // max: round(2.5 * 1.3) = round(3.25) = 3
+    expect(result.min).toBe(2);
+    expect(result.max).toBe(3);
+  });
+});

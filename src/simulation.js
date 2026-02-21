@@ -75,24 +75,28 @@ function taskUpperBound(maxEstimate, confidence) {
  * @returns
  */
 function generateEstimate(minimum, maximum, confidence) {
-  const max = parseInt(maximum, 10);
-  const min = parseInt(minimum, 10);
+  const max = parseFloat(maximum);
+  const min = parseFloat(minimum);
   const base = getRandom(1, 1000);
   const boundary = confidence * 1000;
   const midBoundary = Math.floor((1000 - boundary) / 2);
-  const range = (max - min) + 1;
+  const range = max - min;
   const maxOverrun = taskUpperBound(max, confidence);
   let total = 0;
 
   if (base < boundary) {
-    total = (base % range) + min;
+    // Generate random value within the min-max range
+    total = (Math.random() * range) + min;
   } else if ((base - boundary) < midBoundary) {
-    total = min === 0 ? 0 : base % min;
+    // Underrun: random value between 0 and min
+    total = min === 0 ? 0 : Math.random() * min;
   } else {
-    total = getRandom(max, maxOverrun);
+    // Overrun: random value between max and maxOverrun
+    total = max + (Math.random() * (maxOverrun - max));
   }
 
-  return total;
+  // Round to whole numbers (integers) for cleaner histogram storage
+  return Math.round(total);
 }
 
 /**
@@ -365,7 +369,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     .attr('class', 'xLabel')
     .attr('text-anchor', 'middle')
     .attr('x', width / 2)
-    .attr('y', height + margin.bottom)
+    .attr('y', height + margin.bottom - 10)
     .text(xLabel);
 
   // Add the y axis and y-label.
@@ -565,7 +569,7 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
 
   root.select('.xLabel')
     .attr('x', width / 2)
-    .attr('y', height + margin.bottom)
+    .attr('y', height + margin.bottom - 10)
     .text(xLabel);
 
   root.select('.y.axis')
@@ -686,11 +690,20 @@ function pauseForUiUpdate() {
  * @param {number} callbacks.batchSize Size of each batch for progressive execution.
  * @returns {Object|Promise<Object>} Simulation results (promise if using callbacks).
  */
-function runSimulationCore(passes, data, callbacks = {}) {
+/**
+ * Runs the core simulation logic.
+ * @param {number} passes - Number of times to run the simulation
+ * @param {Array} data - Array of task objects with Min, Max, Confidence, Cost
+ * @param {Object} callbacks - Optional callbacks for progress updates
+ * @param {number} hoursPerTimeUnit - Hours per time unit (1 for hours mode, 8 for days mode)
+ * @returns {Object} Simulation results
+ */
+function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
   const { onBatchComplete, batchSize = 1000 } = callbacks;
   const totalPasses = parseInt(passes, 10);
+  const costMultiplier = parseFloat(hoursPerTimeUnit) || 1;
   const upperTimeBound = calculateUpperBound(data);
-  const upperCostBound = calculateUpperBound(data, true);
+  const upperCostBound = calculateUpperBound(data, true) * costMultiplier;
   const times = new Array(upperTimeBound + 1).fill(0);
   const costs = new Array(upperCostBound + 1).fill(0);
   const taskOutcomes = {};
@@ -711,7 +724,7 @@ function runSimulationCore(passes, data, callbacks = {}) {
   // Setup task-level outcome histograms for row-level visualization.
   for (const row of data) {
     const taskTimeUpperBound = taskUpperBound(row.Max, row.Confidence);
-    const taskCostUpperBound = taskTimeUpperBound * row.Cost;
+    const taskCostUpperBound = taskTimeUpperBound * row.Cost * costMultiplier;
     const rowId = row.RowId || row.Name;
     taskOutcomes[rowId] = {
       rowId,
@@ -741,7 +754,7 @@ function runSimulationCore(passes, data, callbacks = {}) {
       const rowId = row.RowId || row.Name;
       const taskOutcome = taskOutcomes[rowId];
       const taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
-      const taskCost = taskTime * row.Cost;
+      const taskCost = taskTime * row.Cost * costMultiplier;
       totalTime += taskTime;
       totalCost += taskCost;
       outcome[row.Name] = {
@@ -889,8 +902,15 @@ function runSimulationCore(passes, data, callbacks = {}) {
  * @param {Object} data
  * @returns
  */
-function runSimulation(passes, data) {
-  return runSimulationCore(passes, data);
+/**
+ * Runs the simulation for a given number of passes.
+ * @param {number} passes - Number of simulation iterations
+ * @param {Array} data - Task data
+ * @param {number} hoursPerTimeUnit - Hours per time unit (1 for hours, 8 for days)
+ * @returns {Object} Simulation results
+ */
+function runSimulation(passes, data, hoursPerTimeUnit = 1) {
+  return runSimulationCore(passes, data, {}, hoursPerTimeUnit);
 }
 
 /**
@@ -899,9 +919,16 @@ function runSimulation(passes, data) {
  * @param {Object} data Task input data.
  * @param {Function} onProgress Callback invoked with intermediate histogram state.
  * @param {number} progressInterval Number of passes between progress callbacks.
+ * @param {number} hoursPerTimeUnit Hours per time unit (1 for hours mode, 8 for days mode).
  * @returns {Promise<Object>} Full simulation results.
  */
-async function runSimulationProgressive(passes, data, onProgress = null, progressInterval = 1000) {
+async function runSimulationProgressive(
+  passes,
+  data,
+  onProgress = null,
+  progressInterval = 1000,
+  hoursPerTimeUnit = 1,
+) {
   const updateInterval = Math.max(1, parseInt(progressInterval, 10) || 1000);
 
   return runSimulationCore(passes, data, {
@@ -914,7 +941,55 @@ async function runSimulationProgressive(passes, data, onProgress = null, progres
         onProgress(progress);
       }
     },
-  });
+  }, hoursPerTimeUnit);
+}
+
+/**
+ * Maps Fibonacci story point values to calendar day ranges using provided mappings.
+ * @param {number} fibonacci - Story point value (1, 2, 3, 5, 8, 13, 21, 34)
+ * @param {Object} mappings - Object mapping Fibonacci values to {min, max} day ranges
+ * @returns {Object} {min: number, max: number} Range in calendar days
+ */
+function fibonacciToCalendarDays(fibonacci, mappings) {
+  const fib = parseInt(fibonacci, 10);
+
+  if (mappings && mappings[fib]) {
+    return mappings[fib];
+  }
+
+  // Fallback for any non-standard Fibonacci numbers
+  return { min: Math.round(fib * 0.8), max: fib };
+}
+
+/**
+ * Maps Fibonacci story point values to calendar day ranges based on team velocity.
+ * Uses historical velocity data to convert story points to realistic day estimates.
+ * @param {number} fibonacci - Story point value
+ * @param {number} pointsPerSprint - Team's velocity (points completed per sprint)
+ * @param {number} sprintLengthDays - Sprint duration in working days
+ * @returns {Object} {min: number, max: number} Range in calendar days
+ */
+function fibonacciToVelocityDays(fibonacci, pointsPerSprint, sprintLengthDays) {
+  const fib = parseInt(fibonacci, 10);
+  const points = parseFloat(pointsPerSprint);
+  const days = parseFloat(sprintLengthDays);
+
+  // Validate inputs
+  if (fib <= 0 || points <= 0 || days <= 0) {
+    return { min: 0, max: 0 };
+  }
+
+  // Calculate points per day ratio
+  const pointsPerDay = points / days;
+
+  // Base calculation: story points / velocity
+  const baseDays = fib / pointsPerDay;
+
+  // Apply variance: ±30% to account for uncertainty, rounded to whole days
+  const min = Math.round(baseDays * 0.7);
+  const max = Math.round(baseDays * 1.3);
+
+  return { min, max };
 }
 
 export {
@@ -929,5 +1004,7 @@ export {
   getStandardDeviation,
   calculateKDE,
   taskUpperBound,
+  fibonacciToCalendarDays,
+  fibonacciToVelocityDays,
   GRAPH_CONFIG,
 };
