@@ -65,7 +65,123 @@ input[type="button"] {
   cursor: pointer;
 }
 
-/* Fibonacci Mapping Table */
+/* Fibonacci Configuration Panel */
+.fibonacci-config {
+  margin-top: 1em;
+  background-color: #fafafa;
+  padding: 1em;
+  border-radius: 5px;
+}
+
+.fibonacci-config .header {
+  margin-top: 0;
+}
+
+.config-section {
+  margin: 1em 0;
+}
+
+.config-label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.5em;
+}
+
+.config-subheader {
+  margin: 0.5em 0;
+  padding-top: 0.5em;
+  border-top: 1px solid #ddd;
+}
+
+.help-text {
+  color: #666;
+  font-size: 0.9em;
+  margin: 0.5em 0;
+}
+
+.help-text.example {
+  font-style: italic;
+  background-color: #f0f0f0;
+  padding: 0.5em;
+  border-left: 3px solid #005fcc;
+  margin-top: 1em;
+}
+
+.radio-group {
+  margin: 0.5em 0;
+}
+
+.radio-option {
+  margin: 0.75em 0;
+  padding: 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background-color: #fff;
+}
+
+.radio-option:hover {
+  background-color: #f9f9f9;
+  border-color: #005fcc;
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 0.5em;
+}
+
+.radio-option label {
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 0.5em;
+}
+
+.option-help {
+  display: block;
+  margin-left: 1.5em;
+  color: #666;
+  font-size: 0.85em;
+  margin-top: 0.25em;
+}
+
+.velocity-config {
+  background-color: #f0f7ff;
+  padding: 1em;
+  border-radius: 3px;
+  border-left: 3px solid #005fcc;
+}
+
+.input-group {
+  margin: 0.75em 0;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25em;
+}
+
+.input-group input[type="number"] {
+  width: 120px;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.input-group input[type="number"]:focus {
+  outline: none;
+  border-color: #005fcc;
+  box-shadow: 0 0 0 2px rgba(0, 95, 204, 0.1);
+}
+
+/* Calendar Days Mapping Table */
+.calendar-mapping {
+  background-color: #f0f7ff;
+  padding: 1em;
+  border-radius: 3px;
+  border-left: 3px solid #005fcc;
+  margin-top: 1em;
+}
+
+/* T-Shirt Mapping Table (keeping existing styles) */
 .fibonacci-mapping {
   margin-top: 1em;
 }
@@ -89,11 +205,6 @@ input[type="button"] {
   width: 60px;
   padding: 0.3em;
   text-align: center;
-}
-
-#addFibNumberBtn {
-  margin-top: 1em;
-  margin-left: 0;
 }
 
 /* Data Entry Table */

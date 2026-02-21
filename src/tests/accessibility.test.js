@@ -170,8 +170,14 @@ describe('Accessibility: Application State', () => {
     expect(typeof enableCost).toBe('boolean');
   });
 
-  test('fibonacci mappings exist', () => {
-    const mappings = idx.fibonacciMappings;
-    expect(Object.keys(mappings).length).toBeGreaterThan(0);
+  test('fibonacci mode configuration is accessible', () => {
+    expect(idx.appState.getFibonacciMode).toBeDefined();
+    expect(typeof idx.appState.getFibonacciMode()).toBe('string');
+  });
+
+  test('velocity configuration is accessible', () => {
+    const config = idx.appState.getVelocityConfig();
+    expect(config).toHaveProperty('pointsPerSprint');
+    expect(config).toHaveProperty('sprintLengthDays');
   });
 });

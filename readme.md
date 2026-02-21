@@ -123,18 +123,41 @@ The tool runs a **Monte Carlo simulation** with 10,000+ iterations to generate s
 
 #### Fibonacci Values
 
-Each Fibonacci number maps to an hour range:
+**Important**: Story points are estimated in **calendar days**, not hours. This reflects how Agile teams actually work, accounting for meetings, reviews, and all the overhead of real-world development.
 
-- 1 → 0-1 hours
-- 2 → 1-2 hours
-- 3 → 2-3 hours
-- 5 → 3-5 hours
-- 8 → 5-8 hours
-- 13 → 8-13 hours
-- 21 → 13-21 hours
-- 34 → 21-34 hours
+The tool offers two mapping modes:
+
+##### Calendar Days Mode (Fixed Mapping)
+
+Each Fibonacci number maps to a calendar day range:
+
+- 1 → 0.5-1 days
+- 2 → 1-2 days
+- 3 → 2-3 days
+- 5 → 3-5 days
+- 8 → 5-8 days (1-1.6 weeks)
+- 13 → 8-13 days (1.6-2.6 weeks)
+- 21 → 13-21 days (2.6-4.2 weeks)
+- 34 → 21-34 days (4.2-6.8 weeks)
+
+##### Velocity-Based Mode (Team-Specific)
+
+Maps story points to days based on your team's historical velocity:
+
+- **Points Per Sprint**: Average story points your team completes
+- **Sprint Length**: Your sprint duration in working days
+- **Calculation**: Points ÷ (Points Per Sprint ÷ Sprint Days) = Base Days ± 30% variance
+
+Example: With 25 points/sprint over 10 days:
+
+- Velocity ratio: 2.5 points/day
+- 8-point story: 8 ÷ 2.5 = 3.2 days → **2.24 to 4.16 days**
+
+**Tip**: Use velocity-based mode if your team tracks historical velocity. Use calendar days mode if you don't have velocity data or prefer standard agile time estimates.
 
 #### T-Shirt Values
+
+T-shirt sizes map to hour ranges:
 
 - XS → 1-2 hours
 - S → 2-3 hours

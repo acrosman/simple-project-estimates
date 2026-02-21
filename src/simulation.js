@@ -917,6 +917,54 @@ async function runSimulationProgressive(passes, data, onProgress = null, progres
   });
 }
 
+/**
+ * Maps Fibonacci story point values to calendar day ranges using provided mappings.
+ * @param {number} fibonacci - Story point value (1, 2, 3, 5, 8, 13, 21, 34)
+ * @param {Object} mappings - Object mapping Fibonacci values to {min, max} day ranges
+ * @returns {Object} {min: number, max: number} Range in calendar days
+ */
+function fibonacciToCalendarDays(fibonacci, mappings) {
+  const fib = parseInt(fibonacci, 10);
+
+  if (mappings && mappings[fib]) {
+    return mappings[fib];
+  }
+
+  // Fallback for any non-standard Fibonacci numbers
+  return { min: fib * 0.8, max: fib };
+}
+
+/**
+ * Maps Fibonacci story point values to calendar day ranges based on team velocity.
+ * Uses historical velocity data to convert story points to realistic day estimates.
+ * @param {number} fibonacci - Story point value
+ * @param {number} pointsPerSprint - Team's velocity (points completed per sprint)
+ * @param {number} sprintLengthDays - Sprint duration in working days
+ * @returns {Object} {min: number, max: number} Range in calendar days
+ */
+function fibonacciToVelocityDays(fibonacci, pointsPerSprint, sprintLengthDays) {
+  const fib = parseInt(fibonacci, 10);
+  const points = parseFloat(pointsPerSprint);
+  const days = parseFloat(sprintLengthDays);
+
+  // Validate inputs
+  if (fib <= 0 || points <= 0 || days <= 0) {
+    return { min: 0, max: 0 };
+  }
+
+  // Calculate points per day ratio
+  const pointsPerDay = points / days;
+
+  // Base calculation: story points / velocity
+  const baseDays = fib / pointsPerDay;
+
+  // Apply variance: ±30% to account for uncertainty
+  const min = baseDays * 0.7;
+  const max = baseDays * 1.3;
+
+  return { min, max };
+}
+
 export {
   runSimulation,
   runSimulationProgressive,
@@ -929,5 +977,7 @@ export {
   getStandardDeviation,
   calculateKDE,
   taskUpperBound,
+  fibonacciToCalendarDays,
+  fibonacciToVelocityDays,
   GRAPH_CONFIG,
 };

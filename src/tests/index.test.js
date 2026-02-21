@@ -15,18 +15,20 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('renderTaskRowHistograms');
     expect(idx).toHaveProperty('isRowEmpty');
     expect(idx).toHaveProperty('normalizeTshirtSize');
+    expect(idx).toHaveProperty('updateFibonacciCalendarMapping');
     expect(idx).toHaveProperty('updateTshirtMapping');
-    expect(idx).toHaveProperty('getNextFibonacci');
-    expect(idx).toHaveProperty('addFibonacciNumber');
+    expect(idx).toHaveProperty('handleFibonacciModeChange');
+    expect(idx).toHaveProperty('handleVelocityConfigChange');
     expect(idx).toHaveProperty('applyGraphSettings');
     expect(idx).toHaveProperty('resetGraphSettings');
   });
 
   test('Validate exported state exists', () => {
     expect(idx).toHaveProperty('getEstimationMode');
-    expect(idx).toHaveProperty('fibonacciMappings');
+    expect(idx).toHaveProperty('fibonacciCalendarMappings');
     expect(idx).toHaveProperty('tshirtMappings');
     expect(idx).toHaveProperty('getEnableCost');
+    expect(idx).toHaveProperty('appState');
   });
 });
 
@@ -369,43 +371,64 @@ describe('renderTaskRowHistograms', () => {
   });
 });
 
-describe('Fibonacci Mappings', () => {
-  test('has correct Fibonacci numbers as keys', () => {
-    const fibKeys = Object.keys(idx.fibonacciMappings).map(Number);
-    expect(fibKeys).toEqual([1, 2, 3, 5, 8, 13, 21, 34]);
+describe('Fibonacci Configuration', () => {
+  test('appState has Fibonacci mode configuration', () => {
+    expect(idx.appState).toHaveProperty('fibonacciMode');
+    expect(idx.appState.getFibonacciMode).toBeDefined();
+    expect(idx.appState.setFibonacciMode).toBeDefined();
   });
 
-  test('each mapping has min and max properties', () => {
-    Object.values(idx.fibonacciMappings).forEach((mapping) => {
-      expect(mapping).toHaveProperty('min');
-      expect(mapping).toHaveProperty('max');
-    });
+  test('appState has Fibonacci calendar mappings', () => {
+    expect(idx.appState).toHaveProperty('fibonacciCalendarMappings');
+    expect(idx.appState.getFibonacciCalendarMappings).toBeDefined();
   });
 
-  test('min values follow Fibonacci sequence pattern', () => {
-    expect(idx.fibonacciMappings[1].min).toBe(0);
-    expect(idx.fibonacciMappings[2].min).toBe(1);
-    expect(idx.fibonacciMappings[3].min).toBe(2);
-    expect(idx.fibonacciMappings[5].min).toBe(3);
-    expect(idx.fibonacciMappings[8].min).toBe(5);
-    expect(idx.fibonacciMappings[13].min).toBe(8);
-    expect(idx.fibonacciMappings[21].min).toBe(13);
+  test('default Fibonacci mode is calendar-days', () => {
+    idx.appState.reset();
+    expect(idx.appState.getFibonacciMode()).toBe('calendar-days');
   });
 
-  test('max values match Fibonacci keys', () => {
-    expect(idx.fibonacciMappings[1].max).toBe(1);
-    expect(idx.fibonacciMappings[2].max).toBe(2);
-    expect(idx.fibonacciMappings[3].max).toBe(3);
-    expect(idx.fibonacciMappings[5].max).toBe(5);
-    expect(idx.fibonacciMappings[8].max).toBe(8);
-    expect(idx.fibonacciMappings[13].max).toBe(13);
-    expect(idx.fibonacciMappings[21].max).toBe(21);
+  test('can change Fibonacci mode to velocity-based', () => {
+    idx.appState.setFibonacciMode('velocity-based');
+    expect(idx.appState.getFibonacciMode()).toBe('velocity-based');
+    idx.appState.reset();
   });
 
-  test('min is always less than or equal to max', () => {
-    Object.values(idx.fibonacciMappings).forEach((mapping) => {
-      expect(mapping.min).toBeLessThanOrEqual(mapping.max);
-    });
+  test('fibonacci calendar mappings have correct default values', () => {
+    idx.appState.reset();
+    const mappings = idx.appState.getFibonacciCalendarMappings();
+    expect(mappings[1]).toEqual({ min: 0.5, max: 1 });
+    expect(mappings[8]).toEqual({ min: 5, max: 8 });
+    expect(mappings[21]).toEqual({ min: 13, max: 21 });
+  });
+
+  test('appState has velocity configuration', () => {
+    expect(idx.appState).toHaveProperty('velocityConfig');
+    expect(idx.appState.getVelocityConfig).toBeDefined();
+    expect(idx.appState.setVelocityConfig).toBeDefined();
+  });
+
+  test('default velocity configuration is 25 points per 10 days', () => {
+    idx.appState.reset();
+    const config = idx.appState.getVelocityConfig();
+    expect(config.pointsPerSprint).toBe(25);
+    expect(config.sprintLengthDays).toBe(10);
+  });
+
+  test('can update velocity configuration', () => {
+    idx.appState.setVelocityConfig(30, 14);
+    const config = idx.appState.getVelocityConfig();
+    expect(config.pointsPerSprint).toBe(30);
+    expect(config.sprintLengthDays).toBe(14);
+    idx.appState.reset();
+  });
+
+  test('velocity configuration validates and defaults on invalid input', () => {
+    idx.appState.setVelocityConfig('invalid', null);
+    const config = idx.appState.getVelocityConfig();
+    expect(config.pointsPerSprint).toBe(25);
+    expect(config.sprintLengthDays).toBe(10);
+    idx.appState.reset();
   });
 });
 
@@ -442,73 +465,176 @@ describe('T-Shirt Mappings', () => {
   });
 });
 
-describe('updateFibonacciMapping', () => {
+describe('handleFibonacciModeChange', () => {
+  beforeEach(() => {
+    idx.appState.reset();
+    document.body.innerHTML = `
+      <div id="fibonacciCalendarMappingWrapper"></div>
+      <div id="velocityConfigWrapper"></div>
+    `;
+  });
+
+  test('updates appState when mode changes', () => {
+    const mockEvent = {
+      target: {
+        value: 'velocity-based',
+      },
+    };
+
+    idx.handleFibonacciModeChange(mockEvent);
+    expect(idx.appState.getFibonacciMode()).toBe('velocity-based');
+  });
+
+  test('shows calendar mapping wrapper for calendar-days mode', () => {
+    const calendarWrapper = document.getElementById('fibonacciCalendarMappingWrapper');
+    const mockEvent = {
+      target: {
+        value: 'calendar-days',
+      },
+    };
+
+    idx.handleFibonacciModeChange(mockEvent);
+    expect(calendarWrapper.style.display).toBe('block');
+  });
+
+  test('hides calendar mapping wrapper for velocity-based mode', () => {
+    const calendarWrapper = document.getElementById('fibonacciCalendarMappingWrapper');
+    const mockEvent = {
+      target: {
+        value: 'velocity-based',
+      },
+    };
+
+    idx.handleFibonacciModeChange(mockEvent);
+    expect(calendarWrapper.style.display).toBe('none');
+  });
+
+  test('shows velocity config wrapper for velocity-based mode', () => {
+    const wrapper = document.getElementById('velocityConfigWrapper');
+    const mockEvent = {
+      target: {
+        value: 'velocity-based',
+      },
+    };
+
+    idx.handleFibonacciModeChange(mockEvent);
+    expect(wrapper.style.display).toBe('block');
+  });
+
+  test('hides velocity config wrapper for calendar-days mode', () => {
+    const wrapper = document.getElementById('velocityConfigWrapper');
+    const mockEvent = {
+      target: {
+        value: 'calendar-days',
+      },
+    };
+
+    idx.handleFibonacciModeChange(mockEvent);
+    expect(wrapper.style.display).toBe('none');
+  });
+});
+
+describe('handleVelocityConfigChange', () => {
+  beforeEach(() => {
+    idx.appState.reset();
+    document.body.innerHTML = `
+      <input id="velocityPoints" value="30" />
+      <input id="velocityDays" value="14" />
+    `;
+  });
+
+  test('updates velocity configuration from input fields', () => {
+    idx.handleVelocityConfigChange({});
+    const config = idx.appState.getVelocityConfig();
+    expect(config.pointsPerSprint).toBe(30);
+    expect(config.sprintLengthDays).toBe(14);
+  });
+
+  test('handles missing input fields gracefully', () => {
+    document.body.innerHTML = '';
+    expect(() => idx.handleVelocityConfigChange({})).not.toThrow();
+  });
+
+  test('uses default values for invalid inputs', () => {
+    document.body.innerHTML = `
+      <input id="velocityPoints" value="invalid" />
+      <input id="velocityDays" value="also-invalid" />
+    `;
+
+    idx.handleVelocityConfigChange({});
+    const config = idx.appState.getVelocityConfig();
+    expect(config.pointsPerSprint).toBe(25);
+    expect(config.sprintLengthDays).toBe(10);
+  });
+});
+
+describe('updateFibonacciCalendarMapping', () => {
   beforeEach(() => {
     // Reset mappings to default values before each test
-    idx.fibonacciMappings[1] = { min: 0, max: 1 };
-    idx.fibonacciMappings[2] = { min: 1, max: 2 };
-    idx.fibonacciMappings[3] = { min: 2, max: 3 };
-    idx.fibonacciMappings[5] = { min: 3, max: 5 };
-    idx.fibonacciMappings[8] = { min: 5, max: 8 };
-    idx.fibonacciMappings[13] = { min: 8, max: 13 };
-    idx.fibonacciMappings[21] = { min: 13, max: 21 };
+    idx.fibonacciCalendarMappings[1] = { min: 0.5, max: 1 };
+    idx.fibonacciCalendarMappings[2] = { min: 1, max: 2 };
+    idx.fibonacciCalendarMappings[3] = { min: 2, max: 3 };
+    idx.fibonacciCalendarMappings[5] = { min: 3, max: 5 };
+    idx.fibonacciCalendarMappings[8] = { min: 5, max: 8 };
+    idx.fibonacciCalendarMappings[13] = { min: 8, max: 13 };
+    idx.fibonacciCalendarMappings[21] = { min: 13, max: 21 };
   });
 
   test('updates min value when min input changes', () => {
     const mockEvent = {
       target: {
         dataset: { fib: '5', type: 'min' },
-        value: '10',
+        value: '2.5',
       },
     };
 
-    idx.updateFibonacciMapping(mockEvent);
+    idx.updateFibonacciCalendarMapping(mockEvent);
 
-    expect(idx.fibonacciMappings[5].min).toBe(10);
-    expect(idx.fibonacciMappings[5].max).toBe(5); // max should remain unchanged
+    expect(idx.fibonacciCalendarMappings[5].min).toBe(2.5);
+    expect(idx.fibonacciCalendarMappings[5].max).toBe(5); // max should remain unchanged
   });
 
   test('updates max value when max input changes', () => {
     const mockEvent = {
       target: {
         dataset: { fib: '8', type: 'max' },
-        value: '20',
+        value: '10',
       },
     };
 
-    idx.updateFibonacciMapping(mockEvent);
+    idx.updateFibonacciCalendarMapping(mockEvent);
 
-    expect(idx.fibonacciMappings[8].max).toBe(20);
-    expect(idx.fibonacciMappings[8].min).toBe(5); // min should remain unchanged
+    expect(idx.fibonacciCalendarMappings[8].max).toBe(10);
+    expect(idx.fibonacciCalendarMappings[8].min).toBe(5); // min should remain unchanged
+  });
+
+  test('handles decimal values correctly', () => {
+    const mockEvent = {
+      target: {
+        dataset: { fib: '1', type: 'min' },
+        value: '0.25',
+      },
+    };
+
+    idx.updateFibonacciCalendarMapping(mockEvent);
+
+    expect(idx.fibonacciCalendarMappings[1].min).toBe(0.25);
+    expect(typeof idx.fibonacciCalendarMappings[1].min).toBe('number');
   });
 
   test('updates correct Fibonacci number mapping', () => {
     const mockEvent = {
       target: {
         dataset: { fib: '13', type: 'max' },
-        value: '25',
-      },
-    };
-
-    idx.updateFibonacciMapping(mockEvent);
-
-    expect(idx.fibonacciMappings[13].max).toBe(25);
-    expect(idx.fibonacciMappings[8].max).toBe(8); // other mappings unchanged
-    expect(idx.fibonacciMappings[21].max).toBe(21); // other mappings unchanged
-  });
-
-  test('handles string numbers correctly', () => {
-    const mockEvent = {
-      target: {
-        dataset: { fib: '21', type: 'min' },
         value: '15',
       },
     };
 
-    idx.updateFibonacciMapping(mockEvent);
+    idx.updateFibonacciCalendarMapping(mockEvent);
 
-    expect(idx.fibonacciMappings[21].min).toBe(15);
-    expect(typeof idx.fibonacciMappings[21].min).toBe('number');
+    expect(idx.fibonacciCalendarMappings[13].max).toBe(15);
+    expect(idx.fibonacciCalendarMappings[8].max).toBe(8); // other mappings unchanged
+    expect(idx.fibonacciCalendarMappings[21].max).toBe(21); // other mappings unchanged
   });
 
   test('does not crash for non-existent Fibonacci number', () => {
@@ -519,28 +645,28 @@ describe('updateFibonacciMapping', () => {
       },
     };
 
-    expect(() => idx.updateFibonacciMapping(mockEvent)).not.toThrow();
+    expect(() => idx.updateFibonacciCalendarMapping(mockEvent)).not.toThrow();
   });
 
   test('updates multiple values sequentially', () => {
     const event1 = {
       target: {
         dataset: { fib: '5', type: 'min' },
-        value: '4',
+        value: '2',
       },
     };
     const event2 = {
       target: {
         dataset: { fib: '5', type: 'max' },
-        value: '10',
+        value: '6',
       },
     };
 
-    idx.updateFibonacciMapping(event1);
-    idx.updateFibonacciMapping(event2);
+    idx.updateFibonacciCalendarMapping(event1);
+    idx.updateFibonacciCalendarMapping(event2);
 
-    expect(idx.fibonacciMappings[5].min).toBe(4);
-    expect(idx.fibonacciMappings[5].max).toBe(10);
+    expect(idx.fibonacciCalendarMappings[5].min).toBe(2);
+    expect(idx.fibonacciCalendarMappings[5].max).toBe(6);
   });
 });
 
@@ -604,128 +730,6 @@ describe('updateTshirtMapping', () => {
     };
 
     expect(() => idx.updateTshirtMapping(mockEvent)).not.toThrow();
-  });
-});
-
-describe('getNextFibonacci', () => {
-  beforeEach(() => {
-    // Reset mappings to default state
-    Object.keys(idx.fibonacciMappings).forEach((key) => {
-      if (parseInt(key, 10) > 34) {
-        delete idx.fibonacciMappings[key];
-      }
-    });
-    idx.fibonacciMappings[1] = { min: 0, max: 1 };
-    idx.fibonacciMappings[2] = { min: 1, max: 2 };
-    idx.fibonacciMappings[3] = { min: 2, max: 3 };
-    idx.fibonacciMappings[5] = { min: 3, max: 5 };
-    idx.fibonacciMappings[8] = { min: 5, max: 8 };
-    idx.fibonacciMappings[13] = { min: 8, max: 13 };
-    idx.fibonacciMappings[21] = { min: 13, max: 21 };
-    idx.fibonacciMappings[34] = { min: 21, max: 34 };
-  });
-
-  test('calculates next Fibonacci number correctly', () => {
-    expect(idx.getNextFibonacci()).toBe(55);
-  });
-
-  test('continues sequence after multiple additions', () => {
-    idx.fibonacciMappings[55] = { min: 34, max: 55 };
-    expect(idx.getNextFibonacci()).toBe(89);
-  });
-
-  test('handles extended sequence', () => {
-    idx.fibonacciMappings[55] = { min: 34, max: 55 };
-    idx.fibonacciMappings[89] = { min: 55, max: 89 };
-    expect(idx.getNextFibonacci()).toBe(144);
-  });
-
-  test('works with unordered keys in object', () => {
-    // Add a new number out of order
-    idx.fibonacciMappings[55] = { min: 34, max: 55 };
-    // Function should still calculate correctly by sorting
-    expect(idx.getNextFibonacci()).toBe(89);
-  });
-});
-
-describe('addFibonacciNumber', () => {
-  beforeEach(() => {
-    // Reset mappings and DOM
-    Object.keys(idx.fibonacciMappings).forEach((key) => {
-      if (parseInt(key, 10) > 34) {
-        delete idx.fibonacciMappings[key];
-      }
-    });
-    idx.fibonacciMappings[1] = { min: 0, max: 1 };
-    idx.fibonacciMappings[2] = { min: 1, max: 2 };
-    idx.fibonacciMappings[3] = { min: 2, max: 3 };
-    idx.fibonacciMappings[5] = { min: 3, max: 5 };
-    idx.fibonacciMappings[8] = { min: 5, max: 8 };
-    idx.fibonacciMappings[13] = { min: 8, max: 13 };
-    idx.fibonacciMappings[21] = { min: 13, max: 21 };
-    idx.fibonacciMappings[34] = { min: 21, max: 34 };
-
-    document.body.innerHTML = '';
-  });
-
-  test('adds next Fibonacci number to mappings', () => {
-    idx.addFibonacciNumber();
-    expect(idx.fibonacciMappings).toHaveProperty('55');
-  });
-
-  test('sets correct min value from previous max', () => {
-    idx.addFibonacciNumber();
-    expect(idx.fibonacciMappings[55].min).toBe(34);
-  });
-
-  test('sets correct max value as new Fibonacci number', () => {
-    idx.addFibonacciNumber();
-    expect(idx.fibonacciMappings[55].max).toBe(55);
-  });
-
-  test('can add multiple numbers sequentially', () => {
-    idx.addFibonacciNumber();
-    expect(idx.fibonacciMappings).toHaveProperty('55');
-
-    idx.addFibonacciNumber();
-    expect(idx.fibonacciMappings).toHaveProperty('89');
-
-    idx.addFibonacciNumber();
-    expect(idx.fibonacciMappings).toHaveProperty('144');
-  });
-
-  test('maintains proper sequence relationships', () => {
-    idx.addFibonacciNumber(); // Add 55
-    idx.addFibonacciNumber(); // Add 89
-
-    expect(idx.fibonacciMappings[89].min).toBe(55);
-    expect(idx.fibonacciMappings[89].max).toBe(89);
-  });
-
-  test('does not modify existing mappings', () => {
-    const originalMapping = { ...idx.fibonacciMappings[34] };
-    idx.addFibonacciNumber();
-
-    expect(idx.fibonacciMappings[34]).toEqual(originalMapping);
-  });
-
-  test('updates DOM when wrapper exists', () => {
-    // Create a mock parent element with the Fibonacci wrapper
-    const parent = document.createElement('div');
-    const wrapper = document.createElement('div');
-    wrapper.id = 'fibonacciMappingWrapper';
-    parent.appendChild(wrapper);
-    document.body.appendChild(parent);
-
-    idx.addFibonacciNumber();
-
-    // Check that wrapper still exists (was replaced, not removed)
-    const updatedWrapper = document.getElementById('fibonacciMappingWrapper');
-    expect(updatedWrapper).not.toBeNull();
-  });
-
-  test('does not crash when DOM wrapper is missing', () => {
-    expect(() => idx.addFibonacciNumber()).not.toThrow();
   });
 });
 
@@ -1082,51 +1086,48 @@ describe('validateCsvData', () => {
 
 describe('AppState reset()', () => {
   test('reset() mutates existing objects instead of creating new ones', () => {
-    // Store references to the original mapping objects
-    const fibRef = idx.fibonacciMappings;
+    // Store reference to the original t-shirt mappings object
     const tshirtRef = idx.tshirtMappings;
 
-    // Modify the mappings
-    idx.fibonacciMappings[1] = { min: 999, max: 999 };
+    // Modify the mapping
     idx.tshirtMappings.XS = { min: 888, max: 888 };
 
-    // Verify modifications
-    expect(idx.fibonacciMappings[1].min).toBe(999);
+    // Verify modification
     expect(idx.tshirtMappings.XS.min).toBe(888);
 
     // Call reset
     idx.appState.reset();
 
     // Verify the values are reset
-    expect(idx.fibonacciMappings[1]).toEqual({ min: 0, max: 1 });
     expect(idx.tshirtMappings.XS).toEqual({ min: 1, max: 2 });
 
-    // Verify the objects still reference the same memory addresses
-    expect(fibRef).toBe(idx.fibonacciMappings);
+    // Verify the object still references the same memory address
     expect(tshirtRef).toBe(idx.tshirtMappings);
   });
 
   test('reset() clears all existing keys before reassigning', () => {
-    // Add an extra Fibonacci number
-    idx.fibonacciMappings[55] = { min: 34, max: 55 };
-    expect(idx.fibonacciMappings).toHaveProperty('55');
+    // Add an extra t-shirt size
+    idx.tshirtMappings.XXXL = { min: 21, max: 34 };
+    expect(idx.tshirtMappings).toHaveProperty('XXXL');
 
     // Reset should remove the extra key
     idx.appState.reset();
 
     // Verify the extra key is gone
-    expect(idx.fibonacciMappings).not.toHaveProperty('55');
+    expect(idx.tshirtMappings).not.toHaveProperty('XXXL');
 
     // Verify default keys are present
-    expect(idx.fibonacciMappings).toHaveProperty('1');
-    expect(idx.fibonacciMappings).toHaveProperty('34');
+    expect(idx.tshirtMappings).toHaveProperty('XS');
+    expect(idx.tshirtMappings).toHaveProperty('XXL');
   });
 
   test('reset() resets all state properties', () => {
     // Modify all state properties
     idx.appState.setEstimationMode('fibonacci');
     idx.appState.setEnableCost(false);
-    idx.fibonacciMappings[1] = { min: 100, max: 200 };
+    idx.appState.setFibonacciMode('velocity-based');
+    idx.appState.setVelocityConfig(40, 14);
+    idx.tshirtMappings.XS = { min: 100, max: 200 };
 
     // Reset
     idx.appState.reset();
@@ -1134,7 +1135,9 @@ describe('AppState reset()', () => {
     // Verify all properties are reset
     expect(idx.getEstimationMode()).toBe('hours');
     expect(idx.getEnableCost()).toBe(true);
-    expect(idx.fibonacciMappings[1]).toEqual({ min: 0, max: 1 });
+    expect(idx.appState.getFibonacciMode()).toBe('calendar-days');
+    expect(idx.appState.getVelocityConfig()).toEqual({ pointsPerSprint: 25, sprintLengthDays: 10 });
+    expect(idx.tshirtMappings.XS).toEqual({ min: 1, max: 2 });
   });
 });
 
