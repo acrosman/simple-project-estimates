@@ -369,7 +369,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     .attr('class', 'xLabel')
     .attr('text-anchor', 'middle')
     .attr('x', width / 2)
-    .attr('y', height + margin.bottom)
+    .attr('y', height + margin.bottom - 10)
     .text(xLabel);
 
   // Add the y axis and y-label.
@@ -569,7 +569,7 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
 
   root.select('.xLabel')
     .attr('x', width / 2)
-    .attr('y', height + margin.bottom)
+    .attr('y', height + margin.bottom - 10)
     .text(xLabel);
 
   root.select('.y.axis')
