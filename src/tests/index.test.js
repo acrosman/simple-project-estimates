@@ -21,6 +21,7 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('handleVelocityConfigChange');
     expect(idx).toHaveProperty('applyGraphSettings');
     expect(idx).toHaveProperty('resetGraphSettings');
+    expect(idx).toHaveProperty('createLogoElement');
   });
 
   test('Validate exported state exists', () => {
@@ -1420,5 +1421,34 @@ describe('Graph Settings Functions', () => {
         done();
       }, 2100);
     });
+  });
+});
+
+describe('createLogoElement', () => {
+  test('returns an img element', () => {
+    const logo = idx.createLogoElement();
+    expect(logo.tagName.toLowerCase()).toBe('img');
+  });
+
+  test('has the project-icon class', () => {
+    const logo = idx.createLogoElement();
+    expect(logo.classList.contains('project-icon')).toBe(true);
+  });
+
+  test('has a non-empty alt attribute', () => {
+    const logo = idx.createLogoElement();
+    expect(logo.alt).toBeTruthy();
+  });
+
+  test('has explicit width and height set to 100', () => {
+    const logo = idx.createLogoElement();
+    expect(logo.width).toBe(100);
+    expect(logo.height).toBe(100);
+  });
+
+  test('returns a new instance each call', () => {
+    const logo1 = idx.createLogoElement();
+    const logo2 = idx.createLogoElement();
+    expect(logo1).not.toBe(logo2);
   });
 });

@@ -1532,21 +1532,26 @@ async function startSimulation(event) {
 }
 
 /**
- * Creates the page header with icon, title, and GitHub ribbon.
- * @returns {HTMLElement} Header section
+ * Creates the project logo image element.
+ * @returns {HTMLImageElement} Logo image
  */
-function createHeader() {
-  const headerDiv = document.createElement('div');
-  headerDiv.classList.add('page-header', 'section');
-
-  // Insert project Icon
-  const simIcon = new Image();
+function createLogoElement() {
+  const simIcon = document.createElement('img');
   simIcon.src = Icon;
   simIcon.alt = 'Project Estimate Simulator icon';
   simIcon.width = 100;
   simIcon.height = 100;
   simIcon.classList.add('project-icon');
-  headerDiv.appendChild(simIcon);
+  return simIcon;
+}
+
+/**
+ * Creates the page header with GitHub ribbon.
+ * @returns {HTMLElement} Header section
+ */
+function createHeader() {
+  const headerDiv = document.createElement('div');
+  headerDiv.classList.add('page-header', 'section');
 
   // Fork Me ribbon
   const githubRibbon = createDivWithIdAndClasses('forkOnGithub', ['github-ribbon']);
@@ -2055,8 +2060,14 @@ function setupUi() {
   const dataEntry = createDataEntrySection();
   const simulationPanel = createSimulationPanel();
 
+  // Create side-by-side wrapper: mode selector on the left, logo on the right
+  const modeSelectorWithLogo = document.createElement('div');
+  modeSelectorWithLogo.classList.add('mode-selector-logo-wrapper');
+  modeSelectorWithLogo.appendChild(modeSelector);
+  modeSelectorWithLogo.appendChild(createLogoElement());
+
   // Assemble data area
-  dataWrapper.appendChild(modeSelector);
+  dataWrapper.appendChild(modeSelectorWithLogo);
   dataWrapper.appendChild(fileLoader);
   dataWrapper.appendChild(dataEntry);
 
@@ -2095,6 +2106,7 @@ export {
   validateCsvData,
   applyGraphSettings,
   resetGraphSettings,
+  createLogoElement,
 };
 
 // Export getter functions for mutable state
