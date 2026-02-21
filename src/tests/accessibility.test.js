@@ -3,7 +3,6 @@
  */
 
 import * as idx from '../index';
-import * as sim from '../simulation';
 
 describe('Accessibility: HTML Structure', () => {
   beforeEach(() => {
@@ -119,13 +118,6 @@ describe('Accessibility: Data Table Structure', () => {
     headerCell.textContent = 'Task *';
 
     expect(headerCell.textContent).toContain('*');
-  });
-});
-
-describe('Accessibility: SVG Charts', () => {
-  test('buildHistogram function exists', () => {
-    expect(sim.buildHistogram).toBeDefined();
-    expect(sim.buildHistogram).toHaveLength(8);
   });
 });
 

@@ -13,6 +13,13 @@ test('Validate Elements', () => {
   expect(sim).toHaveProperty('GRAPH_CONFIG_DEFAULTS');
 });
 
+describe('Accessibility: SVG Charts', () => {
+  test('buildHistogram function exists and has expected signature', () => {
+    expect(sim.buildHistogram).toBeDefined();
+    expect(sim.buildHistogram).toHaveLength(8);
+  });
+});
+
 test('Validate GRAPH_CONFIG structure', () => {
   expect(sim.GRAPH_CONFIG).toHaveProperty('histogram');
   expect(sim.GRAPH_CONFIG).toHaveProperty('miniGraph');
