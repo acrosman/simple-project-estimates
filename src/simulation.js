@@ -62,34 +62,54 @@ function taskUpperBound(maxEstimate, confidence) {
 }
 
 /**
+ * Calculates the lower bound for a specific task record. Mirrors taskUpperBound:
+ * the less confidence in the estimate, the further an underrun can drop below min.
+ * 90% leaves the lower bound at min estimate (no further underrun possible).
+ * 80% gives us min / 2.
+ * 70% min / 3.
+ * And so on.
+ * @param {number} minEstimate
+ * @param {number} confidence
+ * @returns {number}
+ */
+function taskLowerBound(minEstimate, confidence) {
+  const confidencePercent = Math.round(confidence * 100);
+  const multiplier = Math.max(1, Math.ceil((100 - confidencePercent) / 10));
+  return minEstimate / multiplier;
+}
+
+/**
  * Does the estimate for one task. It picks a random number between min and
- * max confidence % of the time. If the number is outside the range, it has
- * an even chance of being between 0-min, or above max. Since confidence in
- * an estimate implies both likelihood of being right and likelihood of being
- * close. The less confidence in the estimate the higher the risk of the
- * project going way over time. For every 10% drop in overrun grows by 100%
- * of max estimate.
- * @param {*} minimum
- * @param {*} maximum
- * @param {*} confidence
- * @returns
+ * max confidence % of the time. If the number is outside the range, overruns
+ * receive 75% of the outside-confidence budget and underruns receive 25%,
+ * reflecting that tasks more often run over than under. Underruns are bounded
+ * by a confidence-scaled floor: the lower the confidence, the further below
+ * min the result can reach (mirroring the overrun upper-bound logic). For
+ * every 10% drop in confidence the overrun ceiling grows by 100% of max,
+ * and the underrun floor drops by 1/multiplier of min.
+ * @param {number} minimum
+ * @param {number} maximum
+ * @param {number} confidence
+ * @returns {number}
  */
 function generateEstimate(minimum, maximum, confidence) {
   const max = parseFloat(maximum);
   const min = parseFloat(minimum);
   const base = getRandom(1, 1000);
   const boundary = confidence * 1000;
-  const midBoundary = Math.floor((1000 - boundary) / 2);
+  // Underruns get 25% of the outside-confidence budget; overruns get 75%.
+  const underrunBudget = Math.floor((1000 - boundary) * 0.25);
   const range = max - min;
   const maxOverrun = taskUpperBound(max, confidence);
+  const minUnderrun = taskLowerBound(min, confidence);
   let total = 0;
 
   if (base < boundary) {
     // Generate random value within the min-max range
     total = (Math.random() * range) + min;
-  } else if ((base - boundary) < midBoundary) {
-    // Underrun: random value between 0 and min
-    total = min === 0 ? 0 : Math.random() * min;
+  } else if ((base - boundary) < underrunBudget) {
+    // Underrun: confidence-scaled floor up to min
+    total = min === 0 ? 0 : minUnderrun + (Math.random() * (min - minUnderrun));
   } else {
     // Overrun: random value between max and maxOverrun
     total = max + (Math.random() * (maxOverrun - max));
@@ -1018,6 +1038,7 @@ export {
   getStandardDeviation,
   calculateKDE,
   taskUpperBound,
+  taskLowerBound,
   fibonacciToCalendarDays,
   fibonacciToVelocityDays,
   GRAPH_CONFIG,

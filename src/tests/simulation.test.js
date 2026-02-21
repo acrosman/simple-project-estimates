@@ -239,6 +239,56 @@ describe('taskUpperBound', () => {
   });
 });
 
+// Tests for taskLowerBound function
+describe('taskLowerBound', () => {
+  test('100% confidence should give 1x divisor (floor equals min)', () => {
+    const result = sim.taskLowerBound(10, 1.0);
+    expect(result).toBe(10);
+  });
+
+  test('90% confidence should give 1x divisor (floor equals min)', () => {
+    const result = sim.taskLowerBound(10, 0.90);
+    expect(result).toBe(10);
+  });
+
+  test('85% confidence should give 2x divisor (floor is min / 2)', () => {
+    const result = sim.taskLowerBound(10, 0.85);
+    expect(result).toBe(5);
+  });
+
+  test('80% confidence should give 2x divisor (floor is min / 2)', () => {
+    const result = sim.taskLowerBound(10, 0.80);
+    expect(result).toBe(5);
+  });
+
+  test('70% confidence should give 3x divisor (floor is min / 3)', () => {
+    const result = sim.taskLowerBound(30, 0.70);
+    expect(result).toBe(10);
+  });
+
+  test('50% confidence should give 5x divisor (floor is min / 5)', () => {
+    const result = sim.taskLowerBound(10, 0.50);
+    expect(result).toBe(2);
+  });
+
+  test('0% confidence should give 10x divisor (floor is min / 10)', () => {
+    const result = sim.taskLowerBound(10, 0);
+    expect(result).toBe(1);
+  });
+
+  test('min of 0 always returns 0 regardless of confidence', () => {
+    expect(sim.taskLowerBound(0, 1.0)).toBe(0);
+    expect(sim.taskLowerBound(0, 0.80)).toBe(0);
+    expect(sim.taskLowerBound(0, 0)).toBe(0);
+  });
+
+  test('Works with different min estimates', () => {
+    expect(sim.taskLowerBound(20, 0.90)).toBe(20);
+    expect(sim.taskLowerBound(20, 0.80)).toBe(10);
+    expect(sim.taskLowerBound(15, 0.70)).toBe(5);
+  });
+});
+
 // Tests for runSimulationProgressive function
 describe('runSimulationProgressive', () => {
   const sampleTasks = [
