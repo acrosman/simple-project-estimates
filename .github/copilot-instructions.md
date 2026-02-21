@@ -297,6 +297,8 @@ svg
 - `npm run lint` - Check code style
 - `npm run build` - Create dist bundle
 
+Run tests in VSCode whenever possible. Don't use npm by default for that purpose.
+
 ### Key Functions to Remember
 
 - `runSimulation(tasks, runs, useCost)` - Main simulation entry
@@ -304,7 +306,3 @@ svg
 - `buildHistogram(...)` - Create D3 visualization
 - `getMedian(data)` - Calculate median from histogram
 - `getStandardDeviation(data)` - Calculate std dev
-
----
-
-_Last updated: February 7, 2026_
