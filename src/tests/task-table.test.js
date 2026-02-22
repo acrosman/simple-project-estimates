@@ -275,4 +275,263 @@ describe('createEntryTable', () => {
     expect(wrapper.id).toBe('dataTableWrapper');
     expect(document.querySelectorAll('#dataTableWrapper')).toHaveLength(1);
   });
+
+  test('creates fibonacci header column in fibonacci mode', () => {
+    appState.setEstimationMode('fibonacci');
+    const wrapper = createEntryTable();
+    const headers = wrapper.querySelectorAll('[role="columnheader"]');
+    const headerTexts = Array.from(headers).map((h) => h.textContent);
+    expect(headerTexts).toContain('Fibonacci # *');
+    expect(headerTexts).not.toContain('Min Time *');
+  });
+
+  test('creates tshirt header column in tshirt mode', () => {
+    appState.setEstimationMode('tshirt');
+    const wrapper = createEntryTable();
+    const headers = wrapper.querySelectorAll('[role="columnheader"]');
+    const headerTexts = Array.from(headers).map((h) => h.textContent);
+    expect(headerTexts).toContain('T-Shirt Size *');
+    expect(headerTexts).not.toContain('Min Time *');
+  });
+
+  test('includes hourly cost header when enableCost is true', () => {
+    appState.setEnableCost(true);
+    const wrapper = createEntryTable();
+    const headers = wrapper.querySelectorAll('[role="columnheader"]');
+    const headerTexts = Array.from(headers).map((h) => h.textContent);
+    expect(headerTexts).toContain('Hourly Cost');
+  });
+
+  test('excludes hourly cost header when enableCost is false', () => {
+    appState.setEnableCost(false);
+    const wrapper = createEntryTable();
+    const headers = wrapper.querySelectorAll('[role="columnheader"]');
+    const headerTexts = Array.from(headers).map((h) => h.textContent);
+    expect(headerTexts).not.toContain('Hourly Cost');
+  });
+
+  test('creates rows for fibonacci mode data', () => {
+    appState.setEstimationMode('fibonacci');
+    const data = [
+      {
+        Task: 'Task 1', Fibonacci: 5, Confidence: 0.9, Cost: 100,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    const rows = wrapper.querySelectorAll('.data-row');
+    expect(rows).toHaveLength(1);
+    const fibInput = rows[0].querySelector('input[name="Fibonacci"]');
+    expect(fibInput).not.toBeNull();
+    expect(fibInput.value).toBe('5');
+  });
+
+  test('creates rows for tshirt mode data', () => {
+    appState.setEstimationMode('tshirt');
+    const data = [
+      {
+        Task: 'Task 1', TShirt: 'M', Confidence: 0.9, Cost: 100,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    const rows = wrapper.querySelectorAll('.data-row');
+    expect(rows).toHaveLength(1);
+    const tshirtInput = rows[0].querySelector('input[name="T-Shirt"]');
+    expect(tshirtInput).not.toBeNull();
+    expect(tshirtInput.value).toBe('M');
+  });
+
+  test('scales confidence when already >= 1 in data rows', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 1, Max: 5, Confidence: 90, Cost: 0,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    const confInput = wrapper.querySelector('input[name="Confidence"]');
+    expect(confInput.value).toBe('90');
+  });
+});
+
+describe('addTaskClickHandler', () => {
+  beforeEach(() => {
+    appState.reset();
+    document.body.innerHTML = '';
+  });
+
+  test('adds a new row when Add Task button is clicked', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const addBtn = document.querySelector('#addTaskBtn');
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rows).toHaveLength(2);
+  });
+
+  test('increments currentMaxRow after adding task', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const table = document.querySelector('#DataEntryTable');
+    expect(table.dataset.currentMaxRow).toBe('1');
+
+    const addBtn = document.querySelector('#addTaskBtn');
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(table.dataset.currentMaxRow).toBe('2');
+  });
+
+  test('multiple clicks add multiple rows', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const addBtn = document.querySelector('#addTaskBtn');
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rows).toHaveLength(3);
+  });
+});
+
+describe('rowClearClickHandler', () => {
+  beforeEach(() => {
+    appState.reset();
+    document.body.innerHTML = '';
+  });
+
+  test('clears row fields when it is the only/last row', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const row = document.querySelector('.data-row');
+    const taskInput = row.querySelector('input[type="text"]');
+    taskInput.value = 'Task Name';
+
+    const clearBtn = row.querySelector('input[type="button"]');
+    clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(taskInput.value).toBe('');
+  });
+
+  test('removes middle row when it is between two other rows', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 1, Max: 5, Confidence: 0.9, Cost: 0,
+      },
+      {
+        Task: 'Task 2', Min: 2, Max: 6, Confidence: 0.9, Cost: 0,
+      },
+      {
+        Task: 'Task 3', Min: 3, Max: 7, Confidence: 0.9, Cost: 0,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    document.body.appendChild(wrapper);
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rows).toHaveLength(3);
+
+    const middleRowId = rows[1].dataset.rowId;
+    const clearBtn = document.querySelector(`input[data-row-id="${middleRowId}"][type="button"]`);
+    clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rowsAfter = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rowsAfter).toHaveLength(2);
+  });
+
+  test('removes row when another empty row already exists', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 1, Max: 5, Confidence: 0.9, Cost: 0,
+      },
+      {
+        Task: 'Task 2', Min: 2, Max: 6, Confidence: 0.9, Cost: 0,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    document.body.appendChild(wrapper);
+
+    // Add a genuinely empty row via the button (all fields truly blank)
+    const addBtn = document.querySelector('#addTaskBtn');
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rows).toHaveLength(3);
+
+    // Click clear on the first row — there's already an empty row (row 3)
+    const firstRowId = rows[0].dataset.rowId;
+    const clearBtn = document.querySelector(`input[data-row-id="${firstRowId}"][type="button"]`);
+    clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rowsAfter = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rowsAfter).toHaveLength(2);
+  });
+
+  test('does not remove row when only 2 rows remain', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 1, Max: 5, Confidence: 0.9, Cost: 0,
+      },
+      {
+        Task: 'Task 2', Min: 2, Max: 6, Confidence: 0.9, Cost: 0,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    document.body.appendChild(wrapper);
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    const firstRowId = rows[0].dataset.rowId;
+    const taskInput = rows[0].querySelector('input[type="text"]');
+    const clearBtn = document.querySelector(`input[data-row-id="${firstRowId}"][type="button"]`);
+    clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    // Should clear, not remove (only 2 rows, no isBetweenRows, no empty row)
+    const rowsAfter = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rowsAfter).toHaveLength(2);
+    expect(taskInput.value).toBe('');
+  });
+
+  test('clears fields via Enter keydown on clear button', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const row = document.querySelector('.data-row');
+    const taskInput = row.querySelector('input[type="text"]');
+    taskInput.value = 'Something';
+
+    const clearBtn = row.querySelector('input[type="button"]');
+    clearBtn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    expect(taskInput.value).toBe('');
+  });
+
+  test('clears fields via Space keydown on clear button', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const row = document.querySelector('.data-row');
+    const taskInput = row.querySelector('input[type="text"]');
+    taskInput.value = 'Something';
+
+    const clearBtn = row.querySelector('input[type="button"]');
+    clearBtn.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+
+    expect(taskInput.value).toBe('');
+  });
+
+  test('does not trigger clear on other keydown keys', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const row = document.querySelector('.data-row');
+    const taskInput = row.querySelector('input[type="text"]');
+    taskInput.value = 'Something';
+
+    const clearBtn = row.querySelector('input[type="button"]');
+    clearBtn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+
+    expect(taskInput.value).toBe('Something');
+  });
 });
