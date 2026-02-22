@@ -45,17 +45,37 @@ function functionName(paramName) {
 
 ### Core Modules
 
-- **src/simulation.js**: Pure mathematical functions (no DOM manipulation)
-  - Statistical calculations (median, std dev)
-  - Monte Carlo simulation engine
-  - D3 histogram generation
-  - All functions should be testable in isolation
+- **src/stats.js**: Pure math and statistics — no DOM, no D3
+  - `getRandom`, `taskUpperBound`, `taskLowerBound`, `generateEstimate`
+  - `getValueCount`, `getMedian`, `getStandardDeviation`, `calculateKDE`
+  - `calculateUpperBound`
+  - All functions are fully testable in isolation
 
-- **src/index.js**: UI and user interaction
-  - DOM manipulation and event handlers
-  - CSV parsing and file handling
-  - Form generation and validation
-  - Display formatting
+- **src/charts.js**: D3 visualization and graph configuration
+  - `GRAPH_CONFIG`, `GRAPH_CONFIG_DEFAULTS`
+  - `buildHistogram`, `buildHistogramPreview`, `buildTaskRowHistogram`
+  - Imports `calculateKDE` from `stats.js`; everything else is D3
+
+- **src/simulation.js**: Simulation engine (~280 lines)
+  - `runSimulation`, `runSimulationProgressive`, `runSimulationCore`
+  - `fibonacciToCalendarDays`, `fibonacciToVelocityDays`
+  - Re-exports everything from `stats.js` and `charts.js` for backward compatibility
+  - Imports from `stats.js` and `charts.js`; no direct D3 usage
+
+- **src/data-input.js**: Form generation, CSV parsing, and data validation
+  - `generateDataRow`, `createEntryTable`, `validateCsvData`
+  - Fibonacci and T-shirt mapping UI panels
+  - Mode switching handlers
+
+- **src/state.js**: Application state (`AppState` class)
+  - Estimation mode, cost toggle, velocity config
+  - Fibonacci calendar and T-shirt mappings
+
+- **src/index.js**: UI orchestration and event handlers
+  - Wires together data-input, simulation, and charts
+  - `startSimulation`, `renderTaskRowHistograms`, `saveSvgAsImage`
+  - `applyGraphSettings`, `resetGraphSettings`
+  - No direct math or D3 calls — delegates to the appropriate module
 
 ### Data Flow
 
@@ -156,11 +176,12 @@ test("GetMedian: Simple", () => {
 
 ### New Statistical Measures
 
-1. Create pure function in `simulation.js`
+1. Create pure function in `stats.js`
 2. Export for testing: `export { functionName }`
-3. Call from `runSimulation()` return object
-4. Display in UI (index.js)
-5. Add Jest tests with edge cases
+3. Re-export from `simulation.js` if callers need it via that module
+4. Call from `runSimulation()` return object if needed
+5. Display in UI (`index.js`)
+6. Add Jest tests in `src/tests/stats.test.js` with edge cases
 
 ### UI Components
 
@@ -173,7 +194,9 @@ test("GetMedian: Simple", () => {
 
 ### What to Test
 
-- All pure math functions in simulation.js
+- All pure math functions in `stats.js` (`stats.test.js`)
+- Graph config structure and histogram builder guards in `charts.test.js`
+- Simulation engine behavior in `simulation.test.js`
 - Edge cases: empty arrays, single values, gaps in data
 - Random functions: verify output ranges
 - Statistical accuracy with known datasets
@@ -240,29 +263,34 @@ svg
 
 ## File Modification Guide
 
-| Task                 | Files to Modify                                     |
-| -------------------- | --------------------------------------------------- |
-| Simulation algorithm | `src/simulation.js`, `src/tests/simulation.test.js` |
-| UI/UX changes        | `src/index.js`, `src/style.css`, `src/index.html`   |
-| Data format          | `src/index.js` (parsing), `src/data/sample.csv`     |
-| Build config         | `webpack.config.js`                                 |
-| Code style           | `.eslintrc.js`                                      |
-| Tests                | `src/tests/simulation.test.js`                      |
+| Task                        | Files to Modify                                      |
+| --------------------------- | ---------------------------------------------------- |
+| Math / statistics functions | `src/stats.js`, `src/tests/stats.test.js`            |
+| Simulation engine           | `src/simulation.js`, `src/tests/simulation.test.js`  |
+| D3 charts / graph config    | `src/charts.js`, `src/tests/charts.test.js`          |
+| UI orchestration            | `src/index.js`, `src/style.css`, `src/index.html`    |
+| Form / data entry           | `src/data-input.js`, `src/tests/data-input.test.js`  |
+| Application state           | `src/state.js`, `src/tests/state.test.js`            |
+| Data format / CSV           | `src/data-input.js` (parsing), `src/data/sample.csv` |
+| Build config                | `webpack.config.js`                                  |
+| Code style                  | `.eslintrc.js`                                       |
 
 ## Common Pitfalls
 
 ### Don't
 
 - Use `innerHTML` for user-generated content (XSS risk)
-- Call D3 functions in simulation.js (keep it pure)
+- Add D3 or DOM code to `stats.js` (keep it pure math)
+- Add math or statistics logic to `charts.js` or `index.js`
 - Forget to validate min < max and 0 <= confidence <= 1
 - Modify DOM directly in event handlers (use helper functions)
 - Call `Math.max(...largeArray)` (stack overflow)
 
 ### Do
 
-- Export functions from simulation.js for testing
-- Keep simulation logic separate from UI logic
+- Put new pure functions in `stats.js` and export them
+- Re-export from `simulation.js` if existing callers depend on it
+- Keep simulation engine logic in `simulation.js`, rendering in `charts.js`
 - Use `Object.assign()` for multiple attributes
 - Clear existing visualizations before creating new ones
 - Round numbers for display but calculate with full precision
@@ -304,8 +332,25 @@ Run tests in VSCode whenever possible. Don't use npm by default for that purpose
 
 ### Key Functions to Remember
 
-- `runSimulation(tasks, runs, useCost)` - Main simulation entry
+**simulation.js**
+
+- `runSimulation(passes, data, hoursPerTimeUnit)` - Synchronous simulation entry
+- `runSimulationProgressive(passes, data, onProgress, progressInterval, hoursPerTimeUnit)` - Async simulation with progress callbacks
+- `fibonacciToCalendarDays(fibonacci, mappings)` - Story points → calendar day range
+- `fibonacciToVelocityDays(fibonacci, pointsPerSprint, sprintLengthDays)` - Story points → velocity-based day range
+
+**stats.js**
+
 - `generateEstimate(min, max, confidence)` - Single task estimate
-- `buildHistogram(...)` - Create D3 visualization
-- `getMedian(data)` - Calculate median from histogram
-- `getStandardDeviation(data)` - Calculate std dev
+- `getMedian(data)` - Calculate median from histogram array
+- `getStandardDeviation(data)` - Calculate std dev from histogram array
+- `taskUpperBound(maxEstimate, confidence)` - Worst-case upper bound for one task
+- `taskLowerBound(minEstimate, confidence)` - Best-case lower bound for one task
+
+**charts.js**
+
+- `buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limitGraph)` - Final D3 histogram
+- `buildHistogramPreview(targetNode, list, min, max, xLabel)` - Fast bucketed preview during progressive runs
+- `buildTaskRowHistogram(targetNode, list, min, max, taskName)` - Compact per-task mini graph
+- `GRAPH_CONFIG` - Mutable graph settings object (modified by Advanced Settings UI)
+- `GRAPH_CONFIG_DEFAULTS` - Frozen copy of original defaults for reset operations
