@@ -389,6 +389,22 @@ describe('saveSvgAsImage', () => {
     expect(window.getComputedStyle).toHaveBeenCalled();
     expect(mockElements[0].setAttribute).toHaveBeenCalled();
   });
+
+  test('auto-removes error message after 5 seconds', () => {
+    jest.useFakeTimers();
+    mockContainer.querySelector = jest.fn(() => null);
+    mockContainer.appendChild = jest.fn();
+
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+
+    const errorDiv = mockContainer.appendChild.mock.calls[0][0];
+    const removeSpy = jest.spyOn(errorDiv, 'remove');
+
+    jest.advanceTimersByTime(5001);
+
+    expect(removeSpy).toHaveBeenCalled();
+    jest.useRealTimers();
+  });
 });
 
 describe('Graph Settings Functions', () => {
@@ -1162,5 +1178,117 @@ describe('startSimulation', () => {
     }]);
     await idx.startSimulation(mockEvent);
     expect(document.getElementById('simulationRunningTime').textContent).toContain('100');
+  });
+
+  test('stopwatch interval updates running time display during simulation', async () => {
+    jest.useFakeTimers();
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+
+    let resolveSimulation;
+    sim.runSimulationProgressive.mockImplementation(
+      () => new Promise((resolve) => { resolveSimulation = () => resolve(makeSimResults()); }),
+    );
+
+    const simPromise = idx.startSimulation(mockEvent);
+
+    // Advance fake timers to trigger the interval callback
+    jest.advanceTimersByTime(150);
+
+    const textDuringRun = document.getElementById('simulationRunningTime').textContent;
+
+    resolveSimulation();
+    await simPromise;
+    jest.useRealTimers();
+
+    expect(textDuringRun).toContain('Simulation Running Time (ms):');
+  });
+
+  test('calls progress callback and updates cost stats when cost is enabled with valid cost data', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    idx.appState.enableCost = true;
+
+    sim.runSimulationProgressive.mockImplementation(async (passes, data, onProgress) => {
+      onProgress({
+        times: {
+          min: 1, max: 3, list: [0, 1, 3, 1], median: 2, sd: 0.5, likelyMin: 1, likelyMax: 3,
+        },
+        costs: {
+          min: 100, max: 300, list: [0, 1, 3, 1], median: 200, sd: 50, likelyMin: 100, likelyMax: 300,
+        },
+      });
+      return makeSimResults();
+    });
+
+    await idx.startSimulation(mockEvent);
+
+    expect(document.getElementById('simulationCostMedian').textContent).toContain('200');
+  });
+});
+
+describe('createSimulationPanel save button click handlers', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    const panel = idx.createSimulationPanel();
+    document.body.appendChild(panel);
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('save time PNG button triggers saveSvgAsImage for timeHistoGram', () => {
+    document.getElementById('saveTimePngBtn').click();
+    expect(document.getElementById('timeHistoGram').querySelector('.error-message')).not.toBeNull();
+  });
+
+  test('save time JPEG button triggers saveSvgAsImage for timeHistoGram', () => {
+    document.getElementById('saveTimeJpegBtn').click();
+    expect(document.getElementById('timeHistoGram').querySelector('.error-message')).not.toBeNull();
+  });
+
+  test('save cost PNG button triggers saveSvgAsImage for costHistoGram', () => {
+    document.getElementById('saveCostPngBtn').click();
+    expect(document.getElementById('costHistoGram').querySelector('.error-message')).not.toBeNull();
+  });
+
+  test('save cost JPEG button triggers saveSvgAsImage for costHistoGram', () => {
+    document.getElementById('saveCostJpegBtn').click();
+    expect(document.getElementById('costHistoGram').querySelector('.error-message')).not.toBeNull();
+  });
+});
+
+describe('getEstimationMode', () => {
+  afterEach(() => {
+    idx.appState.reset();
+  });
+
+  test('returns the current estimation mode from appState', () => {
+    idx.appState.estimationMode = 'fibonacci';
+    expect(idx.getEstimationMode()).toBe('fibonacci');
+  });
+
+  test('reflects updated estimation mode', () => {
+    idx.appState.estimationMode = 'tshirt';
+    expect(idx.getEstimationMode()).toBe('tshirt');
+  });
+});
+
+describe('getEnableCost', () => {
+  afterEach(() => {
+    idx.appState.reset();
+  });
+
+  test('returns true when cost tracking is enabled', () => {
+    idx.appState.enableCost = true;
+    expect(idx.getEnableCost()).toBe(true);
+  });
+
+  test('returns false when cost tracking is disabled', () => {
+    idx.appState.enableCost = false;
+    expect(idx.getEnableCost()).toBe(false);
   });
 });
