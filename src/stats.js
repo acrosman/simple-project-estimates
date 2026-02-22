@@ -1,8 +1,8 @@
 /**
- * Get a random number is a given range.
- * @param {int} minimum
- * @param {int} maximum
- * @returns int
+ * Get a random integer in a given inclusive range.
+ * @param {number} minimum Lower bound (will be rounded up to nearest integer)
+ * @param {number} maximum Upper bound (will be rounded down to nearest integer)
+ * @returns {number} A random integer between minimum and maximum (inclusive)
  */
 function getRandom(minimum, maximum) {
   const min = Math.ceil(minimum);
@@ -145,8 +145,8 @@ function calculateKDE(data, minBin, maxBin) {
     kdeValues.push(density / (totalCount * bandwidth));
   }
 
-  const maxKDE = Math.max(...kdeValues);
-  const maxFreq = Math.max(...data);
+  const maxKDE = kdeValues.reduce((a, b) => (b > a ? b : a), 0);
+  const maxFreq = data.reduce((a, b) => (b > a ? b : a), 0);
   const scaleFactor = maxFreq / maxKDE;
 
   return kdeValues.map((v) => v * scaleFactor);

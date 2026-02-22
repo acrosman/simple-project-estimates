@@ -110,7 +110,7 @@ test('CalculateKDE: Peak corresponds to data peak', () => {
   const data = [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
   const kdeValues = calculateKDE(data, 0, 10);
 
-  const maxKDE = Math.max(...kdeValues);
+  const maxKDE = kdeValues.reduce((a, b) => (b > a ? b : a), 0);
   const maxIndex = kdeValues.indexOf(maxKDE);
 
   // Should be near the middle where data peaks
@@ -134,7 +134,7 @@ test('CalculateKDE: Handles sparse data', () => {
   expect(Array.isArray(kdeValues)).toBe(true);
   expect(kdeValues.length).toBeGreaterThan(0);
   // Should have two peaks
-  const maxVal = Math.max(...kdeValues);
+  const maxVal = kdeValues.reduce((a, b) => (b > a ? b : a), 0);
   const peaks = kdeValues.filter((v) => v > maxVal * 0.7);
   expect(peaks.length).toBeGreaterThan(0);
 });
