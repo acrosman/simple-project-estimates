@@ -273,8 +273,13 @@ npm install
 
 The project uses Jest for testing. Tests are located in `src/tests/`:
 
-- `simulation.test.js` - Tests for simulation logic and mathematical functions
+- `stats.test.js` - Tests for pure math and statistics functions (`getMedian`, `getStandardDeviation`, `calculateKDE`, `taskUpperBound`, `taskLowerBound`, etc.)
+- `charts.test.js` - Tests for graph configuration and D3 histogram builders (`GRAPH_CONFIG`, `buildHistogramPreview`, `buildTaskRowHistogram`)
+- `simulation.test.js` - Tests for the simulation engine (`runSimulation`, `runSimulationProgressive`, Fibonacci utilities)
+- `data-input.test.js` - Tests for CSV parsing, data validation, and form generation
 - `index.test.js` - Tests for UI functions and DOM manipulation
+- `state.test.js` - Tests for application state management
+- `html-template.test.js` - Tests for HTML template structure and accessibility
 
 Run tests with coverage report:
 
@@ -293,12 +298,27 @@ npm test
 
 ```
 src/
-├── index.js          # UI and user interaction logic
-├── simulation.js     # Pure mathematical simulation functions
+├── index.js          # UI orchestration and event handlers
+├── simulation.js     # Simulation engine (runSimulation, runSimulationProgressive,
+│                     #   Fibonacci utilities) + re-exports from stats and charts
+├── stats.js          # Pure math and statistics (getMedian, getStandardDeviation,
+│                     #   calculateKDE, taskUpperBound, taskLowerBound, generateEstimate)
+├── charts.js         # D3 visualization (buildHistogram, buildHistogramPreview,
+│                     #   buildTaskRowHistogram, GRAPH_CONFIG, GRAPH_CONFIG_DEFAULTS)
+├── data-input.js     # Form generation, CSV parsing, and data validation
+├── state.js          # Application state management (AppState class)
 ├── style.css         # Styling
 ├── index.html        # HTML template
-├── data/            # Sample CSV files
-└── tests/           # Test files
+├── data/             # Sample CSV files
+└── tests/
+    ├── stats.test.js           # Math and statistics function tests
+    ├── charts.test.js          # Graph configuration and rendering tests
+    ├── simulation.test.js      # Simulation engine and Fibonacci tests
+    ├── data-input.test.js      # CSV parsing and form generation tests
+    ├── index.test.js           # UI function tests
+    ├── state.test.js           # Application state tests
+    ├── html-template.test.js   # HTML template and accessibility tests
+    └── accessibility.test.js   # Accessibility compliance tests
 ```
 
 ### Contributing
