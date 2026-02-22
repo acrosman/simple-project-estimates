@@ -8,7 +8,7 @@ class AppState {
     this.enableCost = true; // Track cost by default
     this.fibonacciMode = 'calendar-days'; // 'calendar-days' or 'velocity-based'
     this.fibonacciCalendarMappings = {
-      1: { min: 0, max: 1 },
+      1: { min: 1, max: 1 },
       2: { min: 1, max: 2 },
       3: { min: 2, max: 3 },
       5: { min: 3, max: 5 },
@@ -98,7 +98,7 @@ class AppState {
 
     // Reassign default values to the same objects
     Object.assign(this.fibonacciCalendarMappings, {
-      1: { min: 0, max: 1 },
+      1: { min: 1, max: 1 },
       2: { min: 1, max: 2 },
       3: { min: 2, max: 3 },
       5: { min: 3, max: 5 },
