@@ -63,7 +63,7 @@ test('GetMedian: Three spaces between values', () => {
   expect(medianValue).toBe(4);
 });
 
-test('GetMedian: Between to integers', () => {
+test('GetMedian: Between two integers', () => {
   // [2,2,2,2,3,4,4,4] therefore median 2.5 (between two values by half)
   const sampleList = [0, 0, 4, 1, 3];
   const medianValue = getMedian(sampleList);
