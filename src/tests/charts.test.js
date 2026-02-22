@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import * as d3 from 'd3';
 import {
   GRAPH_CONFIG,
   GRAPH_CONFIG_DEFAULTS,
@@ -53,6 +54,7 @@ describe('buildHistogramPreview', () => {
   let mockTargetNode;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     mockTargetNode = {
       innerHTML: '',
       querySelector: jest.fn(),
@@ -62,23 +64,29 @@ describe('buildHistogramPreview', () => {
 
   test('Returns early when min is negative', () => {
     const list = [0, 1, 2, 3, 4];
-    expect(buildHistogramPreview(mockTargetNode, list, -1, 4, 'Test')).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, -1, 4, 'Test');
+    expect(d3.select).not.toHaveBeenCalled();
   });
 
   test('Returns early when max is less than min', () => {
     const list = [0, 1, 2, 3, 4];
-    expect(buildHistogramPreview(mockTargetNode, list, 10, 5, 'Test')).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, 10, 5, 'Test');
+    expect(d3.select).not.toHaveBeenCalled();
   });
 
   test('Handles normal data', () => {
     const list = new Array(10).fill(0);
-    expect(buildHistogramPreview(mockTargetNode, list, 0, 4, 'Test')).toBeUndefined();
+    list[2] = 5;
+    list[3] = 8;
+    buildHistogramPreview(mockTargetNode, list, 0, 4, 'Test');
+    expect(d3.select).toHaveBeenCalledWith(mockTargetNode);
   });
 
   test('Handles large dataset', () => {
     const list = new Array(1000).fill(0);
     list[500] = 100;
-    expect(buildHistogramPreview(mockTargetNode, list, 0, 999, 'Hours')).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, 0, 999, 'Hours');
+    expect(d3.select).toHaveBeenCalledWith(mockTargetNode);
   });
 
   test('Handles single value range', () => {
@@ -86,8 +94,8 @@ describe('buildHistogramPreview', () => {
     for (let i = 10; i <= 20; i += 1) {
       list[i] = 1;
     }
-    const result = buildHistogramPreview(mockTargetNode, list, 0, 99, 'Hours');
-    expect(result).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, 0, 99, 'Hours');
+    expect(d3.select).toHaveBeenCalledWith(mockTargetNode);
   });
 
   test('Handles sparse data with gaps', () => {
@@ -95,29 +103,30 @@ describe('buildHistogramPreview', () => {
     list[10] = 5;
     list[50] = 10;
     list[90] = 3;
-    const result = buildHistogramPreview(mockTargetNode, list, 0, 99, 'Cost');
-    expect(result).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, 0, 99, 'Cost');
+    expect(d3.select).toHaveBeenCalledWith(mockTargetNode);
   });
 
   test('Works with different x-axis labels', () => {
     const list = new Array(50).fill(0);
     list[25] = 20;
-    expect(buildHistogramPreview(mockTargetNode, list, 0, 49, 'Hours')).toBeUndefined();
-    expect(buildHistogramPreview(mockTargetNode, list, 0, 49, 'Cost ($)')).toBeUndefined();
-    expect(buildHistogramPreview(mockTargetNode, list, 0, 49, 'Duration')).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, 0, 49, 'Hours');
+    buildHistogramPreview(mockTargetNode, list, 0, 49, 'Cost ($)');
+    buildHistogramPreview(mockTargetNode, list, 0, 49, 'Duration');
+    expect(d3.select).toHaveBeenCalledTimes(3);
   });
 
   test('Handles edge case with min equals max', () => {
     const list = [0, 5];
-    const result = buildHistogramPreview(mockTargetNode, list, 1, 1, 'Test');
-    expect(result).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, 1, 1, 'Test');
+    expect(d3.select).toHaveBeenCalledWith(mockTargetNode);
   });
 
   test('Correctly processes histogram array format', () => {
     // [0, 1, 3, 1] represents: one 1, three 2s, one 3
     const list = [0, 1, 3, 1];
-    const result = buildHistogramPreview(mockTargetNode, list, 1, 3, 'Values');
-    expect(result).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, 1, 3, 'Values');
+    expect(d3.select).toHaveBeenCalledWith(mockTargetNode);
   });
 });
 
