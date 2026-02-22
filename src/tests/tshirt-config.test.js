@@ -208,6 +208,6 @@ describe('createTshirtMappingTable', () => {
   test('contains inputs for each t-shirt size', () => {
     const table = createTshirtMappingTable();
     const inputs = table.querySelectorAll('input[data-tshirt]');
-    expect(inputs.length).toBe(Object.keys(tshirtMappings).length);
+    expect(inputs).toHaveLength(Object.keys(tshirtMappings).length);
   });
 });

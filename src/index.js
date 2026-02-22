@@ -8,6 +8,11 @@ import {
   createDataEntrySection,
 } from './data-input';
 import { normalizeTshirtSize } from './tshirt-config';
+import {
+  createDivWithIdAndClasses,
+  createTextElement,
+  createLabeledInput,
+} from './dom-helpers';
 
 /**
  * Helper function to replace all of a node's content with new text.

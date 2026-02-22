@@ -2,7 +2,12 @@
  * @jest-environment jsdom
  */
 
-import { isRowEmpty, generateDataField, generateDataRow, createEntryTable } from '../task-table';
+import {
+  isRowEmpty,
+  generateDataField,
+  generateDataRow,
+  createEntryTable,
+} from '../task-table';
 import { appState } from '../state';
 
 describe('isRowEmpty', () => {
@@ -235,7 +240,7 @@ describe('createEntryTable', () => {
     const wrapper = createEntryTable();
     const rows = wrapper.querySelectorAll('.data-row');
 
-    expect(rows.length).toBe(1);
+    expect(rows).toHaveLength(1);
   });
 
   test('creates rows for each data item', () => {
@@ -250,7 +255,7 @@ describe('createEntryTable', () => {
     const wrapper = createEntryTable(data);
     const rows = wrapper.querySelectorAll('.data-row');
 
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
   });
 
   test('includes Add Task button', () => {
@@ -268,6 +273,6 @@ describe('createEntryTable', () => {
 
     const wrapper = createEntryTable();
     expect(wrapper.id).toBe('dataTableWrapper');
-    expect(document.querySelectorAll('#dataTableWrapper').length).toBe(1);
+    expect(document.querySelectorAll('#dataTableWrapper')).toHaveLength(1);
   });
 });
