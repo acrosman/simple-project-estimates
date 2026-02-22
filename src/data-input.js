@@ -802,9 +802,6 @@ function createTshirtMappingTable() {
     });
     fibInput.dataset.tshirt = size;
     fibInput.addEventListener('change', updateTshirtMapping);
-    fibInput.addEventListener('keydown', (event) => {
-      handleMappingTabNavigation(event, 'tshirt', sizes);
-    });
     fibCell.appendChild(fibInput);
     fibRow.appendChild(fibCell);
   }
