@@ -77,7 +77,7 @@ describe('handleVelocityConfigChange', () => {
   });
 
   test('updates velocity configuration from input fields', () => {
-    handleVelocityConfigChange({});
+    handleVelocityConfigChange();
     const config = appState.getVelocityConfig();
     expect(config.pointsPerSprint).toBe(30);
     expect(config.sprintLengthDays).toBe(14);
@@ -85,7 +85,7 @@ describe('handleVelocityConfigChange', () => {
 
   test('handles missing input fields gracefully', () => {
     document.body.innerHTML = '';
-    expect(() => handleVelocityConfigChange({})).not.toThrow();
+    expect(() => handleVelocityConfigChange()).not.toThrow();
   });
 
   test('uses default values for invalid inputs', () => {
@@ -94,7 +94,7 @@ describe('handleVelocityConfigChange', () => {
       <input id="velocityDays" value="also-invalid" />
     `;
 
-    handleVelocityConfigChange({});
+    handleVelocityConfigChange();
     const config = appState.getVelocityConfig();
     expect(config.pointsPerSprint).toBe(25);
     expect(config.sprintLengthDays).toBe(10);
