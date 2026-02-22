@@ -860,6 +860,11 @@ export {
   applyGraphSettings,
   resetGraphSettings,
   createLogoElement,
+  startSimulation,
+  createHeader,
+  createAdvancedSettings,
+  createSimulationPanel,
+  setupUi,
 };
 
 // Re-export state

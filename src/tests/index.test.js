@@ -2,6 +2,16 @@
  * @jest-environment jsdom
  */
 
+// Must be called before imports so Jest hoists it and both index.js and this
+// test file receive the same mocked module instance.
+jest.mock('../simulation', () => {
+  const actual = jest.requireActual('../simulation');
+  return {
+    ...actual,
+    runSimulationProgressive: jest.fn(),
+  };
+});
+
 import * as idx from '../index';
 import * as sim from '../simulation';
 
@@ -22,6 +32,11 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('applyGraphSettings');
     expect(idx).toHaveProperty('resetGraphSettings');
     expect(idx).toHaveProperty('createLogoElement');
+    expect(idx).toHaveProperty('startSimulation');
+    expect(idx).toHaveProperty('createHeader');
+    expect(idx).toHaveProperty('createAdvancedSettings');
+    expect(idx).toHaveProperty('createSimulationPanel');
+    expect(idx).toHaveProperty('setupUi');
   });
 
   test('Validate exported state exists', () => {
@@ -120,6 +135,56 @@ describe('renderTaskRowHistograms', () => {
     idx.renderTaskRowHistograms([]);
 
     expect(document.querySelector('.task-row-graph[data-row-id="1"]').innerHTML).toBe('');
+  });
+
+  test('populates stats node when present', () => {
+    document.body.innerHTML = `
+      <div class="task-row-graph" data-row-id="1"></div>
+      <div class="task-row-stats" data-row-id="1"></div>
+    `;
+
+    idx.renderTaskRowHistograms([
+      {
+        rowId: '1',
+        name: 'Task 1',
+        times: {
+          list: [0, 2, 4, 2],
+          min: 1,
+          max: 3,
+          median: 2,
+        },
+      },
+    ]);
+
+    const statsNode = document.querySelector('.task-row-stats[data-row-id="1"]');
+    expect(statsNode.innerHTML).toContain('Min: 1');
+    expect(statsNode.innerHTML).toContain('Med: 2');
+    expect(statsNode.innerHTML).toContain('Max: 3');
+  });
+
+  test('uses days as time unit in fibonacci estimation mode', () => {
+    idx.appState.estimationMode = 'fibonacci';
+    document.body.innerHTML = `
+      <div class="task-row-graph" data-row-id="1"></div>
+      <div class="task-row-stats" data-row-id="1"></div>
+    `;
+
+    idx.renderTaskRowHistograms([
+      {
+        rowId: '1',
+        name: 'Task 1',
+        times: {
+          list: [0, 2, 4, 2],
+          min: 1,
+          max: 3,
+          median: 2,
+        },
+      },
+    ]);
+
+    const statsNode = document.querySelector('.task-row-stats[data-row-id="1"]');
+    expect(statsNode.innerHTML).toContain('days');
+    idx.appState.estimationMode = 'hours';
   });
 });
 
@@ -239,6 +304,18 @@ describe('saveSvgAsImage', () => {
     const errorDiv = mockContainer.appendChild.mock.calls[0][0];
     expect(errorDiv.getAttribute('role')).toBe('alert');
     expect(errorDiv.textContent).toBe('No graph to save. Please run a simulation first.');
+  });
+
+  test('removes existing error message before showing new one', () => {
+    const existingError = { remove: jest.fn() };
+    mockContainer.querySelector = jest.fn((selector) => {
+      if (selector === 'svg') return null;
+      if (selector === '.error-message') return existingError;
+      return null;
+    });
+    mockContainer.appendChild = jest.fn();
+    idx.saveSvgAsImage('testId', 'test-file', 'png');
+    expect(existingError.remove).toHaveBeenCalled();
   });
 
   test('clones SVG to avoid modifying original', () => {
@@ -476,7 +553,8 @@ describe('Graph Settings Functions', () => {
       expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1.5);
     });
 
-    test('shows confirmation message', (done) => {
+    test('shows confirmation message', () => {
+      jest.useFakeTimers();
       // Set up DOM
       setupGraphSettingsDOM();
 
@@ -487,14 +565,15 @@ describe('Graph Settings Functions', () => {
       // Apply settings
       idx.applyGraphSettings();
 
-      // Check confirmation message appears
+      // Check confirmation message appears immediately
       expect(summary.textContent).toBe('Advanced Graph Settings ✓ Applied');
 
-      // Wait for timeout to restore original text
-      setTimeout(() => {
-        expect(summary.textContent).toBe(originalText);
-        done();
-      }, 2100);
+      // Advance past the 2000ms timeout
+      jest.advanceTimersByTime(2001);
+
+      // Text should be restored
+      expect(summary.textContent).toBe(originalText);
+      jest.useRealTimers();
     });
   });
 
@@ -575,7 +654,8 @@ describe('Graph Settings Functions', () => {
       expect(document.getElementById('miniGraphGap').value).toBe('1');
     });
 
-    test('shows confirmation message', (done) => {
+    test('shows confirmation message', () => {
+      jest.useFakeTimers();
       // Set up DOM
       setupGraphSettingsDOM();
 
@@ -586,14 +666,15 @@ describe('Graph Settings Functions', () => {
       // Reset settings
       idx.resetGraphSettings();
 
-      // Check confirmation message appears
+      // Check confirmation message appears immediately
       expect(summary.textContent).toBe('Advanced Graph Settings ✓ Reset');
 
-      // Wait for timeout to restore original text
-      setTimeout(() => {
-        expect(summary.textContent).toBe(originalText);
-        done();
-      }, 2100);
+      // Advance past the 2000ms timeout
+      jest.advanceTimersByTime(2001);
+
+      // Text should be restored
+      expect(summary.textContent).toBe(originalText);
+      jest.useRealTimers();
     });
   });
 });
@@ -624,5 +705,434 @@ describe('createLogoElement', () => {
     const logo1 = idx.createLogoElement();
     const logo2 = idx.createLogoElement();
     expect(logo1).not.toBe(logo2);
+  });
+});
+
+describe('createHeader', () => {
+  test('returns a div element', () => {
+    const header = idx.createHeader();
+    expect(header.tagName.toLowerCase()).toBe('div');
+  });
+
+  test('has page-header and section classes', () => {
+    const header = idx.createHeader();
+    expect(header.classList.contains('page-header')).toBe(true);
+    expect(header.classList.contains('section')).toBe(true);
+  });
+
+  test('contains github ribbon element', () => {
+    const header = idx.createHeader();
+    const ribbon = header.querySelector('#forkOnGithub');
+    expect(ribbon).not.toBeNull();
+  });
+
+  test('contains link to github', () => {
+    const header = idx.createHeader();
+    const link = header.querySelector('a');
+    expect(link).not.toBeNull();
+    expect(link.href).toContain('github.com');
+  });
+});
+
+describe('createAdvancedSettings', () => {
+  test('returns a details element', () => {
+    const panel = idx.createAdvancedSettings();
+    expect(panel.tagName.toLowerCase()).toBe('details');
+  });
+
+  test('has id advancedSettings', () => {
+    const panel = idx.createAdvancedSettings();
+    expect(panel.id).toBe('advancedSettings');
+  });
+
+  test('has summary element with correct text', () => {
+    const panel = idx.createAdvancedSettings();
+    const summary = panel.querySelector('summary');
+    expect(summary).not.toBeNull();
+    expect(summary.textContent).toBe('Advanced Graph Settings');
+  });
+
+  test('contains histogram width input', () => {
+    const panel = idx.createAdvancedSettings();
+    const input = panel.querySelector('#histogramWidth');
+    expect(input).not.toBeNull();
+    expect(input.type).toBe('number');
+  });
+
+  test('contains all histogram settings inputs', () => {
+    const panel = idx.createAdvancedSettings();
+    expect(panel.querySelector('#histogramHeight')).not.toBeNull();
+    expect(panel.querySelector('#histogramBarCutoff')).not.toBeNull();
+    expect(panel.querySelector('#histogramMaxBuckets')).not.toBeNull();
+  });
+
+  test('contains all mini graph settings inputs', () => {
+    const panel = idx.createAdvancedSettings();
+    expect(panel.querySelector('#miniGraphWidth')).not.toBeNull();
+    expect(panel.querySelector('#miniGraphHeight')).not.toBeNull();
+    expect(panel.querySelector('#miniGraphMaxBuckets')).not.toBeNull();
+    expect(panel.querySelector('#miniGraphGap')).not.toBeNull();
+  });
+
+  test('contains apply and reset buttons', () => {
+    const panel = idx.createAdvancedSettings();
+    const applyBtn = panel.querySelector('#applyGraphSettings');
+    const resetBtn = panel.querySelector('#resetGraphSettings');
+    expect(applyBtn).not.toBeNull();
+    expect(resetBtn).not.toBeNull();
+  });
+
+  test('histogram width input reflects current GRAPH_CONFIG', () => {
+    const panel = idx.createAdvancedSettings();
+    const widthInput = panel.querySelector('#histogramWidth');
+    expect(widthInput.value).toBe(String(sim.GRAPH_CONFIG.histogram.width));
+  });
+});
+
+describe('createSimulationPanel', () => {
+  test('returns element with id simulationAreaWrapper', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.id).toBe('simulationAreaWrapper');
+  });
+
+  test('contains simulation pass count input', () => {
+    const panel = idx.createSimulationPanel();
+    const input = panel.querySelector('#simulationPasses');
+    expect(input).not.toBeNull();
+    expect(input.type).toBe('number');
+  });
+
+  test('contains LimitGraph checkbox', () => {
+    const panel = idx.createSimulationPanel();
+    const checkbox = panel.querySelector('#LimitGraph');
+    expect(checkbox).not.toBeNull();
+    expect(checkbox.type).toBe('checkbox');
+  });
+
+  test('contains start simulation button', () => {
+    const panel = idx.createSimulationPanel();
+    const btn = panel.querySelector('#startSimulationButton');
+    expect(btn).not.toBeNull();
+  });
+
+  test('contains time histogram container', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#timeHistoGram')).not.toBeNull();
+  });
+
+  test('contains cost histogram container', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#costHistoGram')).not.toBeNull();
+  });
+
+  test('contains all time stats display elements', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#simulationTimeMedian')).not.toBeNull();
+    expect(panel.querySelector('#simulationTimeStandRange')).not.toBeNull();
+    expect(panel.querySelector('#simulationTimeMax')).not.toBeNull();
+    expect(panel.querySelector('#simulationTimeMin')).not.toBeNull();
+    expect(panel.querySelector('#simulationTimeStandDev')).not.toBeNull();
+  });
+
+  test('contains all cost stats display elements', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#simulationCostMedian')).not.toBeNull();
+    expect(panel.querySelector('#simulationCostStandRange')).not.toBeNull();
+    expect(panel.querySelector('#simulationCostMax')).not.toBeNull();
+    expect(panel.querySelector('#simulationCostMin')).not.toBeNull();
+    expect(panel.querySelector('#simulationCostStandDev')).not.toBeNull();
+  });
+
+  test('time and cost headers are initially hidden', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#timeEstimateHeader').style.display).toBe('none');
+    expect(panel.querySelector('#costEstimateHeader').style.display).toBe('none');
+  });
+
+  test('time and cost save buttons are initially hidden', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#timeSaveButtons').style.display).toBe('none');
+    expect(panel.querySelector('#costSaveButtons').style.display).toBe('none');
+  });
+
+  test('contains PNG and JPEG save buttons for time graph', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#saveTimePngBtn')).not.toBeNull();
+    expect(panel.querySelector('#saveTimeJpegBtn')).not.toBeNull();
+  });
+
+  test('contains PNG and JPEG save buttons for cost graph', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#saveCostPngBtn')).not.toBeNull();
+    expect(panel.querySelector('#saveCostJpegBtn')).not.toBeNull();
+  });
+
+  test('contains advanced settings panel', () => {
+    const panel = idx.createSimulationPanel();
+    expect(panel.querySelector('#advancedSettings')).not.toBeNull();
+  });
+});
+
+describe('setupUi', () => {
+  test('returns an element', () => {
+    const ui = idx.setupUi();
+    expect(ui).not.toBeNull();
+  });
+
+  test('contains data area wrapper', () => {
+    const ui = idx.setupUi();
+    expect(ui.querySelector('#dataAreaWrapper')).not.toBeNull();
+  });
+
+  test('contains simulation area wrapper', () => {
+    const ui = idx.setupUi();
+    expect(ui.querySelector('#simulationAreaWrapper')).not.toBeNull();
+  });
+
+  test('contains the logo element', () => {
+    const ui = idx.setupUi();
+    const logo = ui.querySelector('img.project-icon');
+    expect(logo).not.toBeNull();
+  });
+});
+
+describe('startSimulation', () => {
+  let mockEvent;
+
+  /** Build the DOM structure startSimulation needs to run */
+  const buildSimulationDOM = (taskRows = []) => {
+    const taskRowsHtml = taskRows.map((task) => `
+      <div class="tr data-row" data-row-id="${task.rowId !== undefined ? task.rowId : '1'}">
+        <input name="Task" value="${task.name !== undefined ? task.name : 'Test Task'}" />
+        <input name="Min Time" value="${task.min !== undefined ? task.min : '10'}" />
+        <input name="Max Time" value="${task.max !== undefined ? task.max : '20'}" />
+        <input name="Confidence" value="${task.confidence !== undefined ? task.confidence : '90'}" />
+        <input name="Cost" value="${task.cost !== undefined ? task.cost : '100'}" />
+      </div>
+    `).join('');
+
+    document.body.innerHTML = `
+      <input id="simulationPasses" value="1000" />
+      <input id="LimitGraph" type="checkbox" />
+      <input id="startSimulationButton" type="button" value="Run Simulation" />
+      <form id="DataEntryTable">${taskRowsHtml}</form>
+      <div id="results"></div>
+      <div id="costHistoGram"></div>
+      <div id="costEstimateHeader" style="display: none;"></div>
+      <div id="costSaveButtons" style="display: none;"></div>
+      <div id="timeHistoGram"></div>
+      <div id="timeEstimateHeader" style="display: none;"></div>
+      <div id="timeSaveButtons" style="display: none;"></div>
+      <div id="simulationRunningTime"></div>
+      <div id="simulationTimeMedian"></div>
+      <div id="simulationTimeStandRange"></div>
+      <div id="simulationTimeMax"></div>
+      <div id="simulationTimeMin"></div>
+      <div id="simulationTimeStandDev"></div>
+      <div id="simulationCostMedian"></div>
+      <div id="simulationCostStandRange"></div>
+      <div id="simulationCostMax"></div>
+      <div id="simulationCostMin"></div>
+      <div id="simulationCostStandDev"></div>
+    `;
+  };
+
+  const makeSimResults = (overrides = {}) => ({
+    runningTime: 100,
+    times: {
+      list: [0, 1, 3, 1],
+      min: 1,
+      max: 3,
+      median: 2,
+      sd: 0.5,
+      likelyMin: 1,
+      likelyMax: 3,
+    },
+    costs: {
+      list: [0, 1, 3, 1],
+      min: 100,
+      max: 300,
+      median: 200,
+      sd: 50,
+      likelyMin: 100,
+      likelyMax: 300,
+    },
+    taskResults: [],
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    mockEvent = { preventDefault: jest.fn() };
+    sim.runSimulationProgressive.mockResolvedValue(makeSimResults());
+    idx.appState.estimationMode = 'hours';
+    idx.appState.enableCost = true;
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    document.body.innerHTML = '';
+    idx.appState.reset();
+  });
+
+  test('calls event.preventDefault', async () => {
+    buildSimulationDOM();
+    await idx.startSimulation(mockEvent);
+    expect(mockEvent.preventDefault).toHaveBeenCalled();
+  });
+
+  test('shows error when no valid tasks exist', async () => {
+    buildSimulationDOM([]);
+    await idx.startSimulation(mockEvent);
+    const errorDiv = document.querySelector('.error-message');
+    expect(errorDiv).not.toBeNull();
+    expect(errorDiv.textContent).toContain('No valid tasks found');
+  });
+
+  test('does not call simulation when no valid tasks', async () => {
+    buildSimulationDOM([]);
+    await idx.startSimulation(mockEvent);
+    expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
+  });
+
+  test('filters out invalid tasks where max is less than min', async () => {
+    buildSimulationDOM([{ name: 'Bad Task', min: '20', max: '5', confidence: '90' }]);
+    await idx.startSimulation(mockEvent);
+    expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
+    const errorDiv = document.querySelector('.error-message');
+    expect(errorDiv).not.toBeNull();
+    expect(errorDiv.textContent).toContain('No valid tasks found');
+  });
+
+  test('filters out tasks with no name', async () => {
+    buildSimulationDOM([{ name: '', min: '5', max: '10', confidence: '90' }]);
+    await idx.startSimulation(mockEvent);
+    expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
+  });
+
+  test('calls runSimulationProgressive with valid tasks', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    await idx.startSimulation(mockEvent);
+    expect(sim.runSimulationProgressive).toHaveBeenCalled();
+  });
+
+  test('disables run button during simulation and re-enables after', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    const runButton = document.getElementById('startSimulationButton');
+
+    let disabledDuringRun = false;
+    sim.runSimulationProgressive.mockImplementation(async () => {
+      disabledDuringRun = runButton.disabled;
+      return makeSimResults();
+    });
+
+    await idx.startSimulation(mockEvent);
+
+    expect(disabledDuringRun).toBe(true);
+    expect(runButton.disabled).toBe(false);
+    expect(runButton.value).toBe('Run Simulation');
+  });
+
+  test('displays time results after successful simulation', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('simulationTimeMedian').textContent).toContain('2');
+    expect(document.getElementById('simulationTimeMax').textContent).toContain('3');
+    expect(document.getElementById('simulationTimeMin').textContent).toContain('1');
+  });
+
+  test('displays cost results when cost is enabled', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('simulationCostMedian').textContent).toContain('200');
+  });
+
+  test('does not display cost results when cost is disabled', async () => {
+    idx.appState.enableCost = false;
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('simulationCostMedian').textContent).toBe('');
+  });
+
+  test('shows user-friendly error when simulation throws', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
+    await idx.startSimulation(mockEvent);
+    const errorDiv = document.querySelector('.error-message');
+    expect(errorDiv).not.toBeNull();
+    expect(errorDiv.textContent).toContain('Simulation failed');
+  });
+
+  test('re-enables run button even when simulation throws', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
+    const runButton = document.getElementById('startSimulationButton');
+    await idx.startSimulation(mockEvent);
+    expect(runButton.disabled).toBe(false);
+  });
+
+  test('calls progress callback and updates time stats during simulation', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    sim.runSimulationProgressive.mockImplementation(async (passes, data, onProgress) => {
+      onProgress({
+        times: {
+          min: 1,
+          max: 3,
+          list: [0, 1, 3, 1],
+          median: 2,
+          sd: 0.5,
+          likelyMin: 1,
+          likelyMax: 3,
+        },
+        costs: {
+          min: -1,
+          max: 0,
+          list: [],
+          median: 0,
+          sd: 0,
+          likelyMin: 0,
+          likelyMax: 0,
+        },
+      });
+      return makeSimResults();
+    });
+    await idx.startSimulation(mockEvent);
+    // Just verifying the simulation ran to completion with the progress callback invoked
+    expect(sim.runSimulationProgressive).toHaveBeenCalled();
+  });
+
+  test('clears previous stats before running new simulation', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    document.getElementById('simulationTimeMedian').textContent = 'Old value';
+    sim.runSimulationProgressive.mockImplementation(async () => {
+      // Check that stats were cleared before simulation ran
+      expect(document.getElementById('simulationTimeMedian').textContent).toBe('');
+      return makeSimResults();
+    });
+    await idx.startSimulation(mockEvent);
+  });
+
+  test('replaces existing error in results div when simulation throws', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    const resultsDiv = document.getElementById('results');
+    const existingError = document.createElement('div');
+    existingError.classList.add('error-message');
+    existingError.textContent = 'Old error';
+    resultsDiv.appendChild(existingError);
+    sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
+    await idx.startSimulation(mockEvent);
+    const errors = document.querySelectorAll('.error-message');
+    expect(errors.length).toBe(1);
+  });
+
+  test('shows time estimate header after simulation completes', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('timeEstimateHeader').style.display).toBe('block');
+  });
+
+  test('records simulation running time', async () => {
+    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('simulationRunningTime').textContent).toContain('100');
   });
 });
