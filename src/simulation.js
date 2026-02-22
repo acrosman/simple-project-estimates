@@ -1,21 +1,10 @@
 import {
-  getRandom,
   taskUpperBound,
-  taskLowerBound,
   generateEstimate,
-  getValueCount,
-  calculateKDE,
   getMedian,
   getStandardDeviation,
   calculateUpperBound,
 } from './stats';
-import {
-  GRAPH_CONFIG,
-  GRAPH_CONFIG_DEFAULTS,
-  buildHistogram,
-  buildHistogramPreview,
-  buildTaskRowHistogram,
-} from './charts';
 
 /**
  * Yields execution to allow UI updates between simulation batches.

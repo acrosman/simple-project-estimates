@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { appState, fibonacciCalendarMappings, tshirtMappings } from '../state';
+import { appState, tshirtMappings } from '../state';
 
 describe('Fibonacci Configuration', () => {
   test('appState has Fibonacci mode configuration', () => {
