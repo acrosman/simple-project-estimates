@@ -210,6 +210,7 @@ Not
 
 ### What to Test
 
+- Every function you create, you must create a test for it.
 - All pure math functions in `stats.js` (`stats.test.js`)
 - Graph config structure and histogram builder guards in `charts.test.js`
 - Simulation engine behavior in `simulation.test.js`
