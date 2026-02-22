@@ -51,7 +51,7 @@ const GRAPH_CONFIG_DEFAULTS = Object.freeze({
 });
 
 /**
- * Builds the histogram graph, and returns an svg from D3. When there is lots of
+ * Builds the histogram graph into the target DOM node using D3. When there is lots of
  * data it will automatically convert to use a xy scatter graph instead of a bar graph.
  * @param {HTMLElement} targetNode The DOM element to insert the graph into.
  * @param {Array} list List of values to display
@@ -59,6 +59,7 @@ const GRAPH_CONFIG_DEFAULTS = Object.freeze({
  * @param {number} max Largest value
  * @param {number} median Median
  * @param {number} stdDev Standard Deviation of values.
+ * @param {string} xLabel Label for the x-axis.
  * @param {boolean} limitGraph Limits the display to two standard deviations.
  */
 function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limitGraph) {
