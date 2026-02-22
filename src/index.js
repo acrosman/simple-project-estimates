@@ -3,14 +3,11 @@ import Icon from './logo.jpg';
 import * as sim from './simulation';
 import { appState, fibonacciCalendarMappings, tshirtMappings } from './state';
 import {
-  createTextElement,
-  createLabeledInput,
-  createDivWithIdAndClasses,
-  normalizeTshirtSize,
   createModeSelector,
   createFileLoader,
   createDataEntrySection,
 } from './data-input';
+import { normalizeTshirtSize } from './tshirt-config';
 
 /**
  * Helper function to replace all of a node's content with new text.
@@ -863,20 +860,20 @@ export {
 // Re-export state
 export { appState, fibonacciCalendarMappings, tshirtMappings } from './state';
 
+// Re-export dom-helper functions
+export { createTextElement, createLabeledInput, createDivWithIdAndClasses } from './dom-helpers';
+
+// Re-export task-table functions
+export { generateDataField, isRowEmpty } from './task-table';
+
+// Re-export tshirt-config functions
+export { normalizeTshirtSize, updateTshirtMapping } from './tshirt-config';
+
+// Re-export fibonacci-config functions
+export { handleFibonacciModeChange, handleVelocityConfigChange, updateFibonacciCalendarMapping } from './fibonacci-config';
+
 // Re-export data-input functions
-export {
-  createTextElement,
-  createLabeledInput,
-  createDivWithIdAndClasses,
-  generateDataField,
-  isRowEmpty,
-  normalizeTshirtSize,
-  handleFibonacciModeChange,
-  handleVelocityConfigChange,
-  updateFibonacciCalendarMapping,
-  updateTshirtMapping,
-  validateCsvData,
-} from './data-input';
+export { validateCsvData } from './data-input';
 
 // Export getter functions for mutable state
 export const getEstimationMode = () => appState.estimationMode;
