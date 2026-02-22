@@ -4,6 +4,9 @@
 
 // Must be called before imports so Jest hoists it and both index.js and this
 // test file receive the same mocked module instance.
+import * as idx from '../index';
+import * as sim from '../simulation';
+
 jest.mock('../simulation', () => {
   const actual = jest.requireActual('../simulation');
   return {
@@ -11,9 +14,6 @@ jest.mock('../simulation', () => {
     runSimulationProgressive: jest.fn(),
   };
 });
-
-import * as idx from '../index';
-import * as sim from '../simulation';
 
 describe('Index Module Exports', () => {
   test('Validate exported functions exist', () => {
@@ -995,7 +995,9 @@ describe('startSimulation', () => {
   });
 
   test('filters out invalid tasks where max is less than min', async () => {
-    buildSimulationDOM([{ name: 'Bad Task', min: '20', max: '5', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Bad Task', min: '20', max: '5', confidence: '90',
+    }]);
     await idx.startSimulation(mockEvent);
     expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
     const errorDiv = document.querySelector('.error-message');
@@ -1004,19 +1006,25 @@ describe('startSimulation', () => {
   });
 
   test('filters out tasks with no name', async () => {
-    buildSimulationDOM([{ name: '', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: '', min: '5', max: '10', confidence: '90',
+    }]);
     await idx.startSimulation(mockEvent);
     expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
   });
 
   test('calls runSimulationProgressive with valid tasks', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     await idx.startSimulation(mockEvent);
     expect(sim.runSimulationProgressive).toHaveBeenCalled();
   });
 
   test('disables run button during simulation and re-enables after', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     const runButton = document.getElementById('startSimulationButton');
 
     let disabledDuringRun = false;
@@ -1033,7 +1041,9 @@ describe('startSimulation', () => {
   });
 
   test('displays time results after successful simulation', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     await idx.startSimulation(mockEvent);
     expect(document.getElementById('simulationTimeMedian').textContent).toContain('2');
     expect(document.getElementById('simulationTimeMax').textContent).toContain('3');
@@ -1041,20 +1051,26 @@ describe('startSimulation', () => {
   });
 
   test('displays cost results when cost is enabled', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     await idx.startSimulation(mockEvent);
     expect(document.getElementById('simulationCostMedian').textContent).toContain('200');
   });
 
   test('does not display cost results when cost is disabled', async () => {
     idx.appState.enableCost = false;
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     await idx.startSimulation(mockEvent);
     expect(document.getElementById('simulationCostMedian').textContent).toBe('');
   });
 
   test('shows user-friendly error when simulation throws', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
     await idx.startSimulation(mockEvent);
     const errorDiv = document.querySelector('.error-message');
@@ -1063,7 +1079,9 @@ describe('startSimulation', () => {
   });
 
   test('re-enables run button even when simulation throws', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
     const runButton = document.getElementById('startSimulationButton');
     await idx.startSimulation(mockEvent);
@@ -1071,7 +1089,9 @@ describe('startSimulation', () => {
   });
 
   test('calls progress callback and updates time stats during simulation', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     sim.runSimulationProgressive.mockImplementation(async (passes, data, onProgress) => {
       onProgress({
         times: {
@@ -1101,7 +1121,9 @@ describe('startSimulation', () => {
   });
 
   test('clears previous stats before running new simulation', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     document.getElementById('simulationTimeMedian').textContent = 'Old value';
     sim.runSimulationProgressive.mockImplementation(async () => {
       // Check that stats were cleared before simulation ran
@@ -1112,7 +1134,9 @@ describe('startSimulation', () => {
   });
 
   test('replaces existing error in results div when simulation throws', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     const resultsDiv = document.getElementById('results');
     const existingError = document.createElement('div');
     existingError.classList.add('error-message');
@@ -1121,17 +1145,21 @@ describe('startSimulation', () => {
     sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
     await idx.startSimulation(mockEvent);
     const errors = document.querySelectorAll('.error-message');
-    expect(errors.length).toBe(1);
+    expect(errors).toHaveLength(1);
   });
 
   test('shows time estimate header after simulation completes', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     await idx.startSimulation(mockEvent);
     expect(document.getElementById('timeEstimateHeader').style.display).toBe('block');
   });
 
   test('records simulation running time', async () => {
-    buildSimulationDOM([{ name: 'Task 1', min: '5', max: '10', confidence: '90' }]);
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
     await idx.startSimulation(mockEvent);
     expect(document.getElementById('simulationRunningTime').textContent).toContain('100');
   });
