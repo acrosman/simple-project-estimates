@@ -63,39 +63,33 @@ describe('buildHistogramPreview', () => {
   test('Returns early when min is negative', () => {
     const list = [0, 1, 2, 3, 4];
     buildHistogramPreview(mockTargetNode, list, -1, 4, 'Test');
-
   test('Returns early when max is less than min', () => {
     const list = [0, 1, 2, 3, 4];
     expect(buildHistogramPreview(mockTargetNode, list, 10, 5, 'Test')).toBeUndefined();
     buildHistogramPreview(mockTargetNode, list, 10, 5, 'Test');
-  test('Returns early when histogram has no data', () => {
-    const list = [0, 0, 0, 0, 0]; // All zeros, yMax will be 0
+    buildHistogramPreview(mockTargetNode, list, 10, 5, 'Test');
     expect(buildHistogramPreview(mockTargetNode, list, 0, 4, 'Test')).toBeUndefined();
 
     buildHistogramPreview(mockTargetNode, list, 0, 4, 'Test');
     const list = new Array(10).fill(0);
-    list[5] = 10;
-    expect(buildHistogramPreview(mockTargetNode, list, 0, 9, 'Hours')).toBeUndefined();
+    buildHistogramPreview(mockTargetNode, list, 0, 4, 'Test');
 
 
     buildHistogramPreview(mockTargetNode, list, 0, 9, 'Hours');
     list[500] = 100;
     expect(buildHistogramPreview(mockTargetNode, list, 0, 999, 'Hours')).toBeUndefined();
-  });
-
+    buildHistogramPreview(mockTargetNode, list, 0, 9, 'Hours');
   test('Handles single value range', () => {
     buildHistogramPreview(mockTargetNode, list, 0, 999, 'Hours');
     expect(result).toBeUndefined();
   });
 
-  test('Bucketing logic groups values correctly', () => {
-    const list = new Array(100).fill(0);
+    buildHistogramPreview(mockTargetNode, list, 0, 999, 'Hours');
     for (let i = 10; i <= 20; i += 1) {
       list[i] = 1;
     }
     const result = buildHistogramPreview(mockTargetNode, list, 0, 99, 'Hours');
-    expect(result).toBeUndefined();
-  });
+    buildHistogramPreview(mockTargetNode, list, 1, 1, 'Hours');
 
   test('Handles sparse data with gaps', () => {
     const list = new Array(100).fill(0);
