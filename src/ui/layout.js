@@ -3,7 +3,7 @@ import {
   createModeSelector,
   createFileLoader,
   createDataEntrySection,
-} from '../data-input';
+} from './data-input-ui';
 import { createAdvancedSettings } from './graph-settings';
 import saveSvgAsImage from '../utils/export-utils';
 import {
