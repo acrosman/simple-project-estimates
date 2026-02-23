@@ -21,9 +21,6 @@ function handleCostToggle(event) {
   if (costResults) {
     costResults.style.display = appState.getEnableCost() ? 'block' : 'none';
   }
-
-  // Recreate the data entry table with the new cost setting
-  createEntryTable();
 }
 
 /**
@@ -62,9 +59,6 @@ function handleModeChange(event) {
       sampleLink.download = 'sample.csv';
     }
   }
-
-  // Recreate the data entry table with the new mode
-  createEntryTable();
 }
 
 // ============= Interface Behaviors ================
@@ -256,6 +250,10 @@ function createDataEntrySection() {
   // Add segments to section.
   dataEntryDiv.appendChild(dataEntryHeader);
   dataEntryDiv.appendChild(dataEntryTable);
+
+  // Subscribe to state changes to recreate the table
+  appState.subscribe('modeChanged', () => createEntryTable());
+  appState.subscribe('costToggled', () => createEntryTable());
 
   return dataEntryDiv;
 }

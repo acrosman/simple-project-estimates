@@ -4,6 +4,7 @@
  */
 class AppState {
   constructor() {
+    this.listeners = new Map();
     this.estimationMode = 'hours'; // 'hours', 'fibonacci', or 'tshirt'
     this.enableCost = true; // Track cost by default
     this.fibonacciMode = 'calendar-days'; // 'calendar-days' or 'velocity-based'
@@ -33,6 +34,7 @@ class AppState {
 
   setEstimationMode(mode) {
     this.estimationMode = mode;
+    this.emit('modeChanged', mode);
   }
 
   getEstimationMode() {
@@ -57,6 +59,7 @@ class AppState {
 
   setEnableCost(enabled) {
     this.enableCost = enabled;
+    this.emit('costToggled', enabled);
   }
 
   getEnableCost() {
@@ -65,6 +68,7 @@ class AppState {
 
   setFibonacciMode(mode) {
     this.fibonacciMode = mode;
+    this.emit('fibonacciModeChanged', mode);
   }
 
   getFibonacciMode() {
@@ -76,6 +80,7 @@ class AppState {
       pointsPerSprint: parseFloat(pointsPerSprint) || 25,
       sprintLengthDays: parseFloat(sprintLengthDays) || 10,
     };
+    this.emit('velocityConfigChanged', this.velocityConfig);
   }
 
   getVelocityConfig() {
@@ -91,9 +96,33 @@ class AppState {
   }
 
   /**
+   * Subscribes to an event.
+   * @param {string} event The event name to subscribe to.
+   * @param {Function} callback The callback to execute when the event is emitted.
+   */
+  subscribe(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event).push(callback);
+  }
+
+  /**
+   * Emits an event to all subscribers.
+   * @param {string} event The event name to emit.
+   * @param {*} data The data to pass to the callbacks.
+   */
+  emit(event, data) {
+    if (this.listeners.has(event)) {
+      this.listeners.get(event).forEach((callback) => callback(data));
+    }
+  }
+
+  /**
    * Resets state to default values (useful for testing).
    */
   reset() {
+    this.listeners.clear();
     this.estimationMode = 'hours';
     this.enableCost = true;
     this.fibonacciMode = 'calendar-days';

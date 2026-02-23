@@ -388,4 +388,13 @@ describe('createDataEntrySection', () => {
     const element = dataInput.createDataEntrySection();
     expect(element.children.length).toBeGreaterThanOrEqual(2);
   });
+
+  test('subscribes to modeChanged and costToggled events on appState', () => {
+    const subscribeSpy = jest.spyOn(appState, 'subscribe');
+    dataInput.createDataEntrySection();
+    const events = subscribeSpy.mock.calls.map(([event]) => event);
+    expect(events).toContain('modeChanged');
+    expect(events).toContain('costToggled');
+    subscribeSpy.mockRestore();
+  });
 });

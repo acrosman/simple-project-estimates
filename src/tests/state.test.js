@@ -27,6 +27,14 @@ describe('Fibonacci Configuration', () => {
     appState.reset();
   });
 
+  test('emits fibonacciModeChanged event when mode is updated', () => {
+    appState.reset();
+    const mockCallback = jest.fn();
+    appState.subscribe('fibonacciModeChanged', mockCallback);
+    appState.setFibonacciMode('velocity-based');
+    expect(mockCallback).toHaveBeenCalledWith('velocity-based');
+  });
+
   test('fibonacci calendar mappings have correct default values', () => {
     appState.reset();
     const mappings = appState.getFibonacciCalendarMappings();
@@ -56,6 +64,14 @@ describe('Fibonacci Configuration', () => {
     appState.reset();
   });
 
+  test('emits velocityConfigChanged event when config is updated', () => {
+    appState.reset();
+    const mockCallback = jest.fn();
+    appState.subscribe('velocityConfigChanged', mockCallback);
+    appState.setVelocityConfig(30, 14);
+    expect(mockCallback).toHaveBeenCalledWith({ pointsPerSprint: 30, sprintLengthDays: 14 });
+  });
+
   test('velocity configuration validates and defaults on invalid input', () => {
     appState.setVelocityConfig('invalid', null);
     const config = appState.getVelocityConfig();
@@ -69,6 +85,14 @@ describe('Estimation Mode', () => {
   test('defaults to hours mode', () => {
     appState.reset();
     expect(appState.getEstimationMode()).toBe('hours');
+  });
+
+  test('emits modeChanged event when mode is updated', () => {
+    appState.reset();
+    const mockCallback = jest.fn();
+    appState.subscribe('modeChanged', mockCallback);
+    appState.setEstimationMode('fibonacci');
+    expect(mockCallback).toHaveBeenCalledWith('fibonacci');
   });
 });
 
@@ -129,6 +153,14 @@ describe('Cost Tracking', () => {
     appState.reset();
     expect(appState.getEnableCost()).toBe(true);
   });
+
+  test('emits costToggled event when cost is updated', () => {
+    appState.reset();
+    const mockCallback = jest.fn();
+    appState.subscribe('costToggled', mockCallback);
+    appState.setEnableCost(false);
+    expect(mockCallback).toHaveBeenCalledWith(false);
+  });
 });
 
 describe('AppState reset()', () => {
@@ -185,5 +217,55 @@ describe('AppState reset()', () => {
     expect(appState.getFibonacciMode()).toBe('calendar-days');
     expect(appState.getVelocityConfig()).toEqual({ pointsPerSprint: 25, sprintLengthDays: 10 });
     expect(tshirtMappings.XS).toBe(1);
+  });
+
+  test('reset() clears all listeners', () => {
+    const mockCallback = jest.fn();
+    appState.subscribe('modeChanged', mockCallback);
+    appState.reset();
+    appState.setEstimationMode('fibonacci');
+    expect(mockCallback).not.toHaveBeenCalled();
+  });
+});
+
+describe('Pub/Sub (subscribe and emit)', () => {
+  beforeEach(() => {
+    appState.reset();
+  });
+
+  test('subscribe registers a callback for an event', () => {
+    const mockCallback = jest.fn();
+    appState.subscribe('modeChanged', mockCallback);
+    appState.emit('modeChanged', 'fibonacci');
+    expect(mockCallback).toHaveBeenCalledWith('fibonacci');
+  });
+
+  test('emit calls all subscribers for an event', () => {
+    const mockA = jest.fn();
+    const mockB = jest.fn();
+    appState.subscribe('modeChanged', mockA);
+    appState.subscribe('modeChanged', mockB);
+    appState.emit('modeChanged', 'tshirt');
+    expect(mockA).toHaveBeenCalledWith('tshirt');
+    expect(mockB).toHaveBeenCalledWith('tshirt');
+  });
+
+  test('emit does not call callbacks for other events', () => {
+    const mockCallback = jest.fn();
+    appState.subscribe('costToggled', mockCallback);
+    appState.emit('modeChanged', 'fibonacci');
+    expect(mockCallback).not.toHaveBeenCalled();
+  });
+
+  test('emit does nothing when there are no subscribers for the event', () => {
+    expect(() => appState.emit('unknownEvent', 'data')).not.toThrow();
+  });
+
+  test('multiple subscriptions accumulate', () => {
+    const calls = [];
+    appState.subscribe('modeChanged', (d) => calls.push(`a:${d}`));
+    appState.subscribe('modeChanged', (d) => calls.push(`b:${d}`));
+    appState.emit('modeChanged', 'hours');
+    expect(calls).toEqual(['a:hours', 'b:hours']);
   });
 });
