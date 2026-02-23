@@ -327,13 +327,9 @@ export {
 } from '../visualization/charts';
 
 export {
-  getRandom,
-  getValueCount,
   getMedian,
   getStandardDeviation,
-  calculateKDE,
   taskUpperBound,
-  taskLowerBound,
 } from './stats';
 
 export {

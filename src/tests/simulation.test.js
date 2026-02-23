@@ -19,13 +19,9 @@ test('Validate simulation module exports', () => {
   expect(sim).toHaveProperty('GRAPH_CONFIG_DEFAULTS');
 
   // Re-exports from stats
-  expect(sim).toHaveProperty('getRandom');
-  expect(sim).toHaveProperty('getValueCount');
   expect(sim).toHaveProperty('getMedian');
   expect(sim).toHaveProperty('getStandardDeviation');
-  expect(sim).toHaveProperty('calculateKDE');
   expect(sim).toHaveProperty('taskUpperBound');
-  expect(sim).toHaveProperty('taskLowerBound');
 });
 
 test('RunSimulation: Single Task', () => {
