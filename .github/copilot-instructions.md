@@ -84,6 +84,9 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
   - `applyGraphSettings`, `resetGraphSettings`
   - No direct math or D3 calls — delegates to the appropriate module
 
+- **src/export-utils.js**: Utilities for exporting results (CSV/SVG/PNG helpers)
+- **src/graph-settings.js**: Central mutable graph settings and helpers referenced by UI
+
 ### Data Flow
 
 1. User inputs tasks (manual or CSV) → parsed into task objects
@@ -111,11 +114,10 @@ All parameters and settings in the project should be configurable via the UI and
 
 ### Risk Calculation
 
-```javascript
-const confidencePercent = Math.round(confidence * 100);
-const multiplier = Math.max(1, Math.ceil((100 - confidencePercent) / 10));
-upperBound = maxEstimate * multiplier;
-```
+Converts the task `confidence` (a 0–1 value) to a percentage, then computes a conservative
+multiplier based on how far that percentage is below 100% (grouped into 10% bands, with a
+minimum multiplier of 1). The multiplier is applied to the task's maximum estimate to
+produce a risk-adjusted upper bound used for overrun scenarios.
 
 ### Simulation Logic
 
