@@ -1,5 +1,5 @@
 import './style.css';
-import Icon from './logo.jpg';
+import Icon from './logo.png';
 import * as sim from './simulation';
 import { appState, fibonacciCalendarMappings, tshirtMappings } from './state';
 import {
