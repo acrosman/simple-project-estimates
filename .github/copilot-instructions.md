@@ -15,11 +15,14 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
 
 ### ESLint Rules
 
+- Always run a lint check before finishing
 - Use `for...of` loops (allowed), avoid `for...in`
 - Always use JSDoc comments for functions and classes
 - Use const for constants, let for variables, no var
 - Use template literals for string concatenation
 - Use Object destructuring for function parameters and object access
+- Lines should be no more than 100 characters long
+- Object properties must go on a new line if they aren't all on the same line
 
 ### Naming Conventions
 
