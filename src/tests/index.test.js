@@ -5,11 +5,11 @@
 // Must be called before imports so Jest hoists it and both index.js and this
 // test file receive the same mocked module instance.
 import * as idx from '../index';
-import * as sim from '../simulation';
-import { appState } from '../state';
+import * as sim from '../core/simulation';
+import { appState } from '../core/state';
 
-jest.mock('../simulation', () => {
-  const actual = jest.requireActual('../simulation');
+jest.mock('../core/simulation', () => {
+  const actual = jest.requireActual('../core/simulation');
   return {
     ...actual,
     runSimulationProgressive: jest.fn(),

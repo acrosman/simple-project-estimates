@@ -2,10 +2,10 @@
  * @jest-environment jsdom
  */
 
-import saveSvgAsImage from '../export-utils';
-import { showError } from '../dom-helpers';
+import saveSvgAsImage from '../utils/export-utils';
+import { showError } from '../utils/dom-helpers';
 
-jest.mock('../dom-helpers', () => ({
+jest.mock('../utils/dom-helpers', () => ({
   showError: jest.fn(),
 }));
 

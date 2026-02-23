@@ -6,7 +6,7 @@ import {
   calculateKDE,
   taskUpperBound,
   taskLowerBound,
-} from '../stats';
+} from '../core/stats';
 
 test('GetRandom', () => {
   const testResult = getRandom(1, 2);

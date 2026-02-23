@@ -1,21 +1,21 @@
 import './style.css';
 import Icon from './logo.png';
-import * as sim from './simulation';
-import { appState, fibonacciCalendarMappings, tshirtMappings } from './state';
-import saveSvgAsImage from './export-utils';
-import { applyGraphSettings, resetGraphSettings, createAdvancedSettings } from './graph-settings';
+import * as sim from './core/simulation';
+import { appState, fibonacciCalendarMappings, tshirtMappings } from './core/state';
+import saveSvgAsImage from './utils/export-utils';
+import { applyGraphSettings, resetGraphSettings, createAdvancedSettings } from './ui/graph-settings';
 import {
   createModeSelector,
   createFileLoader,
   createDataEntrySection,
 } from './data-input';
-import { gatherRawTaskData, normalizeTaskData } from './task-table';
+import { gatherRawTaskData, normalizeTaskData } from './ui/task-table';
 import {
   createDivWithIdAndClasses,
   createTextElement,
   createLabeledInput,
   showError,
-} from './dom-helpers';
+} from './utils/dom-helpers';
 
 /**
  * Helper function to replace all of a node's content with new text.

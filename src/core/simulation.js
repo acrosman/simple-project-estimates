@@ -323,7 +323,7 @@ export {
   buildHistogram,
   buildHistogramPreview,
   buildTaskRowHistogram,
-} from './charts';
+} from '../visualization/charts';
 
 export {
   getRandom,

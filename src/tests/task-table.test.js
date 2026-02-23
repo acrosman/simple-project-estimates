@@ -9,8 +9,8 @@ import {
   createEntryTable,
   gatherRawTaskData,
   normalizeTaskData,
-} from '../task-table';
-import { appState } from '../state';
+} from '../ui/task-table';
+import { appState } from '../core/state';
 
 describe('isRowEmpty', () => {
   beforeEach(() => {

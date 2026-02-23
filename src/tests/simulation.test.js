@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import * as sim from '../simulation';
+import * as sim from '../core/simulation';
 
 test('Validate simulation module exports', () => {
   // Simulation engine

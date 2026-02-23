@@ -4,7 +4,7 @@
 
 import { csv } from 'd3-fetch';
 import * as dataInput from '../data-input';
-import { appState } from '../state';
+import { appState } from '../core/state';
 
 jest.mock('d3-fetch', () => ({
   csv: jest.fn(),

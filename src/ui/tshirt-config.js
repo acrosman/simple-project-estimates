@@ -1,5 +1,5 @@
-import { tshirtMappings } from './state';
-import { createTextElement, createDivWithIdAndClasses } from './dom-helpers';
+import { tshirtMappings } from '../core/state';
+import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
 
 /**
  * Normalizes t-shirt size values for mapping lookup.

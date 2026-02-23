@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { calculateKDE } from './stats';
+import { calculateKDE } from '../core/stats';
 
 /**
  * Configuration constants for all graph visualization.

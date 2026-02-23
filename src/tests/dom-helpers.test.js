@@ -7,7 +7,7 @@ import {
   createLabeledInput,
   createDivWithIdAndClasses,
   showError,
-} from '../dom-helpers';
+} from '../utils/dom-helpers';
 
 describe('createTextElement', () => {
   test('creates element with text content', () => {

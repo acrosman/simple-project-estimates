@@ -9,7 +9,7 @@ import {
   buildHistogram,
   buildHistogramPreview,
   buildTaskRowHistogram,
-} from '../charts';
+} from '../visualization/charts';
 
 test('Validate GRAPH_CONFIG structure', () => {
   expect(GRAPH_CONFIG).toHaveProperty('histogram');

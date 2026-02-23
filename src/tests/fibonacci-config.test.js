@@ -8,8 +8,8 @@ import {
   updateFibonacciCalendarMapping,
   createFibonacciCalendarMappingTable,
   createFibonacciConfigPanel,
-} from '../fibonacci-config';
-import { appState, fibonacciCalendarMappings } from '../state';
+} from '../ui/fibonacci-config';
+import { appState, fibonacciCalendarMappings } from '../core/state';
 
 describe('handleFibonacciModeChange', () => {
   beforeEach(() => {

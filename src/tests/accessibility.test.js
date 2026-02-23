@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 
-import { createTextElement, createLabeledInput } from '../dom-helpers';
-import { generateDataField } from '../task-table';
-import { appState } from '../state';
+import { createTextElement, createLabeledInput } from '../utils/dom-helpers';
+import { generateDataField } from '../ui/task-table';
+import { appState } from '../core/state';
 
 describe('Accessibility: HTML Structure', () => {
   beforeEach(() => {

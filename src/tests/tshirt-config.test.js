@@ -7,8 +7,8 @@ import {
   handleMappingTabNavigation,
   updateTshirtMapping,
   createTshirtMappingTable,
-} from '../tshirt-config';
-import { tshirtMappings } from '../state';
+} from '../ui/tshirt-config';
+import { tshirtMappings } from '../core/state';
 
 describe('normalizeTshirtSize', () => {
   test('converts lowercase to uppercase', () => {

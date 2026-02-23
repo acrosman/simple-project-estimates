@@ -1,5 +1,5 @@
-import { GRAPH_CONFIG, GRAPH_CONFIG_DEFAULTS } from './charts';
-import { createDivWithIdAndClasses, createTextElement, createLabeledInput } from './dom-helpers';
+import { GRAPH_CONFIG, GRAPH_CONFIG_DEFAULTS } from '../visualization/charts';
+import { createDivWithIdAndClasses, createTextElement, createLabeledInput } from '../utils/dom-helpers';
 
 /**
  * Applies user-modified graph settings to GRAPH_CONFIG.

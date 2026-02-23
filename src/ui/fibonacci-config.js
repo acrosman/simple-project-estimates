@@ -1,5 +1,5 @@
-import { appState, fibonacciCalendarMappings } from './state';
-import { createTextElement, createDivWithIdAndClasses } from './dom-helpers';
+import { appState, fibonacciCalendarMappings } from '../core/state';
+import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
 
 /**
  * Handles Fibonacci mode changes (calendar-days vs velocity-based)

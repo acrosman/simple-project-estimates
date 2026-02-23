@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 
-import { applyGraphSettings, resetGraphSettings, createAdvancedSettings } from '../graph-settings';
-import { GRAPH_CONFIG, GRAPH_CONFIG_DEFAULTS } from '../charts';
+import { applyGraphSettings, resetGraphSettings, createAdvancedSettings } from '../ui/graph-settings';
+import { GRAPH_CONFIG, GRAPH_CONFIG_DEFAULTS } from '../visualization/charts';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

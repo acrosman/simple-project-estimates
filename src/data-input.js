@@ -2,11 +2,11 @@ import { csv } from 'd3-fetch';
 import sampleData from './data/sample.csv';
 import sampleFibData from './data/sample-fib.csv';
 import sampleTshirtData from './data/sample-tshirt.csv';
-import { appState } from './state';
-import { createTextElement } from './dom-helpers';
-import { createEntryTable } from './task-table';
-import { createFibonacciConfigPanel } from './fibonacci-config';
-import { createTshirtMappingTable } from './tshirt-config';
+import { appState } from './core/state';
+import { createTextElement } from './utils/dom-helpers';
+import { createEntryTable } from './ui/task-table';
+import { createFibonacciConfigPanel } from './ui/fibonacci-config';
+import { createTshirtMappingTable } from './ui/tshirt-config';
 
 /**
  * Handles cost tracking toggle
