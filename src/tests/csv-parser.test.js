@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { validateCsvData } from '../utils/csv-parser';
+import validateCsvData from '../utils/csv-parser';
 
 describe('validateCsvData', () => {
   test('throws error when data is null', () => {

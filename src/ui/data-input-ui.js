@@ -7,7 +7,7 @@ import { createTextElement } from '../utils/dom-helpers';
 import { createEntryTable } from './task-table';
 import { createFibonacciConfigPanel } from './fibonacci-config';
 import { createTshirtMappingTable } from './tshirt-config';
-import { validateCsvData } from '../utils/csv-parser';
+import validateCsvData from '../utils/csv-parser';
 
 /**
  * Handles cost tracking toggle

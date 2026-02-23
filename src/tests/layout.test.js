@@ -8,7 +8,7 @@ import {
   createSimulationPanel,
   setupUi,
 } from '../ui/layout';
-import * as idx from '../index';
+// import * as idx from '../index';
 import * as exportUtils from '../utils/export-utils';
 
 jest.mock('../index', () => ({

@@ -7,6 +7,7 @@
 import * as idx from '../index';
 import * as sim from '../core/simulation';
 import { appState } from '../core/state';
+import SimulationResultsView from '../ui/simulation-results-view';
 
 jest.mock('../core/simulation', () => {
   const actual = jest.requireActual('../core/simulation');
@@ -18,7 +19,6 @@ jest.mock('../core/simulation', () => {
 
 describe('Index Module Exports', () => {
   test('Validate exported functions exist', () => {
-    expect(idx).toHaveProperty('updateElementText');
     expect(idx).toHaveProperty('renderTaskRowHistograms');
     expect(idx).toHaveProperty('applyGraphSettings');
     expect(idx).toHaveProperty('resetGraphSettings');
@@ -27,9 +27,8 @@ describe('Index Module Exports', () => {
   });
 });
 
-describe('updateElementText', () => {
+describe('SimulationResultsView.updateElementText', () => {
   beforeEach(() => {
-    // Clear document body before each test
     document.body.innerHTML = '';
   });
 
@@ -37,9 +36,7 @@ describe('updateElementText', () => {
     const div = document.createElement('div');
     div.id = 'testElement';
     document.body.appendChild(div);
-
-    idx.updateElementText('testElement', 'New Content');
-
+    SimulationResultsView.updateElementText('testElement', 'New Content');
     expect(div.textContent).toBe('New Content');
   });
 
@@ -48,9 +45,7 @@ describe('updateElementText', () => {
     span.id = 'updateMe';
     span.textContent = 'Old Text';
     document.body.appendChild(span);
-
-    idx.updateElementText('updateMe', 'Updated Text');
-
+    SimulationResultsView.updateElementText('updateMe', 'Updated Text');
     expect(span.textContent).toBe('Updated Text');
   });
 
@@ -59,9 +54,7 @@ describe('updateElementText', () => {
     p.id = 'paragraph';
     p.textContent = 'Some text';
     document.body.appendChild(p);
-
-    idx.updateElementText('paragraph', '');
-
+    SimulationResultsView.updateElementText('paragraph', '');
     expect(p.textContent).toBe('');
   });
 
@@ -69,9 +62,7 @@ describe('updateElementText', () => {
     const div = document.createElement('div');
     div.id = 'numericDiv';
     document.body.appendChild(div);
-
-    idx.updateElementText('numericDiv', 'Median: 42');
-
+    SimulationResultsView.updateElementText('numericDiv', 'Median: 42');
     expect(div.textContent).toBe('Median: 42');
   });
 });
@@ -90,7 +81,6 @@ describe('renderTaskRowHistograms', () => {
     idx.renderTaskRowHistograms([
       {
         rowId: '1',
-        name: 'Task 1',
         times: {
           list: [0, 2, 4, 2],
           min: 1,

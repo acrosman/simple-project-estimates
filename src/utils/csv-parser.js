@@ -6,7 +6,7 @@
  * @returns {Array} Validated data array
  * @throws {Error} If validation fails
  */
-export function validateCsvData(data, estimationMode, enableCost) {
+function validateCsvData(data, estimationMode, enableCost) {
   // Validate CSV data has required structure
   if (!data || data.length === 0) {
     throw new Error('CSV file is empty or contains no data rows.');
@@ -49,3 +49,5 @@ export function validateCsvData(data, estimationMode, enableCost) {
 
   return data;
 }
+
+export default validateCsvData;
