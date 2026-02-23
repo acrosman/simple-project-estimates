@@ -55,8 +55,40 @@ function createDivWithIdAndClasses(id, classList = []) {
   return el;
 }
 
+/**
+ * Shows an accessible error message inside a container element.
+ * Removes any pre-existing .error-message child before appending the new one.
+ * @param {HTMLElement} containerElement The element to append the error message to.
+ * @param {string} message The error message text.
+ * @param {number} timeoutMs Milliseconds after which the element is auto-removed.
+ *   Pass 0 to disable auto-removal. Defaults to 5000.
+ * @returns {HTMLElement} The created error div.
+ */
+function showError(containerElement, message, timeoutMs = 5000) {
+  const errorDiv = document.createElement('div');
+  errorDiv.setAttribute('role', 'alert');
+  errorDiv.setAttribute('aria-live', 'assertive');
+  errorDiv.classList.add('error-message');
+  errorDiv.textContent = message;
+
+  const existingError = containerElement.querySelector('.error-message');
+  if (existingError) {
+    existingError.remove();
+  }
+  containerElement.appendChild(errorDiv);
+
+  if (timeoutMs > 0) {
+    setTimeout(() => {
+      errorDiv.remove();
+    }, timeoutMs);
+  }
+
+  return errorDiv;
+}
+
 export {
   createTextElement,
   createLabeledInput,
   createDivWithIdAndClasses,
+  showError,
 };

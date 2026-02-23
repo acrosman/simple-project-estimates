@@ -72,6 +72,58 @@ describe('Estimation Mode', () => {
   });
 });
 
+describe('getTimeUnit()', () => {
+  test('returns Hours in hours mode', () => {
+    appState.reset();
+    appState.setEstimationMode('hours');
+    expect(appState.getTimeUnit()).toBe('Hours');
+  });
+
+  test('returns Days in fibonacci mode', () => {
+    appState.reset();
+    appState.setEstimationMode('fibonacci');
+    expect(appState.getTimeUnit()).toBe('Days');
+  });
+
+  test('returns Days in tshirt mode', () => {
+    appState.reset();
+    appState.setEstimationMode('tshirt');
+    expect(appState.getTimeUnit()).toBe('Days');
+  });
+
+  test('returns Hours for unrecognized/default mode', () => {
+    appState.reset();
+    appState.setEstimationMode('unknown');
+    expect(appState.getTimeUnit()).toBe('Hours');
+  });
+});
+
+describe('getHoursPerTimeUnit()', () => {
+  test('returns 1 in hours mode', () => {
+    appState.reset();
+    appState.setEstimationMode('hours');
+    expect(appState.getHoursPerTimeUnit()).toBe(1);
+  });
+
+  test('returns 8 in fibonacci mode', () => {
+    appState.reset();
+    appState.setEstimationMode('fibonacci');
+    expect(appState.getHoursPerTimeUnit()).toBe(8);
+  });
+
+  test('returns 8 in tshirt mode', () => {
+    appState.reset();
+    appState.setEstimationMode('tshirt');
+    expect(appState.getHoursPerTimeUnit()).toBe(8);
+  });
+
+  test('returns 1 for unrecognized/default mode', () => {
+    appState.reset();
+    appState.setEstimationMode('unknown');
+    expect(appState.getHoursPerTimeUnit()).toBe(1);
+  });
+});
+
 describe('Cost Tracking', () => {
   test('cost tracking is enabled by default', () => {
     appState.reset();

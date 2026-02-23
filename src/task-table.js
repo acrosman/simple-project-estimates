@@ -301,9 +301,133 @@ function createEntryTable(data = []) {
   return wrapper;
 }
 
+/**
+ * Reads all task rows from the DOM and returns raw task objects.
+ * Does not perform validation or mode-based conversion.
+ * @returns {Array<Object>} Array of raw task objects.
+ */
+function gatherRawTaskData() {
+  const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+  const tasks = [];
+  for (const row of rows) {
+    const task = { RowId: row.dataset.rowId };
+    const inputs = row.getElementsByTagName('input');
+    for (const input of inputs) {
+      switch (input.name) {
+        case 'Task':
+          task.Name = input.value;
+          break;
+        case 'Min Time':
+          task.Min = parseInt(input.value, 10);
+          break;
+        case 'Max Time':
+          task.Max = parseInt(input.value, 10);
+          break;
+        case 'Fibonacci':
+          task.Fibonacci = parseInt(input.value, 10);
+          break;
+        case 'T-Shirt':
+          task.TShirt = input.value;
+          break;
+        case 'Confidence':
+          task.Confidence = parseFloat(input.value) / 100;
+          break;
+        case 'Cost':
+          task.Cost = parseInt(input.value, 10);
+          break;
+        default:
+          break;
+      }
+    }
+    tasks.push(task);
+  }
+  return tasks;
+}
+
+/**
+ * Normalizes, converts, and validates an array of raw task objects.
+ * @param {Array<Object>} tasks Raw task objects from gatherRawTaskData.
+ * @param {Object} taskAppState Application state (estimationMode, enableCost, etc.).
+ * @param {Object} fibCalendarMappings Fibonacci-to-calendar-day mappings.
+ * @param {Object} taskTshirtMappings T-shirt-to-Fibonacci mappings.
+ * @param {Function} fibToCalendar Function to convert Fibonacci to calendar day range.
+ * @param {Function} fibToVelocity Function to convert Fibonacci to velocity-based day range.
+ * @returns {Array<Object>} Cleaned, validated task array.
+ */
+function normalizeTaskData(
+  tasks,
+  taskAppState,
+  fibCalendarMappings,
+  taskTshirtMappings,
+  fibToCalendar,
+  fibToVelocity,
+) {
+  const data = [];
+  for (const rawTask of tasks) {
+    const taskDetail = { ...rawTask };
+
+    // Convert Fibonacci numbers to min/max if in Fibonacci mode
+    if (taskAppState.estimationMode === 'fibonacci' && taskDetail.Fibonacci) {
+      const fibMode = taskAppState.getFibonacciMode();
+      let mapping;
+
+      if (fibMode === 'calendar-days') {
+        mapping = fibToCalendar(taskDetail.Fibonacci, fibCalendarMappings);
+      } else if (fibMode === 'velocity-based') {
+        const { pointsPerSprint, sprintLengthDays } = taskAppState.getVelocityConfig();
+        mapping = fibToVelocity(taskDetail.Fibonacci, pointsPerSprint, sprintLengthDays);
+      }
+
+      if (mapping) {
+        taskDetail.Min = mapping.min;
+        taskDetail.Max = mapping.max;
+      }
+    } else if (taskAppState.estimationMode === 'tshirt' && taskDetail.TShirt) {
+      const normalizedSize = typeof taskDetail.TShirt === 'string'
+        ? taskDetail.TShirt.trim().toUpperCase()
+        : '';
+      const fibonacciValue = taskTshirtMappings[normalizedSize];
+      if (fibonacciValue) {
+        // Convert T-shirt size to Fibonacci, then Fibonacci to calendar days
+        const mapping = fibToCalendar(fibonacciValue, fibCalendarMappings);
+        if (mapping) {
+          taskDetail.Min = mapping.min;
+          taskDetail.Max = mapping.max;
+        }
+      }
+    }
+
+    // Default Cost to 0 when enableCost is false or the value is NaN
+    if (!taskAppState.enableCost || Number.isNaN(taskDetail.Cost)) {
+      taskDetail.Cost = 0;
+    }
+
+    // Validate that task has required fields and they are valid numbers
+    const hasName = taskDetail.Name && taskDetail.Name.trim() !== '';
+    const hasValidMin = !Number.isNaN(taskDetail.Min) && taskDetail.Min !== undefined;
+    const hasValidMax = !Number.isNaN(taskDetail.Max) && taskDetail.Max !== undefined;
+    const hasValidConfidence = !Number.isNaN(taskDetail.Confidence)
+      && taskDetail.Confidence !== undefined;
+
+    // Additional validation for value ranges
+    const minIsPositive = hasValidMin && taskDetail.Min >= 0;
+    const maxIsValid = hasValidMax && taskDetail.Max >= taskDetail.Min;
+    const confidenceInRange = hasValidConfidence
+      && taskDetail.Confidence >= 0
+      && taskDetail.Confidence <= 1;
+
+    if (hasName && minIsPositive && maxIsValid && confidenceInRange) {
+      data.push(taskDetail);
+    }
+  }
+  return data;
+}
+
 export {
   isRowEmpty,
   generateDataField,
   generateDataRow,
   createEntryTable,
+  gatherRawTaskData,
+  normalizeTaskData,
 };

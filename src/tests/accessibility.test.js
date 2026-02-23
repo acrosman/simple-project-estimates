@@ -2,7 +2,9 @@
  * @jest-environment jsdom
  */
 
-import * as idx from '../index';
+import { createTextElement, createLabeledInput } from '../dom-helpers';
+import { generateDataField } from '../task-table';
+import { appState } from '../state';
 
 describe('Accessibility: HTML Structure', () => {
   beforeEach(() => {
@@ -29,22 +31,22 @@ describe('Accessibility: HTML Structure', () => {
 
 describe('Accessibility: ARIA Attributes', () => {
   test('createTextElement supports ARIA role parameter', () => {
-    const element = idx.createTextElement('div', 'Test', ['class'], 'columnheader');
+    const element = createTextElement('div', 'Test', ['class'], 'columnheader');
     expect(element.getAttribute('role')).toBe('columnheader');
   });
 
   test('createTextElement works without role parameter', () => {
-    const element = idx.createTextElement('div', 'Test', ['class']);
+    const element = createTextElement('div', 'Test', ['class']);
     expect(element.getAttribute('role')).toBeNull();
   });
 
   test('generateDataField creates cell with role attribute', () => {
-    const cell = idx.generateDataField('Task', 'Test', 'text', 1);
+    const cell = generateDataField('Task', 'Test', 'text', 1);
     expect(cell.getAttribute('role')).toBe('cell');
   });
 
   test('generateDataField input has proper name', () => {
-    const cell = idx.generateDataField('Task Name', 'Test', 'text', 1);
+    const cell = generateDataField('Task Name', 'Test', 'text', 1);
     const input = cell.querySelector('input');
     expect(input.name).toBe('Task Name');
   });
@@ -52,13 +54,13 @@ describe('Accessibility: ARIA Attributes', () => {
 
 describe('Accessibility: Required Fields', () => {
   test('required field has required attribute', () => {
-    const cell = idx.generateDataField('Task', '', 'text', 1, true);
+    const cell = generateDataField('Task', '', 'text', 1, true);
     const input = cell.querySelector('input');
     expect(input.required).toBe(true);
   });
 
   test('optional field does not have required attribute', () => {
-    const cell = idx.generateDataField('Cost', '', 'number', 1, false);
+    const cell = generateDataField('Cost', '', 'number', 1, false);
     const input = cell.querySelector('input');
     expect(input.required).toBe(false);
   });
@@ -66,7 +68,7 @@ describe('Accessibility: Required Fields', () => {
 
 describe('Accessibility: Label Associations', () => {
   test('createLabeledInput creates proper label association', () => {
-    const wrapper = idx.createLabeledInput('Test Label', { name: 'testField', type: 'text' });
+    const wrapper = createLabeledInput('Test Label', { name: 'testField', type: 'text' });
     const label = wrapper.querySelector('label');
     const input = wrapper.querySelector('input');
 
@@ -75,7 +77,7 @@ describe('Accessibility: Label Associations', () => {
   });
 
   test('label text is descriptive', () => {
-    const wrapper = idx.createLabeledInput('Simulation Passes', {
+    const wrapper = createLabeledInput('Simulation Passes', {
       name: 'simPasses',
       type: 'number',
     });
@@ -144,7 +146,7 @@ describe('Accessibility: Focus Management', () => {
 
 describe('Accessibility: Clear Button Context', () => {
   test('clear button has descriptive label', () => {
-    const cell = idx.generateDataField('Clear Row', 'Clear Row', 'button', 5);
+    const cell = generateDataField('Clear Row', 'Clear Row', 'button', 5);
     const button = cell.querySelector('input[type="button"]');
 
     expect(button.value).toBe('Clear Row');
@@ -153,22 +155,22 @@ describe('Accessibility: Clear Button Context', () => {
 
 describe('Accessibility: Application State', () => {
   test('estimation mode is accessible', () => {
-    const mode = idx.getEstimationMode();
+    const mode = appState.estimationMode;
     expect(typeof mode).toBe('string');
   });
 
   test('cost tracking state is accessible', () => {
-    const enableCost = idx.getEnableCost();
+    const { enableCost } = appState;
     expect(typeof enableCost).toBe('boolean');
   });
 
   test('fibonacci mode configuration is accessible', () => {
-    expect(idx.appState.getFibonacciMode).toBeDefined();
-    expect(typeof idx.appState.getFibonacciMode()).toBe('string');
+    expect(appState.getFibonacciMode).toBeDefined();
+    expect(typeof appState.getFibonacciMode()).toBe('string');
   });
 
   test('velocity configuration is accessible', () => {
-    const config = idx.appState.getVelocityConfig();
+    const config = appState.getVelocityConfig();
     expect(config).toHaveProperty('pointsPerSprint');
     expect(config).toHaveProperty('sprintLengthDays');
   });

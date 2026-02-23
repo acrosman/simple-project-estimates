@@ -39,6 +39,22 @@ class AppState {
     return this.estimationMode;
   }
 
+  /**
+   * Returns the display label for the current time unit.
+   * @returns {'Days'|'Hours'} 'Days' for fibonacci/tshirt modes, 'Hours' for hours mode
+   */
+  getTimeUnit() {
+    return (this.estimationMode === 'fibonacci' || this.estimationMode === 'tshirt') ? 'Days' : 'Hours';
+  }
+
+  /**
+   * Returns the number of hours per time unit for cost calculations.
+   * @returns {number} 8 for fibonacci/tshirt modes (days), 1 for hours mode
+   */
+  getHoursPerTimeUnit() {
+    return (this.estimationMode === 'fibonacci' || this.estimationMode === 'tshirt') ? 8 : 1;
+  }
+
   setEnableCost(enabled) {
     this.enableCost = enabled;
   }

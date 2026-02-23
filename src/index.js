@@ -2,16 +2,19 @@ import './style.css';
 import Icon from './logo.png';
 import * as sim from './simulation';
 import { appState, fibonacciCalendarMappings, tshirtMappings } from './state';
+import saveSvgAsImage from './export-utils';
+import { applyGraphSettings, resetGraphSettings, createAdvancedSettings } from './graph-settings';
 import {
   createModeSelector,
   createFileLoader,
   createDataEntrySection,
 } from './data-input';
-import { normalizeTshirtSize } from './tshirt-config';
+import { gatherRawTaskData, normalizeTaskData } from './task-table';
 import {
   createDivWithIdAndClasses,
   createTextElement,
   createLabeledInput,
+  showError,
 } from './dom-helpers';
 
 /**
@@ -44,7 +47,7 @@ function renderTaskRowHistograms(taskResults) {
   }
 
   // Determine time unit based on estimation mode
-  const timeUnit = (appState.estimationMode === 'fibonacci' || appState.estimationMode === 'tshirt') ? 'days' : 'hours';
+  const timeUnit = appState.getTimeUnit().toLowerCase();
 
   for (const taskResult of taskResults) {
     const graphNode = document.querySelector(`.task-row-graph[data-row-id="${taskResult.rowId}"]`);
@@ -67,97 +70,6 @@ function renderTaskRowHistograms(taskResults) {
 }
 
 /**
- * Saves an SVG element as a PNG or JPEG image
- * @param {string} svgContainerId ID of the element containing the SVG
- * @param {string} filename Name for the downloaded file
- * @param {string} format 'png' or 'jpeg'
- */
-function saveSvgAsImage(svgContainerId, filename, format = 'png') {
-  const container = document.getElementById(svgContainerId);
-  const svg = container.querySelector('svg');
-
-  if (!svg) {
-    // Create accessible error message instead of alert
-    const errorDiv = document.createElement('div');
-    errorDiv.setAttribute('role', 'alert');
-    errorDiv.setAttribute('aria-live', 'assertive');
-    errorDiv.classList.add('error-message');
-    errorDiv.textContent = 'No graph to save. Please run a simulation first.';
-
-    const existingError = container.querySelector('.error-message');
-    if (existingError) {
-      existingError.remove();
-    }
-    container.appendChild(errorDiv);
-
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      errorDiv.remove();
-    }, 5000);
-    return;
-  }
-
-  // Clone the SVG to avoid modifying the original
-  const svgClone = svg.cloneNode(true);
-
-  // Inline styles to preserve colors
-  const allElements = svgClone.querySelectorAll('*');
-  const originalElements = svg.querySelectorAll('*');
-
-  allElements.forEach((element, index) => {
-    const originalElement = originalElements[index];
-    if (originalElement) {
-      const computedStyle = window.getComputedStyle(originalElement);
-      const styleString = Array.from(computedStyle).reduce((acc, key) => {
-        const value = computedStyle.getPropertyValue(key);
-        if (value && key !== 'all') {
-          return `${acc}${key}:${value};`;
-        }
-        return acc;
-      }, '');
-      if (styleString) {
-        element.setAttribute('style', styleString);
-      }
-    }
-  });
-
-  // Get SVG data
-  const svgData = new XMLSerializer().serializeToString(svgClone);
-  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-
-  // Create an image to load the SVG
-  const img = new Image();
-  img.onload = () => {
-    // Create a canvas with bottom margin
-    const canvas = document.createElement('canvas');
-    const svgSize = svg.getBoundingClientRect();
-    const bottomMargin = 20;
-    canvas.width = svgSize.width;
-    canvas.height = svgSize.height + bottomMargin;
-
-    // Draw the image onto the canvas
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
-
-    // Convert canvas to blob and download
-    canvas.toBlob((blob) => {
-      const link = document.createElement('a');
-      link.download = `${filename}.${format}`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      URL.revokeObjectURL(link.href);
-    }, `image/${format}`, 0.95);
-
-    URL.revokeObjectURL(url);
-  };
-
-  img.src = url;
-}
-
-/**
  * Triggers the start of the simulation run with the current values.
  * @param {Event} event
  */
@@ -165,130 +77,34 @@ async function startSimulation(event) {
   event.preventDefault();
   const passCount = document.getElementById('simulationPasses').value;
   const graphSetting = document.getElementById('LimitGraph').checked;
-  const data = [];
 
   // Clear any previous task-level graphs immediately for this run.
   renderTaskRowHistograms([]);
 
-  // Gather the task information.
-  const tasks = document.querySelectorAll('#DataEntryTable .tr.data-row');
-  let inputs;
-  let taskDetail;
-  for (const t of tasks) {
-    taskDetail = {};
-    taskDetail.RowId = t.dataset.rowId;
-    inputs = t.getElementsByTagName('input');
-    for (const i of inputs) {
-      switch (i.name) {
-        case 'Task':
-          taskDetail.Name = i.value;
-          break;
-        case 'Min Time':
-          taskDetail.Min = parseInt(i.value, 10);
-          break;
-        case 'Max Time':
-          taskDetail.Max = parseInt(i.value, 10);
-          break;
-        case 'Fibonacci':
-          taskDetail.Fibonacci = parseInt(i.value, 10);
-          break;
-        case 'T-Shirt':
-          taskDetail.TShirt = normalizeTshirtSize(i.value);
-          break;
-        case 'Confidence':
-          taskDetail.Confidence = parseFloat(i.value) / 100;
-          break;
-        case 'Cost':
-          taskDetail.Cost = parseInt(i.value, 10);
-          // Default to 0 if parseInt returns NaN (empty or invalid input)
-          if (Number.isNaN(taskDetail.Cost)) {
-            taskDetail.Cost = 0;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-
-    // Convert Fibonacci numbers to min/max if in Fibonacci mode
-    if (appState.estimationMode === 'fibonacci' && taskDetail.Fibonacci) {
-      const fibMode = appState.getFibonacciMode();
-      let mapping;
-
-      if (fibMode === 'calendar-days') {
-        mapping = sim.fibonacciToCalendarDays(taskDetail.Fibonacci, fibonacciCalendarMappings);
-      } else if (fibMode === 'velocity-based') {
-        const { pointsPerSprint, sprintLengthDays } = appState.getVelocityConfig();
-        mapping = sim.fibonacciToVelocityDays(
-          taskDetail.Fibonacci,
-          pointsPerSprint,
-          sprintLengthDays,
-        );
-      }
-
-      if (mapping) {
-        taskDetail.Min = mapping.min;
-        taskDetail.Max = mapping.max;
-      }
-    } else if (appState.estimationMode === 'tshirt' && taskDetail.TShirt) {
-      const fibonacciValue = tshirtMappings[taskDetail.TShirt];
-      if (fibonacciValue) {
-        // Convert T-shirt size to Fibonacci, then Fibonacci to days
-        const mapping = sim.fibonacciToCalendarDays(fibonacciValue, fibonacciCalendarMappings);
-        if (mapping) {
-          taskDetail.Min = mapping.min;
-          taskDetail.Max = mapping.max;
-        }
-      }
-    }
-
-    // Set default cost to 0 if cost tracking is disabled
-    if (!appState.enableCost && !taskDetail.Cost) {
-      taskDetail.Cost = 0;
-    }
-
-    // Validate that task has required fields and they are valid numbers
-    const hasName = taskDetail.Name && taskDetail.Name.trim() !== '';
-    const hasValidMin = !Number.isNaN(taskDetail.Min) && taskDetail.Min !== undefined;
-    const hasValidMax = !Number.isNaN(taskDetail.Max) && taskDetail.Max !== undefined;
-    const hasValidConfidence = !Number.isNaN(taskDetail.Confidence)
-      && taskDetail.Confidence !== undefined;
-
-    // Additional validation for value ranges
-    const minIsPositive = hasValidMin && taskDetail.Min >= 0;
-    const maxIsValid = hasValidMax && taskDetail.Max >= taskDetail.Min;
-    const confidenceInRange = hasValidConfidence
-      && taskDetail.Confidence >= 0
-      && taskDetail.Confidence <= 1;
-
-    if (hasName && minIsPositive && maxIsValid && confidenceInRange) {
-      data.push(taskDetail);
-    }
-  }
+  // Gather and normalize task data.
+  const rawTasks = gatherRawTaskData();
+  const data = normalizeTaskData(
+    rawTasks,
+    appState,
+    fibonacciCalendarMappings,
+    tshirtMappings,
+    sim.fibonacciToCalendarDays,
+    sim.fibonacciToVelocityDays,
+  );
 
   // Validate we have at least one task
   if (data.length === 0) {
-    const errorDiv = document.createElement('div');
-    errorDiv.setAttribute('role', 'alert');
-    errorDiv.setAttribute('aria-live', 'assertive');
-    errorDiv.classList.add('error-message');
-    errorDiv.textContent = 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.';
-
     const resultsDiv = document.getElementById('results');
     if (resultsDiv) {
-      const existingError = resultsDiv.querySelector('.error-message');
-      if (existingError) {
-        existingError.remove();
-      }
-      resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
+      showError(resultsDiv, 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.', 0);
     }
     return;
   }
 
   // Determine the correct time unit based on estimation mode
-  const timeUnit = (appState.estimationMode === 'fibonacci' || appState.estimationMode === 'tshirt') ? 'Days' : 'Hours';
+  const timeUnit = appState.getTimeUnit();
   // When using days, need to multiply hourly cost by 8 hours/day
-  const hoursPerTimeUnit = timeUnit === 'Days' ? 8 : 1;
+  const hoursPerTimeUnit = appState.getHoursPerTimeUnit();
 
   const runButton = document.getElementById('startSimulationButton');
   const runStartTime = Date.now();
@@ -423,20 +239,9 @@ async function startSimulation(event) {
       document.getElementById('costSaveButtons').style.display = 'none';
     }
   } catch (error) {
-    // Display user-friendly error message
-    const errorDiv = document.createElement('div');
-    errorDiv.setAttribute('role', 'alert');
-    errorDiv.setAttribute('aria-live', 'assertive');
-    errorDiv.classList.add('error-message');
-    errorDiv.textContent = 'Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.';
-
     const resultsDiv = document.getElementById('results');
     if (resultsDiv) {
-      const existingError = resultsDiv.querySelector('.error-message');
-      if (existingError) {
-        existingError.remove();
-      }
-      resultsDiv.insertBefore(errorDiv, resultsDiv.firstChild);
+      showError(resultsDiv, 'Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.', 0);
     }
   } finally {
     clearInterval(stopwatchInterval);
@@ -478,202 +283,6 @@ function createHeader() {
   headerDiv.appendChild(githubRibbon);
 
   return headerDiv;
-}
-
-/**
- * Applies user-modified graph settings to GRAPH_CONFIG.
- */
-function applyGraphSettings() {
-  sim.GRAPH_CONFIG.histogram.width = parseInt(document.getElementById('histogramWidth').value, 10);
-  sim.GRAPH_CONFIG.histogram.height = parseInt(document.getElementById('histogramHeight').value, 10);
-  sim.GRAPH_CONFIG.histogram.barCutoff = parseInt(document.getElementById('histogramBarCutoff').value, 10);
-  sim.GRAPH_CONFIG.histogram.maxBuckets = parseInt(document.getElementById('histogramMaxBuckets').value, 10);
-  sim.GRAPH_CONFIG.miniGraph.width = parseInt(document.getElementById('miniGraphWidth').value, 10);
-  sim.GRAPH_CONFIG.miniGraph.height = parseInt(document.getElementById('miniGraphHeight').value, 10);
-  sim.GRAPH_CONFIG.miniGraph.maxBuckets = parseInt(document.getElementById('miniGraphMaxBuckets').value, 10);
-  sim.GRAPH_CONFIG.miniGraph.gap = parseFloat(document.getElementById('miniGraphGap').value);
-
-  // Show confirmation
-  const details = document.getElementById('advancedSettings');
-  const originalSummary = details.querySelector('summary').textContent;
-  details.querySelector('summary').textContent = 'Advanced Graph Settings ✓ Applied';
-  setTimeout(() => {
-    details.querySelector('summary').textContent = originalSummary;
-  }, 2000);
-}
-
-/**
- * Resets graph settings to default values.
- */
-function resetGraphSettings() {
-  const { histogram: h, miniGraph: m } = sim.GRAPH_CONFIG_DEFAULTS;
-
-  // Reset GRAPH_CONFIG to original defaults.
-  sim.GRAPH_CONFIG.histogram.width = h.width;
-  sim.GRAPH_CONFIG.histogram.height = h.height;
-  sim.GRAPH_CONFIG.histogram.barCutoff = h.barCutoff;
-  sim.GRAPH_CONFIG.histogram.maxBuckets = h.maxBuckets;
-  sim.GRAPH_CONFIG.miniGraph.width = m.width;
-  sim.GRAPH_CONFIG.miniGraph.height = m.height;
-  sim.GRAPH_CONFIG.miniGraph.maxBuckets = m.maxBuckets;
-  sim.GRAPH_CONFIG.miniGraph.gap = m.gap;
-
-  // Sync form fields to match the reset values.
-  document.getElementById('histogramWidth').value = String(h.width);
-  document.getElementById('histogramHeight').value = String(h.height);
-  document.getElementById('histogramBarCutoff').value = String(h.barCutoff);
-  document.getElementById('histogramMaxBuckets').value = String(h.maxBuckets);
-  document.getElementById('miniGraphWidth').value = String(m.width);
-  document.getElementById('miniGraphHeight').value = String(m.height);
-  document.getElementById('miniGraphMaxBuckets').value = String(m.maxBuckets);
-  document.getElementById('miniGraphGap').value = String(m.gap);
-
-  // Show confirmation
-  const details = document.getElementById('advancedSettings');
-  const originalSummary = details.querySelector('summary').textContent;
-  details.querySelector('summary').textContent = 'Advanced Graph Settings ✓ Reset';
-  setTimeout(() => {
-    details.querySelector('summary').textContent = originalSummary;
-  }, 2000);
-}
-
-/**
- * Creates the advanced graph settings panel for power users.
- * @returns HTMLElement Details element with graph configuration controls.
- */
-function createAdvancedSettings() {
-  const details = document.createElement('details');
-  details.classList.add('advanced-settings');
-  details.id = 'advancedSettings';
-
-  const summary = document.createElement('summary');
-  summary.textContent = 'Advanced Graph Settings';
-  details.appendChild(summary);
-
-  const settingsWrapper = createDivWithIdAndClasses('advancedSettingsContent', ['settings-grid']);
-
-  // Main histogram settings
-  const histogramHeader = createTextElement('h3', 'Main Histogram Settings', ['settings-header']);
-  settingsWrapper.appendChild(histogramHeader);
-
-  const histogramWidthAttr = {
-    type: 'number',
-    min: '400',
-    max: '2000',
-    step: '50',
-    id: 'histogramWidth',
-    value: String(sim.GRAPH_CONFIG.histogram.width),
-    name: 'Histogram Width',
-  };
-  settingsWrapper.appendChild(createLabeledInput('Width (px):', histogramWidthAttr, true));
-
-  const histogramHeightAttr = {
-    type: 'number',
-    min: '300',
-    max: '1000',
-    step: '50',
-    id: 'histogramHeight',
-    value: String(sim.GRAPH_CONFIG.histogram.height),
-    name: 'Histogram Height',
-  };
-  settingsWrapper.appendChild(createLabeledInput('Height (px):', histogramHeightAttr, true));
-
-  const histogramBarCutoffAttr = {
-    type: 'number',
-    min: '100',
-    max: '2000',
-    step: '50',
-    id: 'histogramBarCutoff',
-    value: String(sim.GRAPH_CONFIG.histogram.barCutoff),
-    name: 'Bar Cutoff',
-  };
-  settingsWrapper.appendChild(createLabeledInput('Bar/Scatter Cutoff:', histogramBarCutoffAttr, true));
-
-  const histogramMaxBucketsAttr = {
-    type: 'number',
-    min: '20',
-    max: '500',
-    step: '10',
-    id: 'histogramMaxBuckets',
-    value: String(sim.GRAPH_CONFIG.histogram.maxBuckets),
-    name: 'Max Preview Buckets',
-  };
-  settingsWrapper.appendChild(createLabeledInput('Max Preview Buckets:', histogramMaxBucketsAttr, true));
-
-  // Mini graph settings
-  const miniGraphHeader = createTextElement('h3', 'Task Row Mini Graph Settings', ['settings-header']);
-  settingsWrapper.appendChild(miniGraphHeader);
-
-  const miniWidthAttr = {
-    type: 'number',
-    min: '50',
-    max: '300',
-    step: '10',
-    id: 'miniGraphWidth',
-    value: String(sim.GRAPH_CONFIG.miniGraph.width),
-    name: 'Mini Graph Width',
-  };
-  settingsWrapper.appendChild(createLabeledInput('Width (px):', miniWidthAttr, true));
-
-  const miniHeightAttr = {
-    type: 'number',
-    min: '10',
-    max: '100',
-    step: '2',
-    id: 'miniGraphHeight',
-    value: String(sim.GRAPH_CONFIG.miniGraph.height),
-    name: 'Mini Graph Height',
-  };
-  settingsWrapper.appendChild(createLabeledInput('Height (px):', miniHeightAttr, true));
-
-  const miniMaxBucketsAttr = {
-    type: 'number',
-    min: '5',
-    max: '50',
-    step: '1',
-    id: 'miniGraphMaxBuckets',
-    value: String(sim.GRAPH_CONFIG.miniGraph.maxBuckets),
-    name: 'Mini Max Buckets',
-  };
-  settingsWrapper.appendChild(createLabeledInput('Max Buckets:', miniMaxBucketsAttr, true));
-
-  const miniGapAttr = {
-    type: 'number',
-    min: '0',
-    max: '5',
-    step: '0.5',
-    id: 'miniGraphGap',
-    value: String(sim.GRAPH_CONFIG.miniGraph.gap),
-    name: 'Mini Graph Gap',
-  };
-  settingsWrapper.appendChild(createLabeledInput('Bar Gap (px):', miniGapAttr, true));
-
-  // Reset and Apply buttons
-  const buttonWrapper = document.createElement('div');
-  buttonWrapper.classList.add('settings-buttons');
-
-  const applyButton = document.createElement('input');
-  Object.assign(applyButton, {
-    type: 'button',
-    value: 'Apply Settings',
-    id: 'applyGraphSettings',
-  });
-  applyButton.addEventListener('click', applyGraphSettings);
-
-  const resetButton = document.createElement('input');
-  Object.assign(resetButton, {
-    type: 'button',
-    value: 'Reset to Defaults',
-    id: 'resetGraphSettings',
-  });
-  resetButton.addEventListener('click', resetGraphSettings);
-
-  buttonWrapper.appendChild(applyButton);
-  buttonWrapper.appendChild(resetButton);
-  settingsWrapper.appendChild(buttonWrapper);
-
-  details.appendChild(settingsWrapper);
-  return details;
 }
 
 /**
@@ -866,25 +475,3 @@ export {
   createSimulationPanel,
   setupUi,
 };
-
-// Re-export state
-export { appState, fibonacciCalendarMappings, tshirtMappings } from './state';
-
-// Re-export dom-helper functions
-export { createTextElement, createLabeledInput, createDivWithIdAndClasses } from './dom-helpers';
-
-// Re-export task-table functions
-export { generateDataField, isRowEmpty } from './task-table';
-
-// Re-export tshirt-config functions
-export { normalizeTshirtSize, updateTshirtMapping } from './tshirt-config';
-
-// Re-export fibonacci-config functions
-export { handleFibonacciModeChange, handleVelocityConfigChange, updateFibonacciCalendarMapping } from './fibonacci-config';
-
-// Re-export data-input functions
-export { validateCsvData } from './data-input';
-
-// Export getter functions for mutable state
-export const getEstimationMode = () => appState.estimationMode;
-export const getEnableCost = () => appState.enableCost;

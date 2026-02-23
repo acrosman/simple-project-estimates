@@ -7,6 +7,8 @@ import {
   generateDataField,
   generateDataRow,
   createEntryTable,
+  gatherRawTaskData,
+  normalizeTaskData,
 } from '../task-table';
 import { appState } from '../state';
 
@@ -533,5 +535,311 @@ describe('rowClearClickHandler', () => {
     clearBtn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
 
     expect(taskInput.value).toBe('Something');
+  });
+});
+
+describe('gatherRawTaskData', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('reads standard-mode fields from a DOM row', () => {
+    document.body.innerHTML = `
+      <div id="DataEntryTable">
+        <div class="tr data-row" data-row-id="1">
+          <input name="Task" value="Build feature" />
+          <input name="Min Time" value="4" />
+          <input name="Max Time" value="8" />
+          <input name="Confidence" value="90" />
+          <input name="Cost" value="100" />
+          <input type="button" name="Clear Row" value="Clear Row" />
+        </div>
+      </div>
+    `;
+    const tasks = gatherRawTaskData();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].Name).toBe('Build feature');
+    expect(tasks[0].Min).toBe(4);
+    expect(tasks[0].Max).toBe(8);
+    expect(tasks[0].Confidence).toBeCloseTo(0.9);
+    expect(tasks[0].Cost).toBe(100);
+    expect(tasks[0].RowId).toBe('1');
+  });
+
+  test('reads fibonacci-mode fields from a DOM row', () => {
+    document.body.innerHTML = `
+      <div id="DataEntryTable">
+        <div class="tr data-row" data-row-id="2">
+          <input name="Task" value="Sprint task" />
+          <input name="Fibonacci" value="8" />
+          <input name="Confidence" value="80" />
+          <input type="button" name="Clear Row" value="Clear Row" />
+        </div>
+      </div>
+    `;
+    const tasks = gatherRawTaskData();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].Name).toBe('Sprint task');
+    expect(tasks[0].Fibonacci).toBe(8);
+    expect(tasks[0].Confidence).toBeCloseTo(0.8);
+    expect(tasks[0].RowId).toBe('2');
+  });
+
+  test('reads multiple rows', () => {
+    document.body.innerHTML = `
+      <div id="DataEntryTable">
+        <div class="tr data-row" data-row-id="1">
+          <input name="Task" value="Task A" />
+          <input name="Min Time" value="2" />
+          <input name="Max Time" value="6" />
+          <input name="Confidence" value="90" />
+          <input name="Cost" value="50" />
+        </div>
+        <div class="tr data-row" data-row-id="2">
+          <input name="Task" value="Task B" />
+          <input name="Min Time" value="4" />
+          <input name="Max Time" value="10" />
+          <input name="Confidence" value="80" />
+          <input name="Cost" value="75" />
+        </div>
+      </div>
+    `;
+    const tasks = gatherRawTaskData();
+    expect(tasks).toHaveLength(2);
+    expect(tasks[0].Name).toBe('Task A');
+    expect(tasks[1].Name).toBe('Task B');
+  });
+
+  test('returns empty array when no rows present', () => {
+    document.body.innerHTML = '<div id="DataEntryTable"></div>';
+    const tasks = gatherRawTaskData();
+    expect(tasks).toHaveLength(0);
+  });
+
+  test('reads T-Shirt field as raw string value', () => {
+    document.body.innerHTML = `
+      <div id="DataEntryTable">
+        <div class="tr data-row" data-row-id="3">
+          <input name="Task" value="Shirt task" />
+          <input name="T-Shirt" value="M" />
+          <input name="Confidence" value="90" />
+        </div>
+      </div>
+    `;
+    const tasks = gatherRawTaskData();
+    expect(tasks[0].TShirt).toBe('M');
+  });
+});
+
+describe('normalizeTaskData', () => {
+  let mockFibToCalendar;
+  let mockFibToVelocity;
+
+  beforeEach(() => {
+    mockFibToCalendar = jest.fn();
+    mockFibToVelocity = jest.fn();
+  });
+
+  test('passes hours mode tasks through without conversion', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task A', Min: 4, Max: 8, Confidence: 0.9, Cost: 100, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].Min).toBe(4);
+    expect(result[0].Max).toBe(8);
+    expect(mockFibToCalendar).not.toHaveBeenCalled();
+  });
+
+  test('converts fibonacci to min/max using calendar-days mapping', () => {
+    const mockState = {
+      estimationMode: 'fibonacci',
+      enableCost: true,
+      getFibonacciMode: () => 'calendar-days',
+      getVelocityConfig: () => ({ pointsPerSprint: 25, sprintLengthDays: 10 }),
+    };
+    const fibMappings = { 5: { min: 3, max: 7 } };
+    const tasks = [{
+      Name: 'Fib task', Fibonacci: 5, Confidence: 0.9, Cost: 50, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      fibMappings,
+      {},
+      (fib, m) => m[fib],
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].Min).toBe(3);
+    expect(result[0].Max).toBe(7);
+  });
+
+  test('converts fibonacci to min/max using velocity-based calculation', () => {
+    const mockState = {
+      estimationMode: 'fibonacci',
+      enableCost: true,
+      getFibonacciMode: () => 'velocity-based',
+      getVelocityConfig: () => ({ pointsPerSprint: 25, sprintLengthDays: 10 }),
+    };
+    const tasks = [{
+      Name: 'Velocity task', Fibonacci: 5, Confidence: 0.9, Cost: 50, RowId: '1',
+    }];
+    const mockVelocity = jest.fn(() => ({ min: 2, max: 4 }));
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockVelocity,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].Min).toBe(2);
+    expect(result[0].Max).toBe(4);
+    expect(mockVelocity).toHaveBeenCalledWith(5, 25, 10);
+  });
+
+  test('converts t-shirt size to min/max via fibonacci calendar days', () => {
+    const mockState = {
+      estimationMode: 'tshirt',
+      enableCost: true,
+    };
+    const tshirtMap = { M: 5 };
+    const fibMap = { 5: { min: 3, max: 7 } };
+    const tasks = [{
+      Name: 'Shirt task', TShirt: 'm', Confidence: 0.9, Cost: 50, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      fibMap,
+      tshirtMap,
+      (fib, m) => m[fib],
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].Min).toBe(3);
+    expect(result[0].Max).toBe(7);
+  });
+
+  test('defaults Cost to 0 when enableCost is false', () => {
+    const mockState = { estimationMode: 'hours', enableCost: false };
+    const tasks = [{
+      Name: 'Task A', Min: 2, Max: 5, Confidence: 0.9, Cost: 100, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result[0].Cost).toBe(0);
+  });
+
+  test('defaults Cost to 0 when value is NaN', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task A', Min: 2, Max: 5, Confidence: 0.9, Cost: NaN, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result[0].Cost).toBe(0);
+  });
+
+  test('filters out tasks with missing name', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: '', Min: 2, Max: 5, Confidence: 0.9, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  test('filters out tasks with min < 0', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task', Min: -1, Max: 5, Confidence: 0.9, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  test('filters out tasks where max < min', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task', Min: 10, Max: 5, Confidence: 0.9, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  test('filters out tasks where confidence is above 1', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task', Min: 2, Max: 5, Confidence: 1.5, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  test('filters out tasks where confidence is below 0', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task', Min: 2, Max: 5, Confidence: -0.1, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
   });
 });

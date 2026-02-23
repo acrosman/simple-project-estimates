@@ -6,6 +6,7 @@
 // test file receive the same mocked module instance.
 import * as idx from '../index';
 import * as sim from '../simulation';
+import { appState } from '../state';
 
 jest.mock('../simulation', () => {
   const actual = jest.requireActual('../simulation');
@@ -17,18 +18,8 @@ jest.mock('../simulation', () => {
 
 describe('Index Module Exports', () => {
   test('Validate exported functions exist', () => {
-    expect(idx).toHaveProperty('createTextElement');
-    expect(idx).toHaveProperty('createLabeledInput');
-    expect(idx).toHaveProperty('createDivWithIdAndClasses');
-    expect(idx).toHaveProperty('generateDataField');
     expect(idx).toHaveProperty('updateElementText');
     expect(idx).toHaveProperty('renderTaskRowHistograms');
-    expect(idx).toHaveProperty('isRowEmpty');
-    expect(idx).toHaveProperty('normalizeTshirtSize');
-    expect(idx).toHaveProperty('updateFibonacciCalendarMapping');
-    expect(idx).toHaveProperty('updateTshirtMapping');
-    expect(idx).toHaveProperty('handleFibonacciModeChange');
-    expect(idx).toHaveProperty('handleVelocityConfigChange');
     expect(idx).toHaveProperty('applyGraphSettings');
     expect(idx).toHaveProperty('resetGraphSettings');
     expect(idx).toHaveProperty('createLogoElement');
@@ -37,14 +28,6 @@ describe('Index Module Exports', () => {
     expect(idx).toHaveProperty('createAdvancedSettings');
     expect(idx).toHaveProperty('createSimulationPanel');
     expect(idx).toHaveProperty('setupUi');
-  });
-
-  test('Validate exported state exists', () => {
-    expect(idx).toHaveProperty('getEstimationMode');
-    expect(idx).toHaveProperty('fibonacciCalendarMappings');
-    expect(idx).toHaveProperty('tshirtMappings');
-    expect(idx).toHaveProperty('getEnableCost');
-    expect(idx).toHaveProperty('appState');
   });
 });
 
@@ -163,7 +146,7 @@ describe('renderTaskRowHistograms', () => {
   });
 
   test('uses days as time unit in fibonacci estimation mode', () => {
-    idx.appState.estimationMode = 'fibonacci';
+    appState.estimationMode = 'fibonacci';
     document.body.innerHTML = `
       <div class="task-row-graph" data-row-id="1"></div>
       <div class="task-row-stats" data-row-id="1"></div>
@@ -184,7 +167,7 @@ describe('renderTaskRowHistograms', () => {
 
     const statsNode = document.querySelector('.task-row-stats[data-row-id="1"]');
     expect(statsNode.innerHTML).toContain('days');
-    idx.appState.estimationMode = 'hours';
+    appState.estimationMode = 'hours';
   });
 });
 
@@ -980,14 +963,14 @@ describe('startSimulation', () => {
   beforeEach(() => {
     mockEvent = { preventDefault: jest.fn() };
     sim.runSimulationProgressive.mockResolvedValue(makeSimResults());
-    idx.appState.estimationMode = 'hours';
-    idx.appState.enableCost = true;
+    appState.estimationMode = 'hours';
+    appState.enableCost = true;
   });
 
   afterEach(() => {
     jest.clearAllMocks();
     document.body.innerHTML = '';
-    idx.appState.reset();
+    appState.reset();
   });
 
   test('calls event.preventDefault', async () => {
@@ -1075,7 +1058,7 @@ describe('startSimulation', () => {
   });
 
   test('does not display cost results when cost is disabled', async () => {
-    idx.appState.enableCost = false;
+    appState.enableCost = false;
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
@@ -1209,7 +1192,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
-    idx.appState.enableCost = true;
+    appState.enableCost = true;
 
     sim.runSimulationProgressive.mockImplementation(async (passes, data, onProgress) => {
       onProgress({
@@ -1264,37 +1247,5 @@ describe('createSimulationPanel save button click handlers', () => {
   test('save cost JPEG button triggers saveSvgAsImage for costHistoGram', () => {
     document.getElementById('saveCostJpegBtn').click();
     expect(document.getElementById('costHistoGram').querySelector('.error-message')).not.toBeNull();
-  });
-});
-
-describe('getEstimationMode', () => {
-  afterEach(() => {
-    idx.appState.reset();
-  });
-
-  test('returns the current estimation mode from appState', () => {
-    idx.appState.estimationMode = 'fibonacci';
-    expect(idx.getEstimationMode()).toBe('fibonacci');
-  });
-
-  test('reflects updated estimation mode', () => {
-    idx.appState.estimationMode = 'tshirt';
-    expect(idx.getEstimationMode()).toBe('tshirt');
-  });
-});
-
-describe('getEnableCost', () => {
-  afterEach(() => {
-    idx.appState.reset();
-  });
-
-  test('returns true when cost tracking is enabled', () => {
-    idx.appState.enableCost = true;
-    expect(idx.getEnableCost()).toBe(true);
-  });
-
-  test('returns false when cost tracking is disabled', () => {
-    idx.appState.enableCost = false;
-    expect(idx.getEnableCost()).toBe(false);
   });
 });
