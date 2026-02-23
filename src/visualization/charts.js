@@ -94,8 +94,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
 
   const useBars = (xMax - xMin) < barCutoff;
 
-  const sortedData = [...data].sort((a, b) => a - b);
-  const yMax = sortedData[sortedData.length - 1];
+  const yMax = data.reduce((acc, val) => (val > acc ? val : acc), 0);
 
   const x = d3.scaleLinear()
     .domain([0, (xMax - xMin)])
