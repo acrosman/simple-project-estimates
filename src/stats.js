@@ -19,16 +19,16 @@ function getRandom(minimum, maximum) {
  * 80% gives us max * 2.
  * 70% max * 3.
  * And so on.
- * @param {*} maxEstimate
- * @param {*} confidence
- * @returns Integer
+ * @param {number} maxEstimate
+ * @param {number} confidence
+ * @returns {number} Integer upper bound for this task
  */
 function taskUpperBound(maxEstimate, confidence) {
   // Calculate multiplier based on confidence level
   // 100% conf = 1x, 90% = 1x, 80% = 2x, 70% = 3x, etc.
   const confidencePercent = Math.round(confidence * 100);
   const multiplier = Math.max(1, Math.ceil((100 - confidencePercent) / 10));
-  const boundary = maxEstimate * multiplier;
+  const boundary = Math.ceil(maxEstimate * multiplier);
   return boundary;
 }
 

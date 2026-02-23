@@ -33,14 +33,14 @@ function generateDataField(label, fieldValue, fieldType, rowId, isRequired = fal
   const values = {
     type: fieldType,
     value: fieldValue,
-    'aria-label': label,
     name: label,
   };
-  if (isRequired) {
-    values['aria-required'] = 'true';
-    values.required = true;
-  }
   Object.assign(element, values);
+  element.setAttribute('aria-label', label);
+  if (isRequired) {
+    element.setAttribute('aria-required', 'true');
+    element.required = true;
+  }
   element.dataset.rowId = rowId;
 
   cell.appendChild(element);
