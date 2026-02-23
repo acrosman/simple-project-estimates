@@ -1217,7 +1217,13 @@ describe('startSimulation', () => {
           min: 1, max: 3, list: [0, 1, 3, 1], median: 2, sd: 0.5, likelyMin: 1, likelyMax: 3,
         },
         costs: {
-          min: 100, max: 300, list: [0, 1, 3, 1], median: 200, sd: 50, likelyMin: 100, likelyMax: 300,
+          min: 100,
+          max: 300,
+          list: [0, 1, 3, 1],
+          median: 200,
+          sd: 50,
+          likelyMin: 100,
+          likelyMax: 300,
         },
       });
       return makeSimResults();
