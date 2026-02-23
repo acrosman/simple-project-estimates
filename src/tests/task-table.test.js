@@ -106,7 +106,7 @@ describe('generateDataField', () => {
     expect(input.type).toBe('number');
     expect(input.value).toBe('10');
     expect(input.name).toBe('Min Time');
-    expect(input['aria-label']).toBe('Min Time');
+    expect(input.getAttribute('aria-label')).toBe('Min Time');
     expect(input.dataset.rowId).toBe('2');
   });
 
@@ -138,7 +138,7 @@ describe('generateDataField', () => {
     const cell = generateDataField('Task', 'My Task', 'text', 1, true);
     const input = cell.querySelector('input');
 
-    expect(input['aria-required']).toBe('true');
+    expect(input.getAttribute('aria-required')).toBe('true');
     expect(input.required).toBe(true);
   });
 
