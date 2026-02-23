@@ -7,7 +7,7 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
 ## Tech Stack
 
 - **JavaScript ES6+** with Webpack 5
-- **D3.js v7** for data visualization
+- **D3.js v7** and **d3-fetch** for data visualization and CSV loading
 - **Jest** for testing
 - **ESLint** with Airbnb style guide
 
@@ -15,11 +15,14 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
 
 ### ESLint Rules
 
+- Always run a lint check before finishing
 - Use `for...of` loops (allowed), avoid `for...in`
 - Always use JSDoc comments for functions and classes
 - Use const for constants, let for variables, no var
 - Use template literals for string concatenation
 - Use Object destructuring for function parameters and object access
+- Lines should be no more than 100 characters long
+- Object properties must go on a new line if they aren't all on the same line
 
 ### Naming Conventions
 
@@ -28,34 +31,61 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
 - DOM elements: descriptive names (`taskField`, `resultContainer`)
 - CSS classes: kebab-case (`data-row`, `histogram-container`)
 
-### Function Structure
-
-```javascript
-/**
- * Brief description of what the function does.
- * @param {type} paramName Description
- * @returns type Description
- */
-function functionName(paramName) {
-  // Implementation
-}
-```
-
 ## Architecture
 
 ### Core Modules
 
-- **src/simulation.js**: Pure mathematical functions (no DOM manipulation)
-  - Statistical calculations (median, std dev)
-  - Monte Carlo simulation engine
-  - D3 histogram generation
-  - All functions should be testable in isolation
+- **src/stats.js**: Pure math and statistics — no DOM, no D3; all functions are fully testable in isolation
+  - `generateEstimate(min, max, confidence)` - Single task estimate
+  - `getMedian(data)` - Calculate median from histogram array
+  - `getStandardDeviation(data)` - Calculate std dev from histogram array
+  - `taskUpperBound(maxEstimate, confidence)` - Worst-case upper bound for one task
+  - `taskLowerBound(minEstimate, confidence)` - Best-case lower bound for one task
+  - `getRandom`, `getValueCount`, `calculateKDE`, `calculateUpperBound`
 
-- **src/index.js**: UI and user interaction
-  - DOM manipulation and event handlers
-  - CSV parsing and file handling
-  - Form generation and validation
-  - Display formatting
+- **src/charts.js**: D3 visualization and graph configuration; imports `calculateKDE` from `stats.js`; everything else is D3
+  - `buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limitGraph)` - Final D3 histogram
+  - `buildHistogramPreview(targetNode, list, min, max, xLabel)` - Fast bucketed preview during progressive runs
+  - `buildTaskRowHistogram(targetNode, list, min, max, taskName)` - Compact per-task mini graph
+  - `GRAPH_CONFIG` - Mutable graph settings object (modified by Advanced Settings UI)
+  - `GRAPH_CONFIG_DEFAULTS` - Frozen copy of original defaults for reset operations
+
+- **src/simulation.js**: Simulation engine; re-exports selected symbols from `stats.js` and `charts.js` for backward compatibility; no direct D3 usage
+  - `runSimulation(passes, data, hoursPerTimeUnit)` - Synchronous simulation entry
+  - `runSimulationProgressive(passes, data, hoursPerTimeUnit)` - Async simulation with progress callbacks; returns a Promise
+  - `fibonacciToCalendarDays(fibonacci, mappings)` - Story points → calendar day range
+  - `fibonacciToVelocityDays(fibonacci, pointsPerSprint, sprintLengthDays)` - Story points → velocity-based day range
+
+- **src/data-input.js**: CSV parsing, data validation, and top-level data entry UI assembly
+  - `handleCostToggle`, `handleModeChange`, `validateCsvData`, `importCsvFile`
+  - `createModeSelector`, `createFileLoader`, `createDataEntrySection`
+
+- **src/state.js**: Application state (`AppState` class)
+  - Estimation mode, cost toggle, velocity config
+  - Fibonacci calendar and T-shirt mappings
+
+- **src/dom-helpers.js**: Reusable DOM element factories — no state, no D3
+  - `createTextElement`, `createLabeledInput`, `createDivWithIdAndClasses`
+  - Preferred over raw `document.createElement` patterns elsewhere in the codebase
+
+- **src/task-table.js**: Task data-entry table creation and row lifecycle
+  - Renders the manual task input table; handles row add/remove
+
+- **src/fibonacci-config.js**: Fibonacci/velocity configuration UI panel
+  - `handleFibonacciModeChange`, `handleVelocityConfigChange`
+  - `createFibonacciConfigPanel`, `createFibonacciCalendarMappingTable`
+
+- **src/tshirt-config.js**: T-shirt size mapping configuration UI panel
+  - `createTshirtMappingTable`, `updateTshirtMapping`
+
+- **src/index.js**: UI orchestration and event handlers
+  - Wires together data-input, simulation, and charts
+  - `startSimulation`, `renderTaskRowHistograms`, `saveSvgAsImage`
+  - `applyGraphSettings`, `resetGraphSettings`
+  - No direct math or D3 calls — delegates to the appropriate module
+
+- **src/export-utils.js**: Utilities for exporting results (CSV/SVG/PNG helpers)
+- **src/graph-settings.js**: Central mutable graph settings and helpers referenced by UI
 
 ### Data Flow
 
@@ -84,15 +114,10 @@ All parameters and settings in the project should be configurable via the UI and
 
 ### Risk Calculation
 
-```javascript
-// Lower confidence = higher risk of overrun
-// 90% conf: upper = max × 1
-// 80% conf: upper = max × 2
-// 70% conf: upper = max × 3
-const confidencePercent = Math.round(confidence * 100);
-const multiplier = Math.max(1, Math.ceil((100 - confidencePercent) / 10));
-upperBound = maxEstimate * multiplier;
-```
+Converts the task `confidence` (a 0–1 value) to a percentage, then computes a conservative
+multiplier based on how far that percentage is below 100% (grouped into 10% bands, with a
+minimum multiplier of 1). The multiplier is applied to the task's maximum estimate to
+produce a risk-adjusted upper bound used for overrun scenarios.
 
 ### Simulation Logic
 
@@ -114,15 +139,24 @@ Array where index = value, cell = frequency count
 
 ### Creating DOM Elements
 
-```javascript
-// Text element with classes
-const el = document.createElement("div");
-el.appendChild(document.createTextNode("Content"));
-el.classList.add("class1", "class2");
+Prefer helpers from `dom-helpers.js` over raw `document.createElement`:
 
-// Input with attributes
-const input = document.createElement("input");
-Object.assign(input, { type: "number", value: 10, name: "fieldName" });
+```javascript
+// Text element (any tag)
+const el = createTextElement('h2', 'Title Text', ['my-class']);
+
+// Labeled input wrapped in a div
+const field = createLabeledInput('Field Label', { type: 'number', value: 10, name: 'fieldName' });
+
+// Div with id and classes
+const container = createDivWithIdAndClasses('my-id', ['class1', 'class2']);
+```
+
+For inputs not covered by helpers, use `Object.assign()` for multiple attributes:
+
+```javascript
+const input = document.createElement('input');
+Object.assign(input, { type: 'number', value: 10, name: 'fieldName' });
 ```
 
 ### D3 Visualization
@@ -143,24 +177,32 @@ test("GetMedian: Simple", () => {
 });
 ```
 
+Do not test functions using superfluous trailing arguments.
+
+Use
+  `handleVelocityConfigChange();`
+Not
+  `handleVelocityConfigChange({});`
+
 ## When Adding Features
 
 ### New Simulation Parameters
 
 1. Add to task data model
-2. Update `generateDataRow()` for UI input
-3. Update CSV parsing logic
+2. Update task row UI in `task-table.js` (`generateDataField`)
+3. Update CSV parsing logic in `data-input.js`
 4. Modify `generateEstimate()` or `runSimulation()`
 5. Add to sample.csv
 6. Write unit tests
 
 ### New Statistical Measures
 
-1. Create pure function in `simulation.js`
+1. Create pure function in `stats.js`
 2. Export for testing: `export { functionName }`
-3. Call from `runSimulation()` return object
-4. Display in UI (index.js)
-5. Add Jest tests with edge cases
+3. Re-export from `simulation.js` if callers need it via that module
+4. Call from `runSimulation()` return object if needed
+5. Display in UI (`index.js`)
+6. Add Jest tests in `src/tests/stats.test.js` with edge cases
 
 ### UI Components
 
@@ -173,26 +215,25 @@ test("GetMedian: Simple", () => {
 
 ### What to Test
 
-- All pure math functions in simulation.js
+- Every function you create, you must create a test for it.
+- All pure math functions in `stats.js` (`stats.test.js`)
+- Graph config structure and histogram builder guards in `charts.test.js`
+- Simulation engine behavior in `simulation.test.js`
+- DOM helper utilities in `dom-helpers.test.js`
+- Task table creation and row logic in `task-table.test.js`
+- Fibonacci config panel and velocity handlers in `fibonacci-config.test.js`
+- T-shirt mapping logic in `tshirt-config.test.js`
 - Edge cases: empty arrays, single values, gaps in data
 - Random functions: verify output ranges
 - Statistical accuracy with known datasets
 
 ### What Not to Test
 
-- D3 rendering (mocked)
+- D3 rendering (mocked via `__mocks__/d3Mock.js`)
+- CSS imports (mocked via `__mocks__/styleMock.js`)
+- Image/file imports (mocked via `__mocks__/fileMock.js`)
 - DOM manipulation (integration test territory)
 - File I/O (mocked)
-
-### Test Structure
-
-```javascript
-test('Function: Scenario', () => {
-  const input = /* test data */;
-  const result = functionUnderTest(input);
-  expect(result).toBe(expected);
-});
-```
 
 ## Performance Notes
 
@@ -202,85 +243,34 @@ test('Function: Scenario', () => {
 - Avoid `Math.max(...array)` for large arrays (can overflow stack)
 - Instead: `[...array].sort((a,b) => a-b)[array.length-1]`
 
-## D3 Patterns
-
-### Standard Setup
-
-```javascript
-const svg = d3
-  .select(targetNode)
-  .append("svg")
-  .attr("width", width + margin.left + margin.right)
-  .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-  .attr("transform", `translate(${margin.left},${margin.top})`);
-```
-
-### Axes
-
-```javascript
-const xAxis = d3.axisBottom().scale(xScale);
-const yAxis = d3.axisLeft().scale(yScale).ticks(8);
-```
-
-### Data Binding
-
-```javascript
-svg
-  .selectAll(".bar")
-  .data(dataArray)
-  .enter()
-  .append("rect")
-  .attr("class", "bar")
-  .attr("x", (d, i) => xScale(i))
-  .attr("width", barWidth)
-  .attr("y", (d) => yScale(d))
-  .attr("height", (d) => height - yScale(d));
-```
-
 ## File Modification Guide
 
-| Task                 | Files to Modify                                     |
-| -------------------- | --------------------------------------------------- |
-| Simulation algorithm | `src/simulation.js`, `src/tests/simulation.test.js` |
-| UI/UX changes        | `src/index.js`, `src/style.css`, `src/index.html`   |
-| Data format          | `src/index.js` (parsing), `src/data/sample.csv`     |
-| Build config         | `webpack.config.js`                                 |
-| Code style           | `.eslintrc.js`                                      |
-| Tests                | `src/tests/simulation.test.js`                      |
+| Task                        | Files to Modify                                                          |
+| --------------------------- | ------------------------------------------------------------------------ |
+| Math / statistics functions | `src/stats.js`, `src/tests/stats.test.js`                                |
+| Simulation engine           | `src/simulation.js`, `src/tests/simulation.test.js`                      |
+| D3 charts / graph config    | `src/charts.js`, `src/tests/charts.test.js`                              |
+| UI orchestration            | `src/index.js`, `src/style.css`, `src/index.html`                        |
+| Form / data entry           | `src/data-input.js`, `src/tests/data-input.test.js`                      |
+| Task input table            | `src/task-table.js`, `src/tests/task-table.test.js`                      |
+| DOM element helpers         | `src/dom-helpers.js`, `src/tests/dom-helpers.test.js`                    |
+| Fibonacci config UI         | `src/fibonacci-config.js`, `src/tests/fibonacci-config.test.js`          |
+| T-shirt config UI           | `src/tshirt-config.js`, `src/tests/tshirt-config.test.js`                |
+| Application state           | `src/state.js`, `src/tests/state.test.js`                                |
+| Data format / CSV           | `src/data-input.js` (parsing), `src/data/sample.csv`                     |
+| Build config                | `webpack.config.js`                                                      |
+| Code style                  | `.eslintrc.js`                                                           |
 
 ## Common Pitfalls
 
 ### Don't
 
 - Use `innerHTML` for user-generated content (XSS risk)
-- Call D3 functions in simulation.js (keep it pure)
+- Add D3 or DOM code to `stats.js` (keep it pure math)
+- Add math or statistics logic to `charts.js` or `index.js`
 - Forget to validate min < max and 0 <= confidence <= 1
 - Modify DOM directly in event handlers (use helper functions)
 - Call `Math.max(...largeArray)` (stack overflow)
-
-### Do
-
-- Export functions from simulation.js for testing
-- Keep simulation logic separate from UI logic
-- Use `Object.assign()` for multiple attributes
-- Clear existing visualizations before creating new ones
-- Round numbers for display but calculate with full precision
-
-## Dependencies
-
-### Core
-
-- `d3` and `d3-fetch`: Data visualization and CSV loading
-- `webpack` ecosystem: Build and dev server
-- `jest`: Testing framework
-- `eslint`: Code quality
-
-### Mocked in Tests
-
-- D3 modules → `__mocks__/d3Mock.js`
-- CSS imports → `__mocks__/styleMock.js`
-- Image/file imports → `__mocks__/fileMock.js`
 
 ## Build Process
 
@@ -288,8 +278,6 @@ svg
 - Template: `src/index.html`
 - Output: `dist/main.js`
 - Dev mode: `inline-source-map`
-- CSS: Injected via style-loader
-- Assets: Copied to dist with unique hashes
 
 ## Quick Reference
 
@@ -301,11 +289,3 @@ svg
 - `npm run build` - Create dist bundle
 
 Run tests in VSCode whenever possible. Don't use npm by default for that purpose.
-
-### Key Functions to Remember
-
-- `runSimulation(tasks, runs, useCost)` - Main simulation entry
-- `generateEstimate(min, max, confidence)` - Single task estimate
-- `buildHistogram(...)` - Create D3 visualization
-- `getMedian(data)` - Calculate median from histogram
-- `getStandardDeviation(data)` - Calculate std dev

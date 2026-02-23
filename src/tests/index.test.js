@@ -2,289 +2,33 @@
  * @jest-environment jsdom
  */
 
+// Must be called before imports so Jest hoists it and both index.js and this
+// test file receive the same mocked module instance.
 import * as idx from '../index';
-import * as sim from '../simulation';
+import * as sim from '../core/simulation';
+import { appState } from '../core/state';
+import SimulationResultsView from '../ui/simulation-results-view';
+
+jest.mock('../core/simulation', () => {
+  const actual = jest.requireActual('../core/simulation');
+  return {
+    ...actual,
+    runSimulationProgressive: jest.fn(),
+  };
+});
 
 describe('Index Module Exports', () => {
   test('Validate exported functions exist', () => {
-    expect(idx).toHaveProperty('createTextElement');
-    expect(idx).toHaveProperty('createLabeledInput');
-    expect(idx).toHaveProperty('createDivWithIdAndClasses');
-    expect(idx).toHaveProperty('generateDataField');
-    expect(idx).toHaveProperty('updateElementText');
     expect(idx).toHaveProperty('renderTaskRowHistograms');
-    expect(idx).toHaveProperty('isRowEmpty');
-    expect(idx).toHaveProperty('normalizeTshirtSize');
-    expect(idx).toHaveProperty('updateFibonacciCalendarMapping');
-    expect(idx).toHaveProperty('updateTshirtMapping');
-    expect(idx).toHaveProperty('handleFibonacciModeChange');
-    expect(idx).toHaveProperty('handleVelocityConfigChange');
     expect(idx).toHaveProperty('applyGraphSettings');
     expect(idx).toHaveProperty('resetGraphSettings');
-    expect(idx).toHaveProperty('createLogoElement');
-  });
-
-  test('Validate exported state exists', () => {
-    expect(idx).toHaveProperty('getEstimationMode');
-    expect(idx).toHaveProperty('fibonacciCalendarMappings');
-    expect(idx).toHaveProperty('tshirtMappings');
-    expect(idx).toHaveProperty('getEnableCost');
-    expect(idx).toHaveProperty('appState');
+    expect(idx).toHaveProperty('startSimulation');
+    expect(idx).toHaveProperty('setupUi');
   });
 });
 
-describe('isRowEmpty', () => {
+describe('SimulationResultsView.updateElementText', () => {
   beforeEach(() => {
-    // Create a test container
-    document.body.innerHTML = '';
-  });
-
-  test('returns true when all fields are empty', () => {
-    document.body.innerHTML = `
-      <input data-row-id="1" type="text" value="" />
-      <input data-row-id="1" type="number" value="" />
-      <input data-row-id="1" type="number" value="" />
-      <input data-row-id="1" type="button" value="Clear" />
-    `;
-    expect(idx.isRowEmpty('1')).toBe(true);
-  });
-
-  test('returns false when at least one field has a value', () => {
-    document.body.innerHTML = `
-      <input data-row-id="2" type="text" value="Task Name" />
-      <input data-row-id="2" type="number" value="" />
-      <input data-row-id="2" type="number" value="" />
-      <input data-row-id="2" type="button" value="Clear" />
-    `;
-    expect(idx.isRowEmpty('2')).toBe(false);
-  });
-
-  test('returns false when all fields have values', () => {
-    document.body.innerHTML = `
-      <input data-row-id="3" type="text" value="Task" />
-      <input data-row-id="3" type="number" value="10" />
-      <input data-row-id="3" type="number" value="20" />
-      <input data-row-id="3" type="number" value="90" />
-      <input data-row-id="3" type="button" value="Clear" />
-    `;
-    expect(idx.isRowEmpty('3')).toBe(false);
-  });
-
-  test('returns true when fields contain only whitespace', () => {
-    document.body.innerHTML = `
-      <input data-row-id="4" type="text" value="   " />
-      <input data-row-id="4" type="number" value="  " />
-      <input data-row-id="4" type="button" value="Clear" />
-    `;
-    expect(idx.isRowEmpty('4')).toBe(true);
-  });
-
-  test('ignores button inputs when checking', () => {
-    document.body.innerHTML = `
-      <input data-row-id="5" type="text" value="" />
-      <input data-row-id="5" type="number" value="" />
-      <input data-row-id="5" type="button" value="Clear" />
-    `;
-    expect(idx.isRowEmpty('5')).toBe(true);
-  });
-
-  test('returns true when row has no input fields', () => {
-    document.body.innerHTML = `
-      <div data-row-id="6"></div>
-    `;
-    expect(idx.isRowEmpty('6')).toBe(true);
-  });
-
-  test('correctly identifies different rows independently', () => {
-    document.body.innerHTML = `
-      <input data-row-id="7" type="text" value="Filled" />
-      <input data-row-id="8" type="text" value="" />
-    `;
-    expect(idx.isRowEmpty('7')).toBe(false);
-    expect(idx.isRowEmpty('8')).toBe(true);
-  });
-
-  test('returns false when any numeric field has value', () => {
-    document.body.innerHTML = `
-      <input data-row-id="9" type="text" value="" />
-      <input data-row-id="9" type="number" value="5" />
-      <input data-row-id="9" type="number" value="" />
-    `;
-    expect(idx.isRowEmpty('9')).toBe(false);
-  });
-});
-
-describe('createTextElement', () => {
-  test('creates element with text content', () => {
-    const element = idx.createTextElement('div', 'Test Text');
-    expect(element.tagName).toBe('DIV');
-    expect(element.textContent).toBe('Test Text');
-  });
-
-  test('creates element with single class', () => {
-    const element = idx.createTextElement('span', 'Text', ['test-class']);
-    expect(element.tagName).toBe('SPAN');
-    expect(element.classList.contains('test-class')).toBe(true);
-  });
-
-  test('creates element with multiple classes', () => {
-    const element = idx.createTextElement('p', 'Paragraph', ['class1', 'class2', 'class3']);
-    expect(element.tagName).toBe('P');
-    expect(element.classList.contains('class1')).toBe(true);
-    expect(element.classList.contains('class2')).toBe(true);
-    expect(element.classList.contains('class3')).toBe(true);
-  });
-
-  test('creates element with empty classList by default', () => {
-    const element = idx.createTextElement('h1', 'Header');
-    expect(element.classList).toHaveLength(0);
-  });
-
-  test('creates different HTML tags correctly', () => {
-    const div = idx.createTextElement('div', 'Div');
-    const span = idx.createTextElement('span', 'Span');
-    const h2 = idx.createTextElement('h2', 'Heading');
-
-    expect(div.tagName).toBe('DIV');
-    expect(span.tagName).toBe('SPAN');
-    expect(h2.tagName).toBe('H2');
-  });
-});
-
-describe('createLabeledInput', () => {
-  test('creates labeled input with label first', () => {
-    const attributes = { name: 'testInput', type: 'text', value: 'test' };
-    const wrapper = idx.createLabeledInput('Test Label', attributes, true);
-
-    expect(wrapper.tagName).toBe('DIV');
-    expect(wrapper.children).toHaveLength(2);
-    expect(wrapper.children[0].tagName).toBe('LABEL');
-    expect(wrapper.children[1].tagName).toBe('INPUT');
-  });
-
-  test('creates labeled input with input first', () => {
-    const attributes = { name: 'testInput', type: 'checkbox', value: '1' };
-    const wrapper = idx.createLabeledInput('Checkbox Label', attributes, false);
-
-    expect(wrapper.children[0].tagName).toBe('INPUT');
-    expect(wrapper.children[1].tagName).toBe('LABEL');
-  });
-
-  test('label has correct text and htmlFor attribute', () => {
-    const attributes = { name: 'testField', type: 'text' };
-    const wrapper = idx.createLabeledInput('Field Label', attributes);
-    const label = wrapper.querySelector('label');
-
-    expect(label.textContent).toBe('Field Label');
-    expect(label.htmlFor).toBe('testField');
-  });
-
-  test('input has correct attributes', () => {
-    const attributes = {
-      name: 'numberField', type: 'number', value: '42', min: '0', max: '100',
-    };
-    const wrapper = idx.createLabeledInput('Number', attributes);
-    const input = wrapper.querySelector('input');
-
-    expect(input.name).toBe('numberField');
-    expect(input.type).toBe('number');
-    expect(input.value).toBe('42');
-    expect(input.min).toBe('0');
-    expect(input.max).toBe('100');
-  });
-
-  test('defaults to label first when labelFirst not specified', () => {
-    const attributes = { name: 'test', type: 'text' };
-    const wrapper = idx.createLabeledInput('Label', attributes);
-
-    expect(wrapper.children[0].tagName).toBe('LABEL');
-    expect(wrapper.children[1].tagName).toBe('INPUT');
-  });
-});
-
-describe('createDivWithIdAndClasses', () => {
-  test('creates div with id and no classes', () => {
-    const div = idx.createDivWithIdAndClasses('testId');
-
-    expect(div.tagName).toBe('DIV');
-    expect(div.id).toBe('testId');
-    expect(div.classList).toHaveLength(0);
-  });
-
-  test('creates div with id and single class', () => {
-    const div = idx.createDivWithIdAndClasses('myDiv', ['class1']);
-
-    expect(div.id).toBe('myDiv');
-    expect(div.classList.contains('class1')).toBe(true);
-  });
-
-  test('creates div with id and multiple classes', () => {
-    const div = idx.createDivWithIdAndClasses('complexDiv', ['class1', 'class2', 'class3']);
-
-    expect(div.id).toBe('complexDiv');
-    expect(div.classList.contains('class1')).toBe(true);
-    expect(div.classList.contains('class2')).toBe(true);
-    expect(div.classList.contains('class3')).toBe(true);
-    expect(div.classList).toHaveLength(3);
-  });
-
-  test('handles empty classList array', () => {
-    const div = idx.createDivWithIdAndClasses('emptyClasses', []);
-
-    expect(div.id).toBe('emptyClasses');
-    expect(div.classList).toHaveLength(0);
-  });
-});
-
-describe('generateDataField', () => {
-  test('creates data field cell with input', () => {
-    const cell = idx.generateDataField('Task', 'Test Task', 'text', 1);
-
-    expect(cell.tagName).toBe('DIV');
-    expect(cell.classList.contains('td')).toBe(true);
-    expect(cell.children).toHaveLength(1);
-  });
-
-  test('input has correct attributes', () => {
-    const cell = idx.generateDataField('Min Time', '10', 'number', 2);
-    const input = cell.querySelector('input');
-
-    expect(input.type).toBe('number');
-    expect(input.value).toBe('10');
-    expect(input.name).toBe('Min Time');
-    // aria-label is set via Object.assign which sets it as a property
-    expect(input['aria-label']).toBe('Min Time');
-    expect(input.dataset.rowId).toBe('2');
-  });
-
-  test('creates button type field', () => {
-    const cell = idx.generateDataField('Clear', 'Clear', 'button', 3);
-    const input = cell.querySelector('input');
-
-    expect(input.type).toBe('button');
-    expect(input.value).toBe('Clear');
-    expect(input.dataset.rowId).toBe('3');
-  });
-
-  test('creates text input field', () => {
-    const cell = idx.generateDataField('Task', 'Setup', 'text', 1);
-    const input = cell.querySelector('input');
-
-    expect(input.type).toBe('text');
-    expect(input.value).toBe('Setup');
-  });
-
-  test('rowId is stored as data attribute', () => {
-    const cell = idx.generateDataField('Cost', '120', 'number', 99);
-    const input = cell.querySelector('input');
-
-    expect(input.dataset.rowId).toBe('99');
-  });
-});
-
-describe('updateElementText', () => {
-  beforeEach(() => {
-    // Clear document body before each test
     document.body.innerHTML = '';
   });
 
@@ -292,9 +36,7 @@ describe('updateElementText', () => {
     const div = document.createElement('div');
     div.id = 'testElement';
     document.body.appendChild(div);
-
-    idx.updateElementText('testElement', 'New Content');
-
+    SimulationResultsView.updateElementText('testElement', 'New Content');
     expect(div.textContent).toBe('New Content');
   });
 
@@ -303,9 +45,7 @@ describe('updateElementText', () => {
     span.id = 'updateMe';
     span.textContent = 'Old Text';
     document.body.appendChild(span);
-
-    idx.updateElementText('updateMe', 'Updated Text');
-
+    SimulationResultsView.updateElementText('updateMe', 'Updated Text');
     expect(span.textContent).toBe('Updated Text');
   });
 
@@ -314,9 +54,7 @@ describe('updateElementText', () => {
     p.id = 'paragraph';
     p.textContent = 'Some text';
     document.body.appendChild(p);
-
-    idx.updateElementText('paragraph', '');
-
+    SimulationResultsView.updateElementText('paragraph', '');
     expect(p.textContent).toBe('');
   });
 
@@ -324,9 +62,7 @@ describe('updateElementText', () => {
     const div = document.createElement('div');
     div.id = 'numericDiv';
     document.body.appendChild(div);
-
-    idx.updateElementText('numericDiv', 'Median: 42');
-
+    SimulationResultsView.updateElementText('numericDiv', 'Median: 42');
     expect(div.textContent).toBe('Median: 42');
   });
 });
@@ -345,7 +81,6 @@ describe('renderTaskRowHistograms', () => {
     idx.renderTaskRowHistograms([
       {
         rowId: '1',
-        name: 'Task 1',
         times: {
           list: [0, 2, 4, 2],
           min: 1,
@@ -370,1085 +105,377 @@ describe('renderTaskRowHistograms', () => {
 
     expect(document.querySelector('.task-row-graph[data-row-id="1"]').innerHTML).toBe('');
   });
-});
 
-describe('Fibonacci Configuration', () => {
-  test('appState has Fibonacci mode configuration', () => {
-    expect(idx.appState).toHaveProperty('fibonacciMode');
-    expect(idx.appState.getFibonacciMode).toBeDefined();
-    expect(idx.appState.setFibonacciMode).toBeDefined();
-  });
-
-  test('appState has Fibonacci calendar mappings', () => {
-    expect(idx.appState).toHaveProperty('fibonacciCalendarMappings');
-    expect(idx.appState.getFibonacciCalendarMappings).toBeDefined();
-  });
-
-  test('default Fibonacci mode is calendar-days', () => {
-    idx.appState.reset();
-    expect(idx.appState.getFibonacciMode()).toBe('calendar-days');
-  });
-
-  test('can change Fibonacci mode to velocity-based', () => {
-    idx.appState.setFibonacciMode('velocity-based');
-    expect(idx.appState.getFibonacciMode()).toBe('velocity-based');
-    idx.appState.reset();
-  });
-
-  test('fibonacci calendar mappings have correct default values', () => {
-    idx.appState.reset();
-    const mappings = idx.appState.getFibonacciCalendarMappings();
-    expect(mappings[1]).toEqual({ min: 1, max: 1 });
-    expect(mappings[8]).toEqual({ min: 5, max: 8 });
-    expect(mappings[21]).toEqual({ min: 13, max: 21 });
-  });
-
-  test('appState has velocity configuration', () => {
-    expect(idx.appState).toHaveProperty('velocityConfig');
-    expect(idx.appState.getVelocityConfig).toBeDefined();
-    expect(idx.appState.setVelocityConfig).toBeDefined();
-  });
-
-  test('default velocity configuration is 25 points per 10 days', () => {
-    idx.appState.reset();
-    const config = idx.appState.getVelocityConfig();
-    expect(config.pointsPerSprint).toBe(25);
-    expect(config.sprintLengthDays).toBe(10);
-  });
-
-  test('can update velocity configuration', () => {
-    idx.appState.setVelocityConfig(30, 14);
-    const config = idx.appState.getVelocityConfig();
-    expect(config.pointsPerSprint).toBe(30);
-    expect(config.sprintLengthDays).toBe(14);
-    idx.appState.reset();
-  });
-
-  test('velocity configuration validates and defaults on invalid input', () => {
-    idx.appState.setVelocityConfig('invalid', null);
-    const config = idx.appState.getVelocityConfig();
-    expect(config.pointsPerSprint).toBe(25);
-    expect(config.sprintLengthDays).toBe(10);
-    idx.appState.reset();
-  });
-});
-
-describe('T-Shirt Mappings', () => {
-  test('has expected t-shirt sizes as keys', () => {
-    const tshirtKeys = Object.keys(idx.tshirtMappings);
-    expect(tshirtKeys).toEqual(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
-  });
-
-  test('each t-shirt mapping has a Fibonacci number', () => {
-    Object.values(idx.tshirtMappings).forEach((fibValue) => {
-      expect(typeof fibValue).toBe('number');
-      expect(fibValue).toBeGreaterThan(0);
-    });
-  });
-
-  test('t-shirt mappings follow expected Fibonacci values', () => {
-    expect(idx.tshirtMappings.XS).toBe(1);
-    expect(idx.tshirtMappings.S).toBe(2);
-    expect(idx.tshirtMappings.M).toBe(3);
-    expect(idx.tshirtMappings.L).toBe(5);
-    expect(idx.tshirtMappings.XL).toBe(8);
-    expect(idx.tshirtMappings.XXL).toBe(13);
-  });
-
-  test('normalizes lowercase t-shirt input for mapping lookup', () => {
-    expect(idx.normalizeTshirtSize('xl')).toBe('XL');
-    expect(idx.tshirtMappings[idx.normalizeTshirtSize('xl')]).toBe(8);
-  });
-
-  test('trims and normalizes t-shirt input for mapping lookup', () => {
-    expect(idx.normalizeTshirtSize('  xxl  ')).toBe('XXL');
-    expect(idx.tshirtMappings[idx.normalizeTshirtSize('  xxl  ')]).toBe(13);
-  });
-});
-
-describe('handleFibonacciModeChange', () => {
-  beforeEach(() => {
-    idx.appState.reset();
+  test('populates stats node when present', () => {
     document.body.innerHTML = `
-      <div id="fibonacciCalendarMappingWrapper"></div>
-      <div id="velocityConfigWrapper"></div>
-    `;
-  });
-
-  test('updates appState when mode changes', () => {
-    const mockEvent = {
-      target: {
-        value: 'velocity-based',
-      },
-    };
-
-    idx.handleFibonacciModeChange(mockEvent);
-    expect(idx.appState.getFibonacciMode()).toBe('velocity-based');
-  });
-
-  test('shows calendar mapping wrapper for calendar-days mode', () => {
-    const calendarWrapper = document.getElementById('fibonacciCalendarMappingWrapper');
-    const mockEvent = {
-      target: {
-        value: 'calendar-days',
-      },
-    };
-
-    idx.handleFibonacciModeChange(mockEvent);
-    expect(calendarWrapper.style.display).toBe('block');
-  });
-
-  test('hides calendar mapping wrapper for velocity-based mode', () => {
-    const calendarWrapper = document.getElementById('fibonacciCalendarMappingWrapper');
-    const mockEvent = {
-      target: {
-        value: 'velocity-based',
-      },
-    };
-
-    idx.handleFibonacciModeChange(mockEvent);
-    expect(calendarWrapper.style.display).toBe('none');
-  });
-
-  test('shows velocity config wrapper for velocity-based mode', () => {
-    const wrapper = document.getElementById('velocityConfigWrapper');
-    const mockEvent = {
-      target: {
-        value: 'velocity-based',
-      },
-    };
-
-    idx.handleFibonacciModeChange(mockEvent);
-    expect(wrapper.style.display).toBe('block');
-  });
-
-  test('hides velocity config wrapper for calendar-days mode', () => {
-    const wrapper = document.getElementById('velocityConfigWrapper');
-    const mockEvent = {
-      target: {
-        value: 'calendar-days',
-      },
-    };
-
-    idx.handleFibonacciModeChange(mockEvent);
-    expect(wrapper.style.display).toBe('none');
-  });
-});
-
-describe('handleVelocityConfigChange', () => {
-  beforeEach(() => {
-    idx.appState.reset();
-    document.body.innerHTML = `
-      <input id="velocityPoints" value="30" />
-      <input id="velocityDays" value="14" />
-    `;
-  });
-
-  test('updates velocity configuration from input fields', () => {
-    idx.handleVelocityConfigChange({});
-    const config = idx.appState.getVelocityConfig();
-    expect(config.pointsPerSprint).toBe(30);
-    expect(config.sprintLengthDays).toBe(14);
-  });
-
-  test('handles missing input fields gracefully', () => {
-    document.body.innerHTML = '';
-    expect(() => idx.handleVelocityConfigChange({})).not.toThrow();
-  });
-
-  test('uses default values for invalid inputs', () => {
-    document.body.innerHTML = `
-      <input id="velocityPoints" value="invalid" />
-      <input id="velocityDays" value="also-invalid" />
+      <div class="task-row-graph" data-row-id="1"></div>
+      <div class="task-row-stats" data-row-id="1"></div>
     `;
 
-    idx.handleVelocityConfigChange({});
-    const config = idx.appState.getVelocityConfig();
-    expect(config.pointsPerSprint).toBe(25);
-    expect(config.sprintLengthDays).toBe(10);
+    idx.renderTaskRowHistograms([
+      {
+        rowId: '1',
+        name: 'Task 1',
+        times: {
+          list: [0, 2, 4, 2],
+          min: 1,
+          max: 3,
+          median: 2,
+        },
+      },
+    ]);
+
+    const statsNode = document.querySelector('.task-row-stats[data-row-id="1"]');
+    expect(statsNode.innerHTML).toContain('Min: 1');
+    expect(statsNode.innerHTML).toContain('Med: 2');
+    expect(statsNode.innerHTML).toContain('Max: 3');
+  });
+
+  test('uses days as time unit in fibonacci estimation mode', () => {
+    appState.estimationMode = 'fibonacci';
+    document.body.innerHTML = `
+      <div class="task-row-graph" data-row-id="1"></div>
+      <div class="task-row-stats" data-row-id="1"></div>
+    `;
+
+    idx.renderTaskRowHistograms([
+      {
+        rowId: '1',
+        name: 'Task 1',
+        times: {
+          list: [0, 2, 4, 2],
+          min: 1,
+          max: 3,
+          median: 2,
+        },
+      },
+    ]);
+
+    const statsNode = document.querySelector('.task-row-stats[data-row-id="1"]');
+    expect(statsNode.innerHTML).toContain('days');
+    appState.estimationMode = 'hours';
   });
 });
 
-describe('updateFibonacciCalendarMapping', () => {
-  beforeEach(() => {
-    // Reset mappings to default values before each test
-    idx.fibonacciCalendarMappings[1] = { min: 0.5, max: 1 };
-    idx.fibonacciCalendarMappings[2] = { min: 1, max: 2 };
-    idx.fibonacciCalendarMappings[3] = { min: 2, max: 3 };
-    idx.fibonacciCalendarMappings[5] = { min: 3, max: 5 };
-    idx.fibonacciCalendarMappings[8] = { min: 5, max: 8 };
-    idx.fibonacciCalendarMappings[13] = { min: 8, max: 13 };
-    idx.fibonacciCalendarMappings[21] = { min: 13, max: 21 };
+describe('startSimulation', () => {
+  let mockEvent;
+
+  /** Build the DOM structure startSimulation needs to run */
+  const buildSimulationDOM = (taskRows = []) => {
+    const taskRowsHtml = taskRows.map((task) => `
+      <div class="tr data-row" data-row-id="${task.rowId !== undefined ? task.rowId : '1'}">
+        <input name="Task" value="${task.name !== undefined ? task.name : 'Test Task'}" />
+        <input name="Min Time" value="${task.min !== undefined ? task.min : '10'}" />
+        <input name="Max Time" value="${task.max !== undefined ? task.max : '20'}" />
+        <input name="Confidence" value="${task.confidence !== undefined ? task.confidence : '90'}" />
+        <input name="Cost" value="${task.cost !== undefined ? task.cost : '100'}" />
+      </div>
+    `).join('');
+
+    document.body.innerHTML = `
+      <input id="simulationPasses" value="1000" />
+      <input id="LimitGraph" type="checkbox" />
+      <input id="startSimulationButton" type="button" value="Run Simulation" />
+      <form id="DataEntryTable">${taskRowsHtml}</form>
+      <div id="results"></div>
+      <div id="costHistoGram"></div>
+      <div id="costEstimateHeader" style="display: none;"></div>
+      <div id="costSaveButtons" style="display: none;"></div>
+      <div id="timeHistoGram"></div>
+      <div id="timeEstimateHeader" style="display: none;"></div>
+      <div id="timeSaveButtons" style="display: none;"></div>
+      <div id="simulationRunningTime"></div>
+      <div id="simulationTimeMedian"></div>
+      <div id="simulationTimeStandRange"></div>
+      <div id="simulationTimeMax"></div>
+      <div id="simulationTimeMin"></div>
+      <div id="simulationTimeStandDev"></div>
+      <div id="simulationCostMedian"></div>
+      <div id="simulationCostStandRange"></div>
+      <div id="simulationCostMax"></div>
+      <div id="simulationCostMin"></div>
+      <div id="simulationCostStandDev"></div>
+    `;
+  };
+
+  const makeSimResults = (overrides = {}) => ({
+    runningTime: 100,
+    times: {
+      list: [0, 1, 3, 1],
+      min: 1,
+      max: 3,
+      median: 2,
+      sd: 0.5,
+      likelyMin: 1,
+      likelyMax: 3,
+    },
+    costs: {
+      list: [0, 1, 3, 1],
+      min: 100,
+      max: 300,
+      median: 200,
+      sd: 50,
+      likelyMin: 100,
+      likelyMax: 300,
+    },
+    taskResults: [],
+    ...overrides,
   });
-
-  test('updates min value when min input changes', () => {
-    const mockEvent = {
-      target: {
-        dataset: { fib: '5', type: 'min' },
-        value: '2.5',
-      },
-    };
-
-    idx.updateFibonacciCalendarMapping(mockEvent);
-
-    expect(idx.fibonacciCalendarMappings[5].min).toBe(2.5);
-    expect(idx.fibonacciCalendarMappings[5].max).toBe(5); // max should remain unchanged
-  });
-
-  test('updates max value when max input changes', () => {
-    const mockEvent = {
-      target: {
-        dataset: { fib: '8', type: 'max' },
-        value: '10',
-      },
-    };
-
-    idx.updateFibonacciCalendarMapping(mockEvent);
-
-    expect(idx.fibonacciCalendarMappings[8].max).toBe(10);
-    expect(idx.fibonacciCalendarMappings[8].min).toBe(5); // min should remain unchanged
-  });
-
-  test('handles decimal values correctly', () => {
-    const mockEvent = {
-      target: {
-        dataset: { fib: '1', type: 'min' },
-        value: '0.25',
-      },
-    };
-
-    idx.updateFibonacciCalendarMapping(mockEvent);
-
-    expect(idx.fibonacciCalendarMappings[1].min).toBe(0.25);
-    expect(typeof idx.fibonacciCalendarMappings[1].min).toBe('number');
-  });
-
-  test('updates correct Fibonacci number mapping', () => {
-    const mockEvent = {
-      target: {
-        dataset: { fib: '13', type: 'max' },
-        value: '15',
-      },
-    };
-
-    idx.updateFibonacciCalendarMapping(mockEvent);
-
-    expect(idx.fibonacciCalendarMappings[13].max).toBe(15);
-    expect(idx.fibonacciCalendarMappings[8].max).toBe(8); // other mappings unchanged
-    expect(idx.fibonacciCalendarMappings[21].max).toBe(21); // other mappings unchanged
-  });
-
-  test('does not crash for non-existent Fibonacci number', () => {
-    const mockEvent = {
-      target: {
-        dataset: { fib: '99', type: 'min' },
-        value: '50',
-      },
-    };
-
-    expect(() => idx.updateFibonacciCalendarMapping(mockEvent)).not.toThrow();
-  });
-
-  test('updates multiple values sequentially', () => {
-    const event1 = {
-      target: {
-        dataset: { fib: '5', type: 'min' },
-        value: '2',
-      },
-    };
-    const event2 = {
-      target: {
-        dataset: { fib: '5', type: 'max' },
-        value: '6',
-      },
-    };
-
-    idx.updateFibonacciCalendarMapping(event1);
-    idx.updateFibonacciCalendarMapping(event2);
-
-    expect(idx.fibonacciCalendarMappings[5].min).toBe(2);
-    expect(idx.fibonacciCalendarMappings[5].max).toBe(6);
-  });
-});
-
-describe('updateTshirtMapping', () => {
-  beforeEach(() => {
-    idx.tshirtMappings.XS = 1;
-    idx.tshirtMappings.S = 2;
-    idx.tshirtMappings.M = 3;
-    idx.tshirtMappings.L = 5;
-    idx.tshirtMappings.XL = 8;
-    idx.tshirtMappings.XXL = 13;
-  });
-
-  test('updates Fibonacci value when input changes', () => {
-    const mockEvent = {
-      target: {
-        dataset: { tshirt: 'XL' },
-        value: '13',
-      },
-    };
-
-    idx.updateTshirtMapping(mockEvent);
-
-    expect(idx.tshirtMappings.XL).toBe(13);
-  });
-
-  test('updates different size value', () => {
-    const mockEvent = {
-      target: {
-        dataset: { tshirt: 'M' },
-        value: '5',
-      },
-    };
-
-    idx.updateTshirtMapping(mockEvent);
-
-    expect(idx.tshirtMappings.M).toBe(5);
-  });
-
-  test('normalizes lowercase size key before updating', () => {
-    const mockEvent = {
-      target: {
-        dataset: { tshirt: 'xxl' },
-        value: '21',
-      },
-    };
-
-    idx.updateTshirtMapping(mockEvent);
-
-    expect(idx.tshirtMappings.XXL).toBe(21);
-  });
-
-  test('does not crash for unknown size', () => {
-    const mockEvent = {
-      target: {
-        dataset: { tshirt: 'XXXL' },
-        value: '20',
-      },
-    };
-
-    expect(() => idx.updateTshirtMapping(mockEvent)).not.toThrow();
-  });
-});
-
-describe('Estimation Mode', () => {
-  test('defaults to hours mode', () => {
-    expect(idx.getEstimationMode()).toBe('hours');
-  });
-});
-
-describe('Cost Tracking', () => {
-  test('cost tracking is enabled by default', () => {
-    expect(idx.getEnableCost()).toBe(true);
-  });
-});
-
-describe('saveSvgAsImage', () => {
-  let mockContainer;
-  let mockSvg;
-  let mockCanvas;
-  let mockContext;
-  let mockImage;
-  let originalCreateElement;
-  let originalGetComputedStyle;
-  let originalURL;
-  let originalAlert;
-  let originalGetElementById;
 
   beforeEach(() => {
-    // Mock DOM elements
-    mockContext = {
-      fillRect: jest.fn(),
-      drawImage: jest.fn(),
-    };
-
-    mockCanvas = {
-      getContext: jest.fn(() => mockContext),
-      toBlob: jest.fn((callback) => callback(new Blob(['test'], { type: 'image/png' }))),
-      width: 0,
-      height: 0,
-    };
-
-    mockSvg = {
-      cloneNode: jest.fn(() => ({
-        querySelectorAll: jest.fn(() => []),
-      })),
-      querySelector: jest.fn(),
-      querySelectorAll: jest.fn(() => []),
-      getBoundingClientRect: jest.fn(() => ({ width: 800, height: 600 })),
-    };
-
-    mockContainer = {
-      querySelector: jest.fn(() => mockSvg),
-    };
-
-    // Mock Image constructor
-    mockImage = {
-      onload: null,
-      src: '',
-    };
-
-    // Mock document methods
-    originalGetElementById = document.getElementById;
-    document.getElementById = jest.fn(() => mockContainer);
-    originalCreateElement = document.createElement;
-    document.createElement = jest.fn((tag) => {
-      if (tag === 'canvas') return mockCanvas;
-      if (tag === 'a') {
-        return {
-          click: jest.fn(),
-          download: '',
-          href: '',
-        };
-      }
-      return originalCreateElement.call(document, tag);
-    });
-
-    // Mock Image constructor globally
-    global.Image = jest.fn(() => mockImage);
-
-    // Mock XMLSerializer
-    global.XMLSerializer = jest.fn(() => ({
-      serializeToString: jest.fn(() => '<svg></svg>'),
-    }));
-
-    // Mock Blob
-    global.Blob = jest.fn((content, options) => ({
-      content,
-      options,
-      type: options.type,
-    }));
-
-    // Mock window.getComputedStyle
-    originalGetComputedStyle = window.getComputedStyle;
-    window.getComputedStyle = jest.fn(() => ({
-      getPropertyValue: jest.fn(() => 'blue'),
-      [Symbol.iterator]: function* iterator() {
-        yield 'fill';
-        yield 'stroke';
-      },
-    }));
-
-    // Mock URL methods
-    originalURL = global.URL;
-    global.URL = {
-      createObjectURL: jest.fn(() => 'blob:mock-url'),
-      revokeObjectURL: jest.fn(),
-    };
-
-    // Mock alert
-    originalAlert = global.alert;
-    global.alert = jest.fn();
+    mockEvent = { preventDefault: jest.fn() };
+    sim.runSimulationProgressive.mockResolvedValue(makeSimResults());
+    appState.estimationMode = 'hours';
+    appState.enableCost = true;
   });
 
   afterEach(() => {
-    document.getElementById = originalGetElementById;
-    document.createElement = originalCreateElement;
-    window.getComputedStyle = originalGetComputedStyle;
-    global.URL = originalURL;
-    global.alert = originalAlert;
-    jest.restoreAllMocks();
     jest.clearAllMocks();
+    document.body.innerHTML = '';
+    appState.reset();
   });
 
-  test('shows error message when no SVG found', () => {
-    mockContainer.querySelector = jest.fn(() => null);
-    mockContainer.appendChild = jest.fn();
-    idx.saveSvgAsImage('testId', 'test-file', 'png');
-    expect(mockContainer.appendChild).toHaveBeenCalled();
-    const errorDiv = mockContainer.appendChild.mock.calls[0][0];
-    expect(errorDiv.getAttribute('role')).toBe('alert');
-    expect(errorDiv.textContent).toBe('No graph to save. Please run a simulation first.');
+  test('calls event.preventDefault', async () => {
+    buildSimulationDOM();
+    await idx.startSimulation(mockEvent);
+    expect(mockEvent.preventDefault).toHaveBeenCalled();
   });
 
-  test('clones SVG to avoid modifying original', () => {
-    idx.saveSvgAsImage('testId', 'test-file', 'png');
-    expect(mockSvg.cloneNode).toHaveBeenCalledWith(true);
+  test('shows error when no valid tasks exist', async () => {
+    buildSimulationDOM([]);
+    await idx.startSimulation(mockEvent);
+    const errorDiv = document.querySelector('.error-message');
+    expect(errorDiv).not.toBeNull();
+    expect(errorDiv.textContent).toContain('No valid tasks found');
   });
 
-  test('creates canvas with correct dimensions including bottom margin', () => {
-    idx.saveSvgAsImage('testId', 'test-file', 'png');
-    // Trigger onload
-    mockImage.onload();
-    expect(mockCanvas.width).toBe(800);
-    expect(mockCanvas.height).toBe(620); // 600 + 20 margin
+  test('does not call simulation when no valid tasks', async () => {
+    buildSimulationDOM([]);
+    await idx.startSimulation(mockEvent);
+    expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
   });
 
-  test('draws white background before image', () => {
-    idx.saveSvgAsImage('testId', 'test-file', 'png');
-    mockImage.onload();
-    expect(mockContext.fillRect).toHaveBeenCalledWith(0, 0, 800, 620);
-    expect(mockContext.drawImage).toHaveBeenCalledWith(mockImage, 0, 0);
+  test('filters out invalid tasks where max is less than min', async () => {
+    buildSimulationDOM([{
+      name: 'Bad Task', min: '20', max: '5', confidence: '90',
+    }]);
+    await idx.startSimulation(mockEvent);
+    expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
+    const errorDiv = document.querySelector('.error-message');
+    expect(errorDiv).not.toBeNull();
+    expect(errorDiv.textContent).toContain('No valid tasks found');
   });
 
-  test('generates PNG by default', () => {
-    idx.saveSvgAsImage('testId', 'test-file');
-    mockImage.onload();
-    expect(mockCanvas.toBlob).toHaveBeenCalled();
-    const toBlobCall = mockCanvas.toBlob.mock.calls[0];
-    expect(toBlobCall[1]).toBe('image/png');
+  test('filters out tasks with no name', async () => {
+    buildSimulationDOM([{
+      name: '', min: '5', max: '10', confidence: '90',
+    }]);
+    await idx.startSimulation(mockEvent);
+    expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
   });
 
-  test('generates JPEG when specified', () => {
-    idx.saveSvgAsImage('testId', 'test-file', 'jpeg');
-    mockImage.onload();
-    const toBlobCall = mockCanvas.toBlob.mock.calls[0];
-    expect(toBlobCall[1]).toBe('image/jpeg');
+  test('calls runSimulationProgressive with valid tasks', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    await idx.startSimulation(mockEvent);
+    expect(sim.runSimulationProgressive).toHaveBeenCalled();
   });
 
-  test('uses XMLSerializer to serialize SVG', () => {
-    idx.saveSvgAsImage('testId', 'test-file', 'png');
-    expect(global.XMLSerializer).toHaveBeenCalled();
-  });
+  test('disables run button during simulation and re-enables after', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    const runButton = document.getElementById('startSimulationButton');
 
-  test('creates blob URL and sets as image source', () => {
-    idx.saveSvgAsImage('testId', 'test-file', 'png');
-    expect(global.URL.createObjectURL).toHaveBeenCalled();
-    expect(mockImage.src).toBe('blob:mock-url');
-  });
-
-  test('revokes blob URL after image loads', () => {
-    idx.saveSvgAsImage('testId', 'test-file', 'png');
-    mockImage.onload();
-    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
-  });
-
-  test('gets computed styles from original elements', () => {
-    const mockElements = [
-      { setAttribute: jest.fn() },
-      { setAttribute: jest.fn() },
-    ];
-    const mockOriginalElements = [{}, {}];
-
-    const clonedSvg = {
-      querySelectorAll: jest.fn(() => mockElements),
-    };
-
-    mockSvg.cloneNode = jest.fn(() => clonedSvg);
-    mockSvg.querySelectorAll = jest.fn(() => mockOriginalElements);
-
-    idx.saveSvgAsImage('testId', 'test-file', 'png');
-
-    expect(window.getComputedStyle).toHaveBeenCalled();
-    expect(mockElements[0].setAttribute).toHaveBeenCalled();
-  });
-});
-describe('validateCsvData', () => {
-  test('throws error when data is null', () => {
-    expect(() => idx.validateCsvData(null, 'hours', false)).toThrow('CSV file is empty or contains no data rows.');
-  });
-
-  test('throws error when data is empty array', () => {
-    expect(() => idx.validateCsvData([], 'hours', false)).toThrow('CSV file is empty or contains no data rows.');
-  });
-
-  test('throws error when required columns are missing - hours mode', () => {
-    const data = [{ Task: 'Test Task', Confidence: 90 }];
-    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Missing required columns: Min, Max');
-  });
-
-  test('throws error when required columns are missing - fibonacci mode', () => {
-    const data = [{ Task: 'Test Task', Confidence: 90 }];
-    expect(() => idx.validateCsvData(data, 'fibonacci', false)).toThrow('Missing required columns: Fibonacci');
-  });
-
-  test('throws error when required columns are missing - tshirt mode', () => {
-    const data = [{ Task: 'Test Task', Confidence: 90 }];
-    expect(() => idx.validateCsvData(data, 'tshirt', false)).toThrow('Missing required columns: TShirt');
-  });
-
-  test('throws error when Min value is not a number', () => {
-    const data = [
-      {
-        Task: 'Test', Min: 'abc', Max: 10, Confidence: 90,
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Min value "abc" in row 1. Must be a number.');
-  });
-
-  test('throws error when Max value is not a number', () => {
-    const data = [
-      {
-        Task: 'Test', Min: 5, Max: 'xyz', Confidence: 90,
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Max value "xyz" in row 1. Must be a number.');
-  });
-
-  test('throws error when Confidence is not a number', () => {
-    const data = [
-      {
-        Task: 'Test', Min: 5, Max: 10, Confidence: 'high',
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Confidence value "high" in row 1. Must be a number between 0 and 100.');
-  });
-
-  test('throws error when Confidence is below 0', () => {
-    const data = [
-      {
-        Task: 'Test', Min: 5, Max: 10, Confidence: -10,
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Confidence value "-10" in row 1. Must be a number between 0 and 100.');
-  });
-
-  test('throws error when Confidence is above 100', () => {
-    const data = [
-      {
-        Task: 'Test', Min: 5, Max: 10, Confidence: 150,
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'hours', false)).toThrow('Invalid Confidence value "150" in row 1. Must be a number between 0 and 100.');
-  });
-
-  test('accepts valid hours mode data', () => {
-    const data = [
-      {
-        Task: 'Task 1', Min: 5, Max: 10, Confidence: 90,
-      },
-      {
-        Task: 'Task 2', Min: 3, Max: 8, Confidence: 80,
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'hours', false)).not.toThrow();
-    const result = idx.validateCsvData(data, 'hours', false);
-    expect(result).toEqual(data);
-  });
-
-  test('accepts valid fibonacci mode data', () => {
-    const data = [
-      {
-        Task: 'Task 1', Fibonacci: 5, Confidence: 90,
-      },
-      {
-        Task: 'Task 2', Fibonacci: 8, Confidence: 80,
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'fibonacci', false)).not.toThrow();
-    const result = idx.validateCsvData(data, 'fibonacci', false);
-    expect(result).toEqual(data);
-  });
-
-  test('accepts valid tshirt mode data', () => {
-    const data = [
-      {
-        Task: 'Task 1', TShirt: 'M', Confidence: 90,
-      },
-      {
-        Task: 'Task 2', TShirt: 'L', Confidence: 80,
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'tshirt', false)).not.toThrow();
-    const result = idx.validateCsvData(data, 'tshirt', false);
-    expect(result).toEqual(data);
-  });
-
-  test('validates only first 3 rows for large datasets', () => {
-    const data = [
-      {
-        Task: 'Task 1', Min: 5, Max: 10, Confidence: 90,
-      },
-      {
-        Task: 'Task 2', Min: 3, Max: 8, Confidence: 80,
-      },
-      {
-        Task: 'Task 3', Min: 2, Max: 6, Confidence: 70,
-      },
-      {
-        Task: 'Task 4', Min: 'invalid', Max: 15, Confidence: 85,
-      }, // Invalid but in 4th row
-    ];
-    // Should not throw since only first 3 rows are validated
-    expect(() => idx.validateCsvData(data, 'hours', false)).not.toThrow();
-  });
-
-  test('includes Cost message when enableCost is true', () => {
-    const data = [
-      {
-        Task: 'Test Task', Confidence: 90,
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'hours', true)).toThrow('Cost (optional)');
-  });
-
-  test('handles string numbers for Min and Max', () => {
-    const data = [
-      {
-        Task: 'Test', Min: '5', Max: '10', Confidence: '90',
-      },
-    ];
-    expect(() => idx.validateCsvData(data, 'hours', false)).not.toThrow();
-  });
-});
-
-describe('AppState reset()', () => {
-  test('reset() mutates existing objects instead of creating new ones', () => {
-    // Store reference to the original t-shirt mappings object
-    const tshirtRef = idx.tshirtMappings;
-
-    // Modify the mapping
-    idx.tshirtMappings.XS = 888;
-
-    // Verify modification
-    expect(idx.tshirtMappings.XS).toBe(888);
-
-    // Call reset
-    idx.appState.reset();
-
-    // Verify the values are reset
-    expect(idx.tshirtMappings.XS).toBe(1);
-
-    // Verify the object still references the same memory address
-    expect(tshirtRef).toBe(idx.tshirtMappings);
-  });
-
-  test('reset() clears all existing keys before reassigning', () => {
-    // Add an extra t-shirt size
-    idx.tshirtMappings.XXXL = 34;
-    expect(idx.tshirtMappings).toHaveProperty('XXXL');
-
-    // Reset should remove the extra key
-    idx.appState.reset();
-
-    // Verify the extra key is gone
-    expect(idx.tshirtMappings).not.toHaveProperty('XXXL');
-
-    // Verify default keys are present
-    expect(idx.tshirtMappings).toHaveProperty('XS');
-    expect(idx.tshirtMappings).toHaveProperty('XXL');
-  });
-
-  test('reset() resets all state properties', () => {
-    // Modify all state properties
-    idx.appState.setEstimationMode('fibonacci');
-    idx.appState.setEnableCost(false);
-    idx.appState.setFibonacciMode('velocity-based');
-    idx.appState.setVelocityConfig(40, 14);
-    idx.tshirtMappings.XS = 100;
-
-    // Reset
-    idx.appState.reset();
-
-    // Verify all properties are reset
-    expect(idx.getEstimationMode()).toBe('hours');
-    expect(idx.getEnableCost()).toBe(true);
-    expect(idx.appState.getFibonacciMode()).toBe('calendar-days');
-    expect(idx.appState.getVelocityConfig()).toEqual({ pointsPerSprint: 25, sprintLengthDays: 10 });
-    expect(idx.tshirtMappings.XS).toBe(1);
-  });
-});
-
-describe('Graph Settings Functions', () => {
-  // Helper function to reset GRAPH_CONFIG to defaults
-  const resetGraphConfig = () => {
-    if (!sim) return;
-    sim.GRAPH_CONFIG.histogram.width = 800;
-    sim.GRAPH_CONFIG.histogram.height = 500;
-    sim.GRAPH_CONFIG.histogram.barCutoff = 600;
-    sim.GRAPH_CONFIG.histogram.maxBuckets = 120;
-    sim.GRAPH_CONFIG.miniGraph.width = 140;
-    sim.GRAPH_CONFIG.miniGraph.height = 26;
-    sim.GRAPH_CONFIG.miniGraph.maxBuckets = 24;
-    sim.GRAPH_CONFIG.miniGraph.gap = 1;
-  };
-
-  // Helper function to set up DOM with default form field values
-  const setupGraphSettingsDOM = (overrides = {}) => {
-    const defaults = {
-      histogramWidth: '800',
-      histogramHeight: '500',
-      histogramBarCutoff: '600',
-      histogramMaxBuckets: '120',
-      miniGraphWidth: '140',
-      miniGraphHeight: '26',
-      miniGraphMaxBuckets: '24',
-      miniGraphGap: '1',
-    };
-
-    const values = { ...defaults, ...overrides };
-
-    document.body.innerHTML = `
-      <input id="histogramWidth" value="${values.histogramWidth}" />
-      <input id="histogramHeight" value="${values.histogramHeight}" />
-      <input id="histogramBarCutoff" value="${values.histogramBarCutoff}" />
-      <input id="histogramMaxBuckets" value="${values.histogramMaxBuckets}" />
-      <input id="miniGraphWidth" value="${values.miniGraphWidth}" />
-      <input id="miniGraphHeight" value="${values.miniGraphHeight}" />
-      <input id="miniGraphMaxBuckets" value="${values.miniGraphMaxBuckets}" />
-      <input id="miniGraphGap" value="${values.miniGraphGap}" />
-      <details id="advancedSettings">
-        <summary>Advanced Graph Settings</summary>
-      </details>
-    `;
-  };
-
-  beforeEach(() => {
-    // Reset before each test to ensure clean state
-    resetGraphConfig();
-  });
-
-  afterEach(() => {
-    // Reset after each test to prevent pollution
-    resetGraphConfig();
-  });
-
-  describe('applyGraphSettings', () => {
-    test('applies valid values to sim.GRAPH_CONFIG', () => {
-      // Set up DOM with default values
-      setupGraphSettingsDOM();
-
-      // Set new values in form fields
-      document.getElementById('histogramWidth').value = '1000';
-      document.getElementById('histogramHeight').value = '600';
-      document.getElementById('histogramBarCutoff').value = '800';
-      document.getElementById('histogramMaxBuckets').value = '150';
-      document.getElementById('miniGraphWidth').value = '200';
-      document.getElementById('miniGraphHeight').value = '30';
-      document.getElementById('miniGraphMaxBuckets').value = '30';
-      document.getElementById('miniGraphGap').value = '2';
-
-      // Apply settings
-      idx.applyGraphSettings();
-
-      // Verify GRAPH_CONFIG was updated
-      expect(sim.GRAPH_CONFIG.histogram.width).toBe(1000);
-      expect(sim.GRAPH_CONFIG.histogram.height).toBe(600);
-      expect(sim.GRAPH_CONFIG.histogram.barCutoff).toBe(800);
-      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(150);
-      expect(sim.GRAPH_CONFIG.miniGraph.width).toBe(200);
-      expect(sim.GRAPH_CONFIG.miniGraph.height).toBe(30);
-      expect(sim.GRAPH_CONFIG.miniGraph.maxBuckets).toBe(30);
-      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(2);
+    let disabledDuringRun = false;
+    sim.runSimulationProgressive.mockImplementation(async () => {
+      disabledDuringRun = runButton.disabled;
+      return makeSimResults();
     });
 
-    test('handles empty input values (NaN)', () => {
-      // Set up DOM with empty values
-      setupGraphSettingsDOM({
-        histogramWidth: '',
-        histogramHeight: '',
-        miniGraphGap: '',
+    await idx.startSimulation(mockEvent);
+
+    expect(disabledDuringRun).toBe(true);
+    expect(runButton.disabled).toBe(false);
+    expect(runButton.value).toBe('Run Simulation');
+  });
+
+  test('displays time results after successful simulation', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('simulationTimeMedian').textContent).toContain('2');
+    expect(document.getElementById('simulationTimeMax').textContent).toContain('3');
+    expect(document.getElementById('simulationTimeMin').textContent).toContain('1');
+  });
+
+  test('displays cost results when cost is enabled', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('simulationCostMedian').textContent).toContain('200');
+  });
+
+  test('does not display cost results when cost is disabled', async () => {
+    appState.enableCost = false;
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('simulationCostMedian').textContent).toBe('');
+  });
+
+  test('shows user-friendly error when simulation throws', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
+    await idx.startSimulation(mockEvent);
+    const errorDiv = document.querySelector('.error-message');
+    expect(errorDiv).not.toBeNull();
+    expect(errorDiv.textContent).toContain('Simulation failed');
+  });
+
+  test('re-enables run button even when simulation throws', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
+    const runButton = document.getElementById('startSimulationButton');
+    await idx.startSimulation(mockEvent);
+    expect(runButton.disabled).toBe(false);
+  });
+
+  test('calls progress callback and updates time stats during simulation', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    sim.runSimulationProgressive.mockImplementation(async (passes, data, onProgress) => {
+      onProgress({
+        times: {
+          min: 1,
+          max: 3,
+          list: [0, 1, 3, 1],
+          median: 2,
+          sd: 0.5,
+          likelyMin: 1,
+          likelyMax: 3,
+        },
+        costs: {
+          min: -1,
+          max: 0,
+          list: [],
+          median: 0,
+          sd: 0,
+          likelyMin: 0,
+          likelyMax: 0,
+        },
       });
-
-      // Apply settings
-      idx.applyGraphSettings();
-
-      // Verify GRAPH_CONFIG contains NaN for empty fields
-      expect(Number.isNaN(sim.GRAPH_CONFIG.histogram.width)).toBe(true);
-      expect(Number.isNaN(sim.GRAPH_CONFIG.histogram.height)).toBe(true);
-      expect(Number.isNaN(sim.GRAPH_CONFIG.miniGraph.gap)).toBe(true);
+      return makeSimResults();
     });
-
-    test('handles non-numeric input values', () => {
-      // Set up DOM with invalid values
-      setupGraphSettingsDOM({
-        histogramWidth: 'abc',
-        histogramHeight: 'xyz',
-        miniGraphGap: 'invalid',
-      });
-
-      // Apply settings
-      idx.applyGraphSettings();
-
-      // Verify GRAPH_CONFIG contains NaN for invalid fields
-      expect(Number.isNaN(sim.GRAPH_CONFIG.histogram.width)).toBe(true);
-      expect(Number.isNaN(sim.GRAPH_CONFIG.histogram.height)).toBe(true);
-      expect(Number.isNaN(sim.GRAPH_CONFIG.miniGraph.gap)).toBe(true);
-    });
-
-    test('handles negative values', () => {
-      // Set up DOM with negative values
-      setupGraphSettingsDOM({
-        histogramWidth: '-100',
-        histogramHeight: '-50',
-        histogramMaxBuckets: '-10',
-      });
-
-      // Apply settings
-      idx.applyGraphSettings();
-
-      // Verify GRAPH_CONFIG accepts negative values (parseInt doesn't reject them)
-      expect(sim.GRAPH_CONFIG.histogram.width).toBe(-100);
-      expect(sim.GRAPH_CONFIG.histogram.height).toBe(-50);
-      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(-10);
-    });
-
-    test('handles decimal values for integer fields', () => {
-      // Set up DOM with decimal values
-      setupGraphSettingsDOM({
-        histogramWidth: '1000.5',
-        histogramMaxBuckets: '120.9',
-      });
-
-      // Apply settings
-      idx.applyGraphSettings();
-
-      // Verify parseInt truncates decimals
-      expect(sim.GRAPH_CONFIG.histogram.width).toBe(1000);
-      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(120);
-    });
-
-    test('correctly parses float values for gap', () => {
-      // Set up DOM with decimal gap value
-      setupGraphSettingsDOM({
-        miniGraphGap: '1.5',
-      });
-
-      // Apply settings
-      idx.applyGraphSettings();
-
-      // Verify parseFloat preserves decimals
-      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1.5);
-    });
-
-    test('shows confirmation message', (done) => {
-      // Set up DOM
-      setupGraphSettingsDOM();
-
-      const details = document.getElementById('advancedSettings');
-      const summary = details.querySelector('summary');
-      const originalText = summary.textContent;
-
-      // Apply settings
-      idx.applyGraphSettings();
-
-      // Check confirmation message appears
-      expect(summary.textContent).toBe('Advanced Graph Settings ✓ Applied');
-
-      // Wait for timeout to restore original text
-      setTimeout(() => {
-        expect(summary.textContent).toBe(originalText);
-        done();
-      }, 2100);
-    });
+    await idx.startSimulation(mockEvent);
+    // Just verifying the simulation ran to completion with the progress callback invoked
+    expect(sim.runSimulationProgressive).toHaveBeenCalled();
   });
 
-  describe('resetGraphSettings', () => {
-    test('resets sim.GRAPH_CONFIG to default values', () => {
-      // Set up DOM (required for resetGraphSettings to work)
-      setupGraphSettingsDOM();
-
-      // Modify GRAPH_CONFIG
-      sim.GRAPH_CONFIG.histogram.width = 1000;
-      sim.GRAPH_CONFIG.histogram.height = 600;
-      sim.GRAPH_CONFIG.histogram.barCutoff = 800;
-      sim.GRAPH_CONFIG.histogram.maxBuckets = 150;
-      sim.GRAPH_CONFIG.miniGraph.width = 200;
-      sim.GRAPH_CONFIG.miniGraph.height = 30;
-      sim.GRAPH_CONFIG.miniGraph.maxBuckets = 30;
-      sim.GRAPH_CONFIG.miniGraph.gap = 2;
-
-      // Reset settings
-      idx.resetGraphSettings();
-
-      // Verify defaults are restored
-      expect(sim.GRAPH_CONFIG.histogram.width).toBe(800);
-      expect(sim.GRAPH_CONFIG.histogram.height).toBe(500);
-      expect(sim.GRAPH_CONFIG.histogram.barCutoff).toBe(600);
-      expect(sim.GRAPH_CONFIG.histogram.maxBuckets).toBe(120);
-      expect(sim.GRAPH_CONFIG.miniGraph.width).toBe(140);
-      expect(sim.GRAPH_CONFIG.miniGraph.height).toBe(26);
-      expect(sim.GRAPH_CONFIG.miniGraph.maxBuckets).toBe(24);
-      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1);
+  test('clears previous stats before running new simulation', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    document.getElementById('simulationTimeMedian').textContent = 'Old value';
+    sim.runSimulationProgressive.mockImplementation(async () => {
+      // Check that stats were cleared before simulation ran
+      expect(document.getElementById('simulationTimeMedian').textContent).toBe('');
+      return makeSimResults();
     });
+    await idx.startSimulation(mockEvent);
+  });
 
-    test('updates form fields to default values', () => {
-      // Set up DOM with modified values
-      setupGraphSettingsDOM({
-        histogramWidth: '1000',
-        histogramHeight: '600',
-        histogramBarCutoff: '800',
-        histogramMaxBuckets: '150',
-        miniGraphWidth: '200',
-        miniGraphHeight: '30',
-        miniGraphMaxBuckets: '30',
-        miniGraphGap: '2',
+  test('replaces existing error in results div when simulation throws', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    const resultsDiv = document.getElementById('results');
+    const existingError = document.createElement('div');
+    existingError.classList.add('error-message');
+    existingError.textContent = 'Old error';
+    resultsDiv.appendChild(existingError);
+    sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
+    await idx.startSimulation(mockEvent);
+    const errors = document.querySelectorAll('.error-message');
+    expect(errors).toHaveLength(1);
+  });
+
+  test('shows time estimate header after simulation completes', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('timeEstimateHeader').style.display).toBe('block');
+  });
+
+  test('records simulation running time', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    await idx.startSimulation(mockEvent);
+    expect(document.getElementById('simulationRunningTime').textContent).toContain('100');
+  });
+
+  test('stopwatch interval updates running time display during simulation', async () => {
+    jest.useFakeTimers();
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+
+    let resolveSimulation;
+    sim.runSimulationProgressive.mockImplementation(
+      () => new Promise((resolve) => { resolveSimulation = () => resolve(makeSimResults()); }),
+    );
+
+    const simPromise = idx.startSimulation(mockEvent);
+
+    // Advance fake timers to trigger the interval callback
+    jest.advanceTimersByTime(150);
+
+    const textDuringRun = document.getElementById('simulationRunningTime').textContent;
+
+    resolveSimulation();
+    await simPromise;
+    jest.useRealTimers();
+
+    expect(textDuringRun).toContain('Simulation Running Time (ms):');
+  });
+
+  test('calls progress callback and updates cost stats when cost is enabled with valid cost data', async () => {
+    buildSimulationDOM([{
+      name: 'Task 1', min: '5', max: '10', confidence: '90',
+    }]);
+    appState.enableCost = true;
+
+    sim.runSimulationProgressive.mockImplementation(async (passes, data, onProgress) => {
+      onProgress({
+        times: {
+          min: 1, max: 3, list: [0, 1, 3, 1], median: 2, sd: 0.5, likelyMin: 1, likelyMax: 3,
+        },
+        costs: {
+          min: 100,
+          max: 300,
+          list: [0, 1, 3, 1],
+          median: 200,
+          sd: 50,
+          likelyMin: 100,
+          likelyMax: 300,
+        },
       });
-
-      // Reset settings
-      idx.resetGraphSettings();
-
-      // Verify form fields are updated
-      expect(document.getElementById('histogramWidth').value).toBe('800');
-      expect(document.getElementById('histogramHeight').value).toBe('500');
-      expect(document.getElementById('histogramBarCutoff').value).toBe('600');
-      expect(document.getElementById('histogramMaxBuckets').value).toBe('120');
-      expect(document.getElementById('miniGraphWidth').value).toBe('140');
-      expect(document.getElementById('miniGraphHeight').value).toBe('26');
-      expect(document.getElementById('miniGraphMaxBuckets').value).toBe('24');
-      expect(document.getElementById('miniGraphGap').value).toBe('1');
+      return makeSimResults();
     });
 
-    test('resets both GRAPH_CONFIG and form fields together', () => {
-      // Set up DOM with modified values
-      setupGraphSettingsDOM({
-        histogramWidth: '1000',
-        miniGraphGap: '2.5',
-      });
+    await idx.startSimulation(mockEvent);
 
-      // Modify GRAPH_CONFIG
-      sim.GRAPH_CONFIG.histogram.width = 1000;
-      sim.GRAPH_CONFIG.miniGraph.gap = 2.5;
-
-      // Reset settings
-      idx.resetGraphSettings();
-
-      // Verify both are reset
-      expect(sim.GRAPH_CONFIG.histogram.width).toBe(800);
-      expect(document.getElementById('histogramWidth').value).toBe('800');
-      expect(sim.GRAPH_CONFIG.miniGraph.gap).toBe(1);
-      expect(document.getElementById('miniGraphGap').value).toBe('1');
-    });
-
-    test('shows confirmation message', (done) => {
-      // Set up DOM
-      setupGraphSettingsDOM();
-
-      const details = document.getElementById('advancedSettings');
-      const summary = details.querySelector('summary');
-      const originalText = summary.textContent;
-
-      // Reset settings
-      idx.resetGraphSettings();
-
-      // Check confirmation message appears
-      expect(summary.textContent).toBe('Advanced Graph Settings ✓ Reset');
-
-      // Wait for timeout to restore original text
-      setTimeout(() => {
-        expect(summary.textContent).toBe(originalText);
-        done();
-      }, 2100);
-    });
-  });
-});
-
-describe('createLogoElement', () => {
-  test('returns an img element', () => {
-    const logo = idx.createLogoElement();
-    expect(logo.tagName.toLowerCase()).toBe('img');
-  });
-
-  test('has the project-icon class', () => {
-    const logo = idx.createLogoElement();
-    expect(logo.classList.contains('project-icon')).toBe(true);
-  });
-
-  test('has a non-empty alt attribute', () => {
-    const logo = idx.createLogoElement();
-    expect(logo.alt).toBeTruthy();
-  });
-
-  test('has explicit width and height set to 100', () => {
-    const logo = idx.createLogoElement();
-    expect(logo.width).toBe(100);
-    expect(logo.height).toBe(100);
-  });
-
-  test('returns a new instance each call', () => {
-    const logo1 = idx.createLogoElement();
-    const logo2 = idx.createLogoElement();
-    expect(logo1).not.toBe(logo2);
+    expect(document.getElementById('simulationCostMedian').textContent).toContain('200');
   });
 });

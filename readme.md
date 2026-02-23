@@ -273,8 +273,22 @@ npm install
 
 The project uses Jest for testing. Tests are located in `src/tests/`:
 
-- `simulation.test.js` - Tests for simulation logic and mathematical functions
-- `index.test.js` - Tests for UI functions and DOM manipulation
+- `stats.test.js` - Tests for pure math and statistics functions (`getMedian`, `getStandardDeviation`, `calculateKDE`, `taskUpperBound`, `taskLowerBound`, etc.)
+- `charts.test.js` - Tests for graph configuration and D3 histogram builders (`GRAPH_CONFIG`, `buildHistogramPreview`, `buildTaskRowHistogram`)
+- `simulation.test.js` - Tests for the simulation engine (`runSimulation`, `runSimulationProgressive`, Fibonacci utilities)
+- `csv-parser.test.js` - Tests for CSV parsing and data validation
+- `data-input-ui.test.js` - Tests for data entry form generation and UI interactions
+- `dom-helpers.test.js` - Tests for reusable DOM element factory functions
+- `export-utils.test.js` - Tests for CSV/SVG/PNG export utilities
+- `fibonacci-config.test.js` - Tests for Fibonacci/velocity configuration UI
+- `graph-settings.test.js` - Tests for graph settings and configuration helpers
+- `index.test.js` - Tests for UI orchestration functions and DOM manipulation
+- `layout.test.js` - Tests for page layout construction
+- `state.test.js` - Tests for application state management
+- `task-table.test.js` - Tests for task data-entry table creation and row lifecycle
+- `tshirt-config.test.js` - Tests for T-shirt size mapping configuration UI
+- `html-template.test.js` - Tests for HTML template structure and accessibility
+- `accessibility.test.js` - Tests for accessibility compliance
 
 Run tests with coverage report:
 
@@ -293,12 +307,48 @@ npm test
 
 ```
 src/
-├── index.js          # UI and user interaction logic
-├── simulation.js     # Pure mathematical simulation functions
+├── index.js          # UI orchestration and event handlers
 ├── style.css         # Styling
 ├── index.html        # HTML template
-├── data/            # Sample CSV files
-└── tests/           # Test files
+├── core/
+│   ├── simulation.js # Simulation engine (runSimulation, runSimulationProgressive,
+│   │                 #   Fibonacci utilities) + re-exports from stats and charts
+│   ├── stats.js      # Pure math and statistics (getMedian, getStandardDeviation,
+│   │                 #   calculateKDE, taskUpperBound, taskLowerBound, generateEstimate)
+│   └── state.js      # Application state management (AppState class)
+├── ui/
+│   ├── data-input-ui.js          # Data entry form generation and UI interactions
+│   ├── fibonacci-config.js       # Fibonacci/velocity configuration UI panel
+│   ├── graph-settings.js         # Graph settings UI and configuration helpers
+│   ├── layout.js                 # Page layout construction
+│   ├── simulation-results-view.js # Simulation results display
+│   ├── task-table.js             # Task data-entry table and row lifecycle
+│   └── tshirt-config.js          # T-shirt size mapping configuration UI
+├── utils/
+│   ├── csv-parser.js   # CSV parsing and data validation
+│   ├── dom-helpers.js  # Reusable DOM element factory functions
+│   └── export-utils.js # CSV/SVG/PNG export utilities
+├── visualization/
+│   └── charts.js       # D3 visualization (buildHistogram, buildHistogramPreview,
+│                       #   buildTaskRowHistogram, GRAPH_CONFIG, GRAPH_CONFIG_DEFAULTS)
+├── data/             # Sample CSV files
+└── tests/
+    ├── stats.test.js           # Math and statistics function tests
+    ├── charts.test.js          # Graph configuration and rendering tests
+    ├── simulation.test.js      # Simulation engine and Fibonacci tests
+    ├── csv-parser.test.js      # CSV parsing and validation tests
+    ├── data-input-ui.test.js   # Data entry form generation tests
+    ├── dom-helpers.test.js     # DOM element factory function tests
+    ├── export-utils.test.js    # Export utility tests
+    ├── fibonacci-config.test.js # Fibonacci config UI tests
+    ├── graph-settings.test.js  # Graph settings tests
+    ├── index.test.js           # UI orchestration function tests
+    ├── layout.test.js          # Page layout tests
+    ├── state.test.js           # Application state tests
+    ├── task-table.test.js      # Task table and row lifecycle tests
+    ├── tshirt-config.test.js   # T-shirt config UI tests
+    ├── html-template.test.js   # HTML template and accessibility tests
+    └── accessibility.test.js   # Accessibility compliance tests
 ```
 
 ### Contributing
