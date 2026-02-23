@@ -247,6 +247,11 @@ async function startSimulation(event) {
 const projectSimulator = document.getElementById('project-simulator');
 if (projectSimulator) {
   projectSimulator.appendChild(setupUi());
+
+  const startSimulationButton = document.getElementById('startSimulationButton');
+  if (startSimulationButton) {
+    startSimulationButton.addEventListener('click', startSimulation);
+  }
 }
 
 // Export local functions for testing

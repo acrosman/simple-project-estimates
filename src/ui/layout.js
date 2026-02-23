@@ -5,7 +5,6 @@ import {
   createDataEntrySection,
 } from '../data-input';
 import { createAdvancedSettings } from './graph-settings';
-import { startSimulation } from '../index';
 import saveSvgAsImage from '../utils/export-utils';
 import {
   createDivWithIdAndClasses,
@@ -78,7 +77,6 @@ export function createSimulationPanel() {
   simRun.type = 'button';
   simRun.id = 'startSimulationButton';
   simRun.value = 'Run Simulation';
-  simRun.addEventListener('click', startSimulation);
 
   simControls.appendChild(simCountCtl);
   simControls.appendChild(simLimitCtl);
