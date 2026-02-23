@@ -30,8 +30,8 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
   const { onBatchComplete, batchSize = 1000 } = callbacks;
   const totalPasses = parseInt(passes, 10);
   const costMultiplier = parseFloat(hoursPerTimeUnit) || 1;
-  const upperTimeBound = calculateUpperBound(data);
-  const upperCostBound = calculateUpperBound(data, true) * costMultiplier;
+  const upperTimeBound = Math.ceil(calculateUpperBound(data));
+  const upperCostBound = Math.ceil(calculateUpperBound(data, true) * costMultiplier);
   const times = new Array(upperTimeBound + 1).fill(0);
   const costs = new Array(upperCostBound + 1).fill(0);
   const taskOutcomes = {};
@@ -47,8 +47,8 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
 
   // Setup task-level outcome histograms for row-level visualization.
   for (const row of data) {
-    const taskTimeUpperBound = taskUpperBound(row.Max, row.Confidence);
-    const taskCostUpperBound = taskTimeUpperBound * row.Cost * costMultiplier;
+    const taskTimeUpperBound = Math.ceil(taskUpperBound(row.Max, row.Confidence));
+    const taskCostUpperBound = Math.ceil(taskTimeUpperBound * row.Cost * costMultiplier);
     const rowId = row.RowId || row.Name;
     taskOutcomes[rowId] = {
       rowId,

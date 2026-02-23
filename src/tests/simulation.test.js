@@ -59,6 +59,26 @@ test('RunSimulation: Single Task', () => {
   expect(results.taskResults[0].times.sd).not.toBeNaN();
 });
 
+test('RunSimulation: Fractional Max values do not throw RangeError', () => {
+  const tasks = [
+    {
+      RowId: '1',
+      Name: 'Fractional Task',
+      Min: 1.5,
+      Max: 3.7,
+      Confidence: 0.8,
+      Cost: 100.5,
+    },
+  ];
+  expect(() => sim.runSimulation(100, tasks)).not.toThrow();
+  const results = sim.runSimulation(100, tasks);
+  expect(results.times.median).toBeGreaterThanOrEqual(0);
+  expect(Number.isInteger(results.times.list.length)).toBe(true);
+  expect(Number.isInteger(results.costs.list.length)).toBe(true);
+  expect(Number.isInteger(results.taskResults[0].times.list.length)).toBe(true);
+  expect(Number.isInteger(results.taskResults[0].costs.list.length)).toBe(true);
+});
+
 // Tests for runSimulationProgressive function
 describe('runSimulationProgressive', () => {
   const sampleTasks = [
