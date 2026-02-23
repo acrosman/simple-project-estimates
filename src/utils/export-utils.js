@@ -8,6 +8,13 @@ import { showError } from './dom-helpers';
  */
 function saveSvgAsImage(svgContainerId, filename, format = 'png') {
   const container = document.getElementById(svgContainerId);
+
+  if (!container) {
+    // eslint-disable-next-line no-console
+    console.error(`saveSvgAsImage: container element "${svgContainerId}" not found.`);
+    return;
+  }
+
   const svg = container.querySelector('svg');
 
   if (!svg) {

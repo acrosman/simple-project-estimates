@@ -91,6 +91,36 @@ describe('saveSvgAsImage', () => {
     jest.restoreAllMocks();
   });
 
+  describe('when the container element is not found', () => {
+    let consoleSpy;
+
+    beforeEach(() => {
+      document.getElementById = jest.fn(() => null);
+      consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
+
+    test('logs an error to the console', () => {
+      saveSvgAsImage('missingId', 'test-file', 'png');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'saveSvgAsImage: container element "missingId" not found.',
+      );
+    });
+
+    test('does not attempt to serialize an SVG', () => {
+      saveSvgAsImage('missingId', 'test-file', 'png');
+      expect(global.XMLSerializer).not.toHaveBeenCalled();
+    });
+
+    test('does not call showError', () => {
+      saveSvgAsImage('missingId', 'test-file', 'png');
+      expect(showError).not.toHaveBeenCalled();
+    });
+  });
+
   describe('when no SVG is present in the container', () => {
     beforeEach(() => {
       mockContainer.querySelector = jest.fn(() => null);
