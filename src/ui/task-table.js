@@ -1,5 +1,5 @@
-import { appState } from './state';
-import { createTextElement, createDivWithIdAndClasses } from './dom-helpers';
+import { appState } from '../core/state';
+import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
 
 /**
  * Checks if a row is empty (all input fields are empty except the button).
