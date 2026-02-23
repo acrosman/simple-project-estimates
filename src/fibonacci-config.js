@@ -128,8 +128,8 @@ function createFibonacciCalendarMappingTable() {
       name: `fib-cal-min-${fibNum}`,
       step: '0.5',
       min: '0',
-      'aria-label': `Minimum days for ${fibNum} story points`,
     });
+    minInput.setAttribute('aria-label', `Minimum days for ${fibNum} story points`);
     minInput.dataset.fib = fibNum;
     minInput.dataset.type = 'min';
     minInput.addEventListener('change', updateFibonacciCalendarMapping);
@@ -153,8 +153,8 @@ function createFibonacciCalendarMappingTable() {
       name: `fib-cal-max-${fibNum}`,
       step: '0.5',
       min: '0',
-      'aria-label': `Maximum days for ${fibNum} story points`,
     });
+    maxInput.setAttribute('aria-label', `Maximum days for ${fibNum} story points`);
     maxInput.dataset.fib = fibNum;
     maxInput.dataset.type = 'max';
     maxInput.addEventListener('change', updateFibonacciCalendarMapping);

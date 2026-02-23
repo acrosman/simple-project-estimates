@@ -135,8 +135,8 @@ function createTshirtMappingTable() {
       name: `tshirt-fib-${size}`,
       min: 0,
       step: 1,
-      'aria-label': `Fibonacci points for t-shirt size ${size}`,
     });
+    fibInput.setAttribute('aria-label', `Fibonacci points for t-shirt size ${size}`);
     fibInput.dataset.tshirt = size;
     fibInput.addEventListener('change', updateTshirtMapping);
     fibCell.appendChild(fibInput);
