@@ -5,9 +5,15 @@ import { showError } from './dom-helpers';
  * @param {string} svgContainerId ID of the element containing the SVG
  * @param {string} filename Name for the downloaded file
  * @param {string} format 'png' or 'jpeg'
+ * @returns {void} Returns early without action if the container or SVG is not found
  */
 function saveSvgAsImage(svgContainerId, filename, format = 'png') {
   const container = document.getElementById(svgContainerId);
+
+  if (!container) {
+    return;
+  }
+
   const svg = container.querySelector('svg');
 
   if (!svg) {
