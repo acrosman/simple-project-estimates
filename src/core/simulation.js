@@ -103,12 +103,13 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
     }
 
     times[totalTime] += 1;
-    costs[totalCost] += 1;
+    const totalCostBucket = Math.round(totalCost);
+    costs[totalCostBucket] += 1;
     estimateDetails.push(outcome);
     if (totalTime < minTime || minTime === -1) { minTime = totalTime; }
     if (totalTime > maxTime) { maxTime = totalTime; }
-    if (totalCost < minCost || minCost === -1) { minCost = totalCost; }
-    if (totalCost > maxCost) { maxCost = totalCost; }
+    if (totalCostBucket < minCost || minCost === -1) { minCost = totalCostBucket; }
+    if (totalCostBucket > maxCost) { maxCost = totalCostBucket; }
   };
 
   /**
