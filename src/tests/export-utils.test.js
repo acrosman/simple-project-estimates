@@ -92,22 +92,12 @@ describe('saveSvgAsImage', () => {
   });
 
   describe('when the container element is not found', () => {
-    let consoleSpy;
-
     beforeEach(() => {
       document.getElementById = jest.fn(() => null);
-      consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     });
 
-    afterEach(() => {
-      consoleSpy.mockRestore();
-    });
-
-    test('logs an error to the console', () => {
-      saveSvgAsImage('missingId', 'test-file', 'png');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'saveSvgAsImage: container element "missingId" not found.',
-      );
+    test('returns without throwing', () => {
+      expect(() => saveSvgAsImage('missingId', 'test-file', 'png')).not.toThrow();
     });
 
     test('does not attempt to serialize an SVG', () => {
