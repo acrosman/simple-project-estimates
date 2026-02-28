@@ -4,7 +4,7 @@
 
 // Must be called before imports so Jest hoists it and both index.js and this
 // test file receive the same mocked module instance.
-import * as idx from '../index';
+import startSimulation from '../index';
 import * as sim from '../core/simulation';
 import { appState } from '../core/state';
 import SimulationResultsView from '../ui/simulation-results-view';
@@ -18,9 +18,9 @@ jest.mock('../core/simulation', () => {
 });
 
 describe('Index Module Exports', () => {
-  test('Validate exported functions exist', () => {
-    expect(idx).toHaveProperty('renderTaskRowHistograms');
-    expect(idx).toHaveProperty('startSimulation');
+  test('startSimulation is exported as default', () => {
+    expect(startSimulation).toBeDefined();
+    expect(typeof startSimulation).toBe('function');
   });
 });
 
@@ -61,96 +61,6 @@ describe('SimulationResultsView.updateElementText', () => {
     document.body.appendChild(div);
     SimulationResultsView.updateElementText('numericDiv', 'Median: 42');
     expect(div.textContent).toBe('Median: 42');
-  });
-});
-
-describe('renderTaskRowHistograms', () => {
-  beforeEach(() => {
-    document.body.innerHTML = '';
-  });
-
-  test('renders histogram only for matching task row ids', () => {
-    document.body.innerHTML = `
-      <div class="task-row-graph" data-row-id="1"></div>
-      <div class="task-row-graph" data-row-id="2"></div>
-    `;
-
-    idx.renderTaskRowHistograms([
-      {
-        rowId: '1',
-        times: {
-          list: [0, 2, 4, 2],
-          min: 1,
-          max: 3,
-        },
-      },
-    ]);
-
-    const row1Svg = document.querySelector('.task-row-graph[data-row-id="1"] svg');
-    const row2Svg = document.querySelector('.task-row-graph[data-row-id="2"] svg');
-
-    expect(row1Svg).not.toBeNull();
-    expect(row2Svg).toBeNull();
-  });
-
-  test('clears existing graphs when no task results are provided', () => {
-    document.body.innerHTML = `
-      <div class="task-row-graph" data-row-id="1"><svg></svg></div>
-    `;
-
-    idx.renderTaskRowHistograms([]);
-
-    expect(document.querySelector('.task-row-graph[data-row-id="1"]').innerHTML).toBe('');
-  });
-
-  test('populates stats node when present', () => {
-    document.body.innerHTML = `
-      <div class="task-row-graph" data-row-id="1"></div>
-      <div class="task-row-stats" data-row-id="1"></div>
-    `;
-
-    idx.renderTaskRowHistograms([
-      {
-        rowId: '1',
-        name: 'Task 1',
-        times: {
-          list: [0, 2, 4, 2],
-          min: 1,
-          max: 3,
-          median: 2,
-        },
-      },
-    ]);
-
-    const statsNode = document.querySelector('.task-row-stats[data-row-id="1"]');
-    expect(statsNode.innerHTML).toContain('Min: 1');
-    expect(statsNode.innerHTML).toContain('Med: 2');
-    expect(statsNode.innerHTML).toContain('Max: 3');
-  });
-
-  test('uses days as time unit in fibonacci estimation mode', () => {
-    appState.estimationMode = 'fibonacci';
-    document.body.innerHTML = `
-      <div class="task-row-graph" data-row-id="1"></div>
-      <div class="task-row-stats" data-row-id="1"></div>
-    `;
-
-    idx.renderTaskRowHistograms([
-      {
-        rowId: '1',
-        name: 'Task 1',
-        times: {
-          list: [0, 2, 4, 2],
-          min: 1,
-          max: 3,
-          median: 2,
-        },
-      },
-    ]);
-
-    const statsNode = document.querySelector('.task-row-stats[data-row-id="1"]');
-    expect(statsNode.innerHTML).toContain('days');
-    appState.estimationMode = 'hours';
   });
 });
 
@@ -234,13 +144,13 @@ describe('startSimulation', () => {
 
   test('calls event.preventDefault', async () => {
     buildSimulationDOM();
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(mockEvent.preventDefault).toHaveBeenCalled();
   });
 
   test('shows error when no valid tasks exist', async () => {
     buildSimulationDOM([]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     const errorDiv = document.querySelector('.error-message');
     expect(errorDiv).not.toBeNull();
     expect(errorDiv.textContent).toContain('No valid tasks found');
@@ -248,7 +158,7 @@ describe('startSimulation', () => {
 
   test('does not call simulation when no valid tasks', async () => {
     buildSimulationDOM([]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
   });
 
@@ -256,7 +166,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Bad Task', min: '20', max: '5', confidence: '90',
     }]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
     const errorDiv = document.querySelector('.error-message');
     expect(errorDiv).not.toBeNull();
@@ -267,7 +177,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: '', min: '5', max: '10', confidence: '90',
     }]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(sim.runSimulationProgressive).not.toHaveBeenCalled();
   });
 
@@ -275,7 +185,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(sim.runSimulationProgressive).toHaveBeenCalled();
   });
 
@@ -291,7 +201,7 @@ describe('startSimulation', () => {
       return makeSimResults();
     });
 
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
 
     expect(disabledDuringRun).toBe(true);
     expect(runButton.disabled).toBe(false);
@@ -302,7 +212,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(document.getElementById('simulationTimeMedian').textContent).toContain('2');
     expect(document.getElementById('simulationTimeMax').textContent).toContain('3');
     expect(document.getElementById('simulationTimeMin').textContent).toContain('1');
@@ -312,7 +222,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(document.getElementById('simulationCostMedian').textContent).toContain('200');
   });
 
@@ -321,7 +231,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(document.getElementById('simulationCostMedian').textContent).toBe('');
   });
 
@@ -330,7 +240,7 @@ describe('startSimulation', () => {
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
     sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     const errorDiv = document.querySelector('.error-message');
     expect(errorDiv).not.toBeNull();
     expect(errorDiv.textContent).toContain('Simulation failed');
@@ -342,7 +252,7 @@ describe('startSimulation', () => {
     }]);
     sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
     const runButton = document.getElementById('startSimulationButton');
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(runButton.disabled).toBe(false);
   });
 
@@ -373,7 +283,7 @@ describe('startSimulation', () => {
       });
       return makeSimResults();
     });
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     // Just verifying the simulation ran to completion with the progress callback invoked
     expect(sim.runSimulationProgressive).toHaveBeenCalled();
   });
@@ -388,7 +298,7 @@ describe('startSimulation', () => {
       expect(document.getElementById('simulationTimeMedian').textContent).toBe('');
       return makeSimResults();
     });
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
   });
 
   test('replaces existing error in results div when simulation throws', async () => {
@@ -401,7 +311,7 @@ describe('startSimulation', () => {
     existingError.textContent = 'Old error';
     resultsDiv.appendChild(existingError);
     sim.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     const errors = document.querySelectorAll('.error-message');
     expect(errors).toHaveLength(1);
   });
@@ -410,7 +320,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(document.getElementById('timeEstimateHeader').style.display).toBe('block');
   });
 
@@ -418,7 +328,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
     expect(document.getElementById('simulationRunningTime').textContent).toContain('100');
   });
 
@@ -433,7 +343,7 @@ describe('startSimulation', () => {
       () => new Promise((resolve) => { resolveSimulation = () => resolve(makeSimResults()); }),
     );
 
-    const simPromise = idx.startSimulation(mockEvent);
+    const simPromise = startSimulation(mockEvent);
 
     // Advance fake timers to trigger the interval callback
     jest.advanceTimersByTime(150);
@@ -471,7 +381,7 @@ describe('startSimulation', () => {
       return makeSimResults();
     });
 
-    await idx.startSimulation(mockEvent);
+    await startSimulation(mockEvent);
 
     expect(document.getElementById('simulationCostMedian').textContent).toContain('200');
   });

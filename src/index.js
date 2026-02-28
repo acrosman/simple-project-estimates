@@ -6,48 +6,6 @@ import { setupUi } from './ui/layout';
 import SimulationResultsView from './ui/simulation-results-view';
 
 /**
- * Renders mini histograms for all task rows from simulation output.
- * @param {Array} taskResults Per-task simulation results.
- */
-function renderTaskRowHistograms(taskResults) {
-  const rowGraphs = document.querySelectorAll('.task-row-graph');
-  for (const graphNode of rowGraphs) {
-    graphNode.innerHTML = '';
-  }
-
-  const rowStats = document.querySelectorAll('.task-row-stats');
-  for (const statsNode of rowStats) {
-    statsNode.innerHTML = '';
-  }
-
-  if (!taskResults || taskResults.length < 1) {
-    return;
-  }
-
-  // Determine time unit based on estimation mode
-  const timeUnit = appState.getTimeUnit().toLowerCase();
-
-  for (const taskResult of taskResults) {
-    const graphNode = document.querySelector(`.task-row-graph[data-row-id="${taskResult.rowId}"]`);
-    if (graphNode) {
-      sim.buildTaskRowHistogram(
-        graphNode,
-        taskResult.times.list,
-        taskResult.times.min,
-        taskResult.times.max,
-        taskResult.name,
-      );
-    }
-
-    // Add statistics display
-    const statsNode = document.querySelector(`.task-row-stats[data-row-id="${taskResult.rowId}"]`);
-    if (statsNode) {
-      statsNode.innerHTML = `Min: ${taskResult.times.min} | Med: ${taskResult.times.median} | Max: ${taskResult.times.max} ${timeUnit}`;
-    }
-  }
-}
-
-/**
  * Triggers the start of the simulation run with the current values.
  * @param {Event} event
  */
@@ -57,7 +15,7 @@ async function startSimulation(event) {
   const graphSetting = document.getElementById('LimitGraph').checked;
 
   // Clear any previous task-level graphs immediately for this run.
-  renderTaskRowHistograms([]);
+  SimulationResultsView.renderTaskRowHistograms([]);
 
   // Gather and normalize task data.
   const rawTasks = gatherRawTaskData();
@@ -148,7 +106,7 @@ async function startSimulation(event) {
     );
 
     // Render row-level task distributions as soon as simulation data is available.
-    renderTaskRowHistograms(results.taskResults);
+    SimulationResultsView.renderTaskRowHistograms(results.taskResults);
 
     // Build and display histograms.
     sim.buildHistogram(
@@ -204,8 +162,5 @@ if (projectSimulator) {
   }
 }
 
-// Export local functions for testing
-export {
-  renderTaskRowHistograms,
-  startSimulation,
-};
+// Export for testing
+export default startSimulation;

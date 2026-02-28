@@ -1,6 +1,12 @@
 /**
- * SimulationResultsView: Handles all DOM updates for simulation results.
+ * Handles all DOM updates for displaying simulation results.
+ * Provides functions for updating progress, rendering final results,
+ * and rendering per-task row histograms.
+ * @module ui/simulation-results-view
  */
+
+import { appState } from '../core/state';
+import { buildTaskRowHistogram } from '../core/simulation';
 
 function updateElementText(id, text) {
   const el = document.getElementById(id);
@@ -82,6 +88,48 @@ function showCostResults(enable) {
   document.getElementById('costSaveButtons').style.display = enable ? 'block' : 'none';
 }
 
+/**
+ * Renders mini histograms for all task rows from simulation output.
+ * @param {Array} taskResults Per-task simulation results.
+ */
+function renderTaskRowHistograms(taskResults) {
+  const rowGraphs = document.querySelectorAll('.task-row-graph');
+  for (const graphNode of rowGraphs) {
+    graphNode.innerHTML = '';
+  }
+
+  const rowStats = document.querySelectorAll('.task-row-stats');
+  for (const statsNode of rowStats) {
+    statsNode.innerHTML = '';
+  }
+
+  if (!taskResults || taskResults.length < 1) {
+    return;
+  }
+
+  // Determine time unit based on estimation mode
+  const timeUnit = appState.getTimeUnit().toLowerCase();
+
+  for (const taskResult of taskResults) {
+    const graphNode = document.querySelector(`.task-row-graph[data-row-id="${taskResult.rowId}"]`);
+    if (graphNode) {
+      buildTaskRowHistogram(
+        graphNode,
+        taskResult.times.list,
+        taskResult.times.min,
+        taskResult.times.max,
+        taskResult.name,
+      );
+    }
+
+    // Add statistics display
+    const statsNode = document.querySelector(`.task-row-stats[data-row-id="${taskResult.rowId}"]`);
+    if (statsNode) {
+      statsNode.innerHTML = `Min: ${taskResult.times.min} | Med: ${taskResult.times.median} | Max: ${taskResult.times.max} ${timeUnit}`;
+    }
+  }
+}
+
 const SimulationResultsView = {
   updateElementText,
   showError,
@@ -90,6 +138,7 @@ const SimulationResultsView = {
   clearStatistics,
   showTimeResults,
   showCostResults,
+  renderTaskRowHistograms,
 };
 
 export default SimulationResultsView;
