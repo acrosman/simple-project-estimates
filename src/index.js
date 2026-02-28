@@ -30,9 +30,10 @@ async function startSimulation(event) {
 
   // Validate we have at least one task
   if (data.length === 0) {
-    const resultsDiv = document.getElementById('results');
-    if (resultsDiv) {
-      SimulationResultsView.showError(resultsDiv, 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.', 0);
+    const messagesSection = document.getElementById('messages');
+    if (messagesSection) {
+      SimulationResultsView.showError(messagesSection, 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.', 0);
+      messagesSection.style.display = 'block';
     }
     return;
   }
@@ -138,9 +139,10 @@ async function startSimulation(event) {
       SimulationResultsView.showCostResults(false);
     }
   } catch (error) {
-    const resultsDiv = document.getElementById('results');
-    if (resultsDiv) {
-      SimulationResultsView.showError(resultsDiv, 'Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.', 0);
+    const messagesSection = document.getElementById('messages');
+    if (messagesSection) {
+      SimulationResultsView.showError(messagesSection, 'Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.', 0);
+      messagesSection.style.display = 'block';
     }
   } finally {
     clearInterval(stopwatchInterval);

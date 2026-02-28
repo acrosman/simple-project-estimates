@@ -33,6 +33,18 @@ export function createLogoElement() {
 }
 
 /**
+ * Creates the message section for displaying simulation messages.
+ * @returns {HTMLElement} Message section
+ */
+export function createMessageSection() {
+  const messagesSection = document.createElement('div');
+  messagesSection.id = 'messages';
+  messagesSection.classList.add('messages-section');
+  messagesSection.style.display = 'none';
+  return messagesSection;
+}
+
+/**
  * Creates the page header with GitHub ribbon.
  * @returns {HTMLElement} Header section
  */
@@ -200,6 +212,7 @@ export function setupUi() {
   const fileLoader = createFileLoader();
   const dataEntry = createDataEntrySection();
   const simulationPanel = createSimulationPanel();
+  const messagesSection = createMessageSection();
 
   // Create side-by-side wrapper: mode selector on the left, logo on the right
   const modeSelectorWithLogo = document.createElement('div');
@@ -209,6 +222,7 @@ export function setupUi() {
 
   // Assemble data area
   dataWrapper.appendChild(modeSelectorWithLogo);
+  dataWrapper.appendChild(messagesSection);
   dataWrapper.appendChild(fileLoader);
   dataWrapper.appendChild(dataEntry);
 

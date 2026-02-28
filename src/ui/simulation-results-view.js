@@ -26,6 +26,7 @@ function showError(targetNode, message, timeout = 0) {
   if (timeout > 0) {
     setTimeout(() => errorDiv.remove(), timeout);
   }
+  targetNode.style.display = 'block';
 }
 
 function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {

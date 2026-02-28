@@ -84,7 +84,7 @@ describe('startSimulation', () => {
       <input id="LimitGraph" type="checkbox" />
       <input id="startSimulationButton" type="button" value="Run Simulation" />
       <form id="DataEntryTable">${taskRowsHtml}</form>
-      <div id="results"></div>
+      <div id="messages" class="messages-section"  style="display: none;"></div>
       <div id="costHistoGram"></div>
       <div id="costEstimateHeader" style="display: none;"></div>
       <div id="costSaveButtons" style="display: none;"></div>
@@ -305,7 +305,7 @@ describe('startSimulation', () => {
     buildSimulationDOM([{
       name: 'Task 1', min: '5', max: '10', confidence: '90',
     }]);
-    const resultsDiv = document.getElementById('results');
+    const resultsDiv = document.getElementById('messages');
     const existingError = document.createElement('div');
     existingError.classList.add('error-message');
     existingError.textContent = 'Old error';

@@ -6,6 +6,7 @@ import {
   createLogoElement,
   createHeader,
   createSimulationPanel,
+  createMessageSection,
   setupUi,
 } from '../ui/layout';
 // import * as idx from '../index';
@@ -22,6 +23,7 @@ describe('Layout Module Exports', () => {
     expect(createLogoElement).toBeDefined();
     expect(createHeader).toBeDefined();
     expect(createSimulationPanel).toBeDefined();
+    expect(createMessageSection).toBeDefined();
     expect(setupUi).toBeDefined();
   });
 });
@@ -79,6 +81,23 @@ describe('createHeader', () => {
     const link = el.querySelector('a');
     expect(link).not.toBeNull();
     expect(link.href).toContain('github.com');
+  });
+});
+
+describe('createMessageSection', () => {
+  test('returns a div element', () => {
+    const el = createMessageSection();
+    expect(el.tagName).toBe('DIV');
+  });
+
+  test('has messages-section class', () => {
+    const el = createMessageSection();
+    expect(el.classList.contains('messages-section')).toBe(true);
+  });
+
+  test('is initially hidden', () => {
+    const el = createMessageSection();
+    expect(el.style.display).toBe('none');
   });
 });
 
