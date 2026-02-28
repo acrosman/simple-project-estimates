@@ -1,4 +1,10 @@
 /**
+ * CSV data parsing and validation utilities.
+ * Pure functions with no DOM or D3 dependencies — safe to test in isolation.
+ * @module utils/csv-parser
+ */
+
+/**
  * Validates CSV data structure and content. Pure function for testing.
  * @param {Array} data Parsed CSV data as array of objects
  * @param {string} estimationMode Current estimation mode ('hours', 'fibonacci', 'tshirt')

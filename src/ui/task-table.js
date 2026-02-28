@@ -1,3 +1,9 @@
+/**
+ * Task data-entry table module.
+ * Renders the manual task input table and manages the full row lifecycle
+ * (add, validate, remove) for hours, Fibonacci, and T-shirt estimation modes.
+ * @module ui/task-table
+ */
 import { appState } from '../core/state';
 import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
 

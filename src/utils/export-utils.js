@@ -1,3 +1,8 @@
+/**
+ * Export utilities for saving simulation result graphs.
+ * Supports saving D3-generated SVGs as PNG or JPEG images via canvas conversion.
+ * @module utils/export-utils
+ */
 import { showError } from './dom-helpers';
 
 /**

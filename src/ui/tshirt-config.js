@@ -1,3 +1,8 @@
+/**
+ * T-shirt size mapping configuration UI panel.
+ * Renders the table that lets users define hour-range mappings for each size (XS–XXL).
+ * @module ui/tshirt-config
+ */
 import { tshirtMappings } from '../core/state';
 import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
 

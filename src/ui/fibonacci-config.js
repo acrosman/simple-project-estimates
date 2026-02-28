@@ -1,3 +1,9 @@
+/**
+ * Fibonacci and velocity estimation configuration UI panel.
+ * Renders the mapping table between Fibonacci story-point values
+ * and calendar or velocity-based day ranges.
+ * @module ui/fibonacci-config
+ */
 import { appState, fibonacciCalendarMappings } from '../core/state';
 import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
 

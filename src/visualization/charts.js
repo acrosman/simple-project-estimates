@@ -1,3 +1,9 @@
+/**
+ * D3-powered chart and histogram visualization module.
+ * Builds time and cost histograms, per-task mini graphs, and histogram previews.
+ * Exposes GRAPH_CONFIG for runtime customisation and GRAPH_CONFIG_DEFAULTS for resets.
+ * @module visualization/charts
+ */
 import * as d3 from 'd3';
 import { calculateKDE } from '../core/stats';
 

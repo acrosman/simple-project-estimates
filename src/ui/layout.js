@@ -1,3 +1,9 @@
+/**
+ * Main application layout builder.
+ * Creates the page header, logo, simulation control panel, and root UI structure,
+ * then wires them together into the top-level DOM tree returned to index.js.
+ * @module ui/layout
+ */
 import Icon from '../logo.png';
 import {
   createModeSelector,

@@ -1,3 +1,10 @@
+/**
+ * Data entry UI components for task input.
+ * Handles CSV file loading, estimation mode selection, cost toggle,
+ * and the manual data entry section.
+ * CSV validation logic is delegated to utils/csv-parser.
+ * @module ui/data-input-ui
+ */
 import { csv } from 'd3-fetch';
 import sampleData from '../data/sample.csv';
 import sampleFibData from '../data/sample-fib.csv';

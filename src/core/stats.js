@@ -1,4 +1,10 @@
 /**
+ * Pure math and statistics functions used by the simulation engine.
+ * Contains no DOM manipulation or D3 references — all functions are fully testable in isolation.
+ * @module core/stats
+ */
+
+/**
  * Get a random integer in a given inclusive range.
  * @param {number} minimum Lower bound (will be rounded up to nearest integer)
  * @param {number} maximum Upper bound (will be rounded down to nearest integer)

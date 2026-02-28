@@ -1,3 +1,9 @@
+/**
+ * Simulation engine for Monte Carlo project time and cost estimation.
+ * Runs thousands of passes over task data to produce histogram distributions.
+ * Re-exports selected symbols from stats.js and charts.js for backward compatibility.
+ * @module core/simulation
+ */
 import {
   taskUpperBound,
   generateEstimate,

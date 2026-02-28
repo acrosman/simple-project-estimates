@@ -1,4 +1,9 @@
-// ============= Interface Element Helpers =================
+/**
+ * Reusable DOM element factory helpers.
+ * Provides convenience wrappers over document.createElement for common patterns.
+ * Contains no application state, simulation logic, or D3 references.
+ * @module utils/dom-helpers
+ */
 /**
  * Create a text element with it's internal text node.
  * @param {string} wrapperTag Tag name

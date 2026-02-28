@@ -1,4 +1,11 @@
-// ============= Application State Management =================
+/**
+ * Application state management module.
+ * Provides the AppState class and shared state instances
+ * (appState, fibonacciCalendarMappings, tshirtMappings).
+ * Stores estimation mode, cost toggle, velocity configuration, and size mappings.
+ * @module core/state
+ */
+
 /**
  * Manages application state in a testable, encapsulated way.
  */
