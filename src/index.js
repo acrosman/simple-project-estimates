@@ -6,8 +6,6 @@ import { gatherRawTaskData, normalizeTaskData } from './ui/task-table';
 import { setupUi } from './ui/layout';
 import SimulationResultsView from './ui/simulation-results-view';
 
-// updateElementText now handled by SimulationResultsView
-
 /**
  * Renders mini histograms for all task rows from simulation output.
  * @param {Array} taskResults Per-task simulation results.
