@@ -20,10 +20,7 @@ jest.mock('../core/simulation', () => {
 describe('Index Module Exports', () => {
   test('Validate exported functions exist', () => {
     expect(idx).toHaveProperty('renderTaskRowHistograms');
-    expect(idx).toHaveProperty('applyGraphSettings');
-    expect(idx).toHaveProperty('resetGraphSettings');
     expect(idx).toHaveProperty('startSimulation');
-    expect(idx).toHaveProperty('setupUi');
   });
 });
 

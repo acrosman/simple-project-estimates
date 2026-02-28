@@ -1,7 +1,6 @@
 import './style.css';
 import * as sim from './core/simulation';
 import { appState, fibonacciCalendarMappings, tshirtMappings } from './core/state';
-import { applyGraphSettings, resetGraphSettings } from './ui/graph-settings';
 import { gatherRawTaskData, normalizeTaskData } from './ui/task-table';
 import { setupUi } from './ui/layout';
 import SimulationResultsView from './ui/simulation-results-view';
@@ -208,8 +207,5 @@ if (projectSimulator) {
 // Export local functions for testing
 export {
   renderTaskRowHistograms,
-  applyGraphSettings,
-  resetGraphSettings,
   startSimulation,
-  setupUi,
 };
