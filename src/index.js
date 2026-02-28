@@ -30,11 +30,7 @@ async function startSimulation(event) {
 
   // Validate we have at least one task
   if (data.length === 0) {
-    const messagesSection = document.getElementById('messages');
-    if (messagesSection) {
-      SimulationResultsView.showError(messagesSection, 'No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.', 0);
-      messagesSection.style.display = 'block';
-    }
+    SimulationResultsView.showError('No valid tasks found. Please ensure all tasks have valid values: name, min >= 0, max >= min, and confidence between 0-100%.');
     return;
   }
 
@@ -139,11 +135,7 @@ async function startSimulation(event) {
       SimulationResultsView.showCostResults(false);
     }
   } catch (error) {
-    const messagesSection = document.getElementById('messages');
-    if (messagesSection) {
-      SimulationResultsView.showError(messagesSection, 'Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.', 0);
-      messagesSection.style.display = 'block';
-    }
+    SimulationResultsView.showError('Simulation failed. Please verify your input data is valid and try again. If the problem persists, check the browser console for details.');
   } finally {
     clearInterval(stopwatchInterval);
     if (runButton) {

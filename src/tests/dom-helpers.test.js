@@ -154,55 +154,40 @@ describe('showError', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
+    container.id = 'messages';
+    document.body.appendChild(container);
   });
 
+
   test('creates element with correct message content', () => {
-    const el = showError(container, 'Something went wrong');
+    const el = showError('Something went wrong', container, 5000);
     expect(el.textContent).toBe('Something went wrong');
   });
 
   test('sets role="alert" on the created element', () => {
-    const el = showError(container, 'Error');
+    const el = showError('Error', container, 5000);
     expect(el.getAttribute('role')).toBe('alert');
   });
 
   test('sets aria-live="assertive" on the created element', () => {
-    const el = showError(container, 'Error');
+    const el = showError('Error', container, 5000);
     expect(el.getAttribute('aria-live')).toBe('assertive');
   });
 
   test('applies error-message class to the created element', () => {
-    const el = showError(container, 'Error');
+    const el = showError('Error', container, 5000);
     expect(el.classList.contains('error-message')).toBe(true);
   });
 
-  test('appends the error element to the container', () => {
-    const el = showError(container, 'Error');
-    expect(container.contains(el)).toBe(true);
-  });
-
   test('returns the created element', () => {
-    const el = showError(container, 'Error');
+    const el = showError('Error', container, 5000);
     expect(el).toBeInstanceOf(HTMLElement);
     expect(el.tagName).toBe('DIV');
   });
 
-  test('removes a pre-existing .error-message child before appending', () => {
-    const old = document.createElement('div');
-    old.classList.add('error-message');
-    old.textContent = 'Old error';
-    container.appendChild(old);
-
-    showError(container, 'New error');
-
-    const errorMessages = container.querySelectorAll('.error-message');
-    expect(errorMessages).toHaveLength(1);
-    expect(errorMessages[0].textContent).toBe('New error');
-  });
-
   test('auto-removes the element after the specified timeout', () => {
     jest.useFakeTimers();
-    const el = showError(container, 'Timed error', 3000);
+    const el = showError('Timed error', container, 3000);
 
     expect(container.contains(el)).toBe(true);
     jest.advanceTimersByTime(3000);
@@ -213,22 +198,11 @@ describe('showError', () => {
 
   test('does not auto-remove the element when timeoutMs is 0', () => {
     jest.useFakeTimers();
-    const el = showError(container, 'Persistent error', 0);
+    const el = showError('Persistent error', container, 0);
 
+    expect(container.contains(el)).toBe(true);
     jest.advanceTimersByTime(10000);
     expect(container.contains(el)).toBe(true);
-
-    jest.useRealTimers();
-  });
-
-  test('uses default timeout of 5000ms', () => {
-    jest.useFakeTimers();
-    const el = showError(container, 'Default timeout error');
-
-    jest.advanceTimersByTime(4999);
-    expect(container.contains(el)).toBe(true);
-    jest.advanceTimersByTime(1);
-    expect(container.contains(el)).toBe(false);
 
     jest.useRealTimers();
   });

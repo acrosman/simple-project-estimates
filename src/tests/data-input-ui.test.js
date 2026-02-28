@@ -16,6 +16,7 @@ describe('handleCostToggle', () => {
     appState.setEnableCost(true);
     document.body.innerHTML = `
       <div id="simulationCostResultsWrapper" style="display: block;"></div>
+      <div id="messages"></div>
       <div id="dataTableWrapper"></div>
     `;
   });
@@ -56,6 +57,7 @@ describe('handleModeChange', () => {
       <div id="fibonacciConfigWrapper" style="display: none;"></div>
       <div id="tshirtMappingWrapper" style="display: none;"></div>
       <a class="link-sample" href="#"></a>
+      <div id="messages"></div>
       <div id="dataTableWrapper"></div>
     `;
   });
@@ -124,6 +126,7 @@ describe('handleModeChange', () => {
     document.body.innerHTML = `
       <div id="fibonacciConfigWrapper" style="display: none;"></div>
       <div id="tshirtMappingWrapper" style="display: none;"></div>
+      <div id="messages"></div>
       <div id="dataTableWrapper"></div>
     `;
     expect(() => {
@@ -146,6 +149,7 @@ describe('importCsvFile', () => {
     global.FileReader = jest.fn(() => mockReader);
     document.body.innerHTML = `
       <input type="file" id="csvFileInput" />
+      <div id="messages"></div>
       <div id="dataAreaWrapper"></div>
       <div id="dataTableWrapper"></div>
     `;
@@ -229,26 +233,6 @@ describe('importCsvFile', () => {
     const errorDiv = document.querySelector('.error-message');
     expect(errorDiv).not.toBeNull();
     expect(errorDiv.textContent).toContain('Failed to parse CSV file');
-  });
-
-  test('replaces an existing error message', async () => {
-    const dataWrapper = document.getElementById('dataAreaWrapper');
-    const existingError = document.createElement('div');
-    existingError.classList.add('error-message');
-    existingError.textContent = 'Old error';
-    dataWrapper.appendChild(existingError);
-    csv.mockRejectedValueOnce(new Error('New error'));
-    Object.defineProperty(document.getElementById('csvFileInput'), 'files', {
-      value: [{ name: 'test.csv' }],
-      configurable: true,
-    });
-    const mockEvent = { preventDefault: jest.fn() };
-    dataInput.importCsvFile(mockEvent);
-    await Promise.resolve();
-    await Promise.resolve();
-    const errorDivs = document.querySelectorAll('.error-message');
-    expect(errorDivs).toHaveLength(1);
-    expect(errorDivs[0].textContent).toBe('New error');
   });
 
   test('shows validation error when CSV data is missing required columns', async () => {

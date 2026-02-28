@@ -7,26 +7,11 @@
 
 import { appState } from '../core/state';
 import { buildTaskRowHistogram } from '../core/simulation';
+import { showError } from '../utils/dom-helpers';
 
 function updateElementText(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text;
-}
-
-function showError(targetNode, message, timeout = 0) {
-  let errorDiv = targetNode.querySelector('.error-message');
-  if (!errorDiv) {
-    errorDiv = document.createElement('div');
-    errorDiv.classList.add('error-message');
-    errorDiv.setAttribute('role', 'alert');
-    errorDiv.setAttribute('aria-live', 'assertive');
-    targetNode.insertBefore(errorDiv, targetNode.firstChild);
-  }
-  errorDiv.textContent = message;
-  if (timeout > 0) {
-    setTimeout(() => errorDiv.remove(), timeout);
-  }
-  targetNode.style.display = 'block';
 }
 
 function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {

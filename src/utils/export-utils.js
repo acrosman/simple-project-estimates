@@ -22,7 +22,7 @@ function saveSvgAsImage(svgContainerId, filename, format = 'png') {
   const svg = container.querySelector('svg');
 
   if (!svg) {
-    showError(container, 'No graph to save. Please run a simulation first.');
+    showError('No graph to save. Please run a simulation first.');
     return;
   }
 

@@ -63,28 +63,39 @@ function createDivWithIdAndClasses(id, classList = []) {
 /**
  * Shows an accessible error message inside a container element.
  * Removes any pre-existing .error-message child before appending the new one.
- * @param {HTMLElement} containerElement The element to append the error message to.
  * @param {string} message The error message text.
+ * @param {HTMLElement} [container] Optional container to append error to. Defaults to #messages.
  * @param {number} timeoutMs Milliseconds after which the element is auto-removed.
  *   Pass 0 to disable auto-removal. Defaults to 5000.
  * @returns {HTMLElement} The created error div.
  */
-function showError(containerElement, message, timeoutMs = 5000) {
+function showError(message, container = null, timeoutMs = 5000) {
+  const containerElement = container || document.getElementById('messages');
+  // Remove any existing error message in the container
+  const existingError = containerElement.querySelector('.error-message');
+  if (existingError) {
+    existingError.remove();
+  }
   const errorDiv = document.createElement('div');
   errorDiv.setAttribute('role', 'alert');
   errorDiv.setAttribute('aria-live', 'assertive');
   errorDiv.classList.add('error-message');
   errorDiv.textContent = message;
 
-  const existingError = containerElement.querySelector('.error-message');
-  if (existingError) {
-    existingError.remove();
-  }
   containerElement.appendChild(errorDiv);
+  // Only set style.display if using the default container
+  if (!container || container === document.getElementById('messages')) {
+    containerElement.style.display = 'block';
+  }
 
+  // Auto hide errors after a timeout.
   if (timeoutMs > 0) {
     setTimeout(() => {
       errorDiv.remove();
+      // Only set style.display if using the default container
+      if (!container || container === document.getElementById('messages')) {
+        containerElement.style.display = 'none';
+      }
     }, timeoutMs);
   }
 

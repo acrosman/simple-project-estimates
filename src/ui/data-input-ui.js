@@ -10,7 +10,7 @@ import sampleData from '../data/sample.csv';
 import sampleFibData from '../data/sample-fib.csv';
 import sampleTshirtData from '../data/sample-tshirt.csv';
 import { appState } from '../core/state';
-import { createTextElement } from '../utils/dom-helpers';
+import { createTextElement, showError } from '../utils/dom-helpers';
 import { createEntryTable } from './task-table';
 import { createFibonacciConfigPanel } from './fibonacci-config';
 import { createTshirtMappingTable } from './tshirt-config';
@@ -88,24 +88,13 @@ function importCsvFile(event) {
         const validatedData = validateCsvData(data, appState.estimationMode, appState.enableCost);
         createEntryTable(validatedData);
       }).catch((error) => {
-        const errorDiv = document.createElement('div');
-        errorDiv.setAttribute('role', 'alert');
-        errorDiv.setAttribute('aria-live', 'assertive');
-        errorDiv.classList.add('error-message');
-
         // Provide specific error message or fallback to generic one
         let errorMessage = error.message;
         if (!errorMessage || errorMessage.includes('undefined')) {
           errorMessage = 'Failed to parse CSV file. Please check that the file is properly formatted with columns separated by commas.';
         }
-        errorDiv.textContent = errorMessage;
 
-        const dataWrapper = document.getElementById('dataAreaWrapper');
-        const existingError = dataWrapper.querySelector('.error-message');
-        if (existingError) {
-          existingError.remove();
-        }
-        dataWrapper.insertBefore(errorDiv, dataWrapper.firstChild);
+        showError(errorMessage);
       });
     };
     reader.readAsDataURL(file);

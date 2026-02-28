@@ -119,7 +119,6 @@ describe('saveSvgAsImage', () => {
     test('calls showError with the container and an error message', () => {
       saveSvgAsImage('testId', 'test-file', 'png');
       expect(showError).toHaveBeenCalledWith(
-        mockContainer,
         'No graph to save. Please run a simulation first.',
       );
     });
