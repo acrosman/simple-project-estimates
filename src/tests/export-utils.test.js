@@ -10,11 +10,72 @@ jest.mock('../utils/dom-helpers', () => ({
 }));
 
 describe('saveSvgAsImage', () => {
+  // mockContainer is declared above, do not redeclare
+  let mockImage;
   let mockContainer;
+  describe('SVG style inlining edge cases', () => {
+    let styledSvg;
+    let styledClone;
+    let setAttributeMock;
+    beforeEach(() => {
+      setAttributeMock = jest.fn();
+      styledClone = {
+        querySelectorAll: jest.fn(() => [
+          { setAttribute: setAttributeMock },
+          { setAttribute: jest.fn() },
+        ]),
+      };
+      styledSvg = {
+        cloneNode: jest.fn(() => styledClone),
+        querySelectorAll: jest.fn(() => [
+          {},
+          {},
+        ]),
+        getBoundingClientRect: jest.fn(() => ({ width: 800, height: 600 })),
+      };
+      mockContainer.querySelector = jest.fn(() => styledSvg);
+      document.getElementById = jest.fn(() => mockContainer);
+    });
+
+    test('does not set style if computed style is empty', () => {
+      window.getComputedStyle = jest.fn(() => ({
+        getPropertyValue: jest.fn(() => ''),
+        [Symbol.iterator]: function* iterator() {
+          yield 'fill';
+        },
+      }));
+      saveSvgAsImage('testId', 'test-file', 'png');
+      mockImage.onload();
+      expect(styledClone.querySelectorAll()[0].setAttribute).not.toHaveBeenCalledWith('style', expect.any(String));
+    });
+
+    test('does not set style if only key is "all"', () => {
+      window.getComputedStyle = jest.fn(() => ({
+        getPropertyValue: jest.fn(() => 'red'),
+        [Symbol.iterator]: function* iterator() {
+          yield 'all';
+        },
+      }));
+      saveSvgAsImage('testId', 'test-file', 'png');
+      mockImage.onload();
+      expect(styledClone.querySelectorAll()[0].setAttribute).not.toHaveBeenCalledWith('style', expect.any(String));
+    });
+
+    test('sets style if computed style returns valid string', () => {
+      window.getComputedStyle = jest.fn(() => ({
+        getPropertyValue: jest.fn((key) => (key === 'fill' ? 'blue' : '')),
+        [Symbol.iterator]: function* iterator() {
+          yield 'fill';
+        },
+      }));
+      saveSvgAsImage('testId', 'test-file', 'png');
+      mockImage.onload();
+      expect(setAttributeMock).toHaveBeenCalledWith('style', expect.stringContaining('fill:blue;'));
+    });
+  });
   let mockSvg;
   let mockCanvas;
   let mockContext;
-  let mockImage;
   let originalCreateElement;
   let originalGetComputedStyle;
   let originalURL;
