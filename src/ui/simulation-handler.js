@@ -4,6 +4,7 @@ import * as sim from '../core/simulation';
 import { appState, fibonacciCalendarMappings, tshirtMappings } from '../core/state';
 import { gatherRawTaskData, normalizeTaskData } from './task-table';
 import { buildTaskRowHistogram } from '../core/simulation';
+import { showError } from '../utils/dom-helpers';
 
 function updateElementText(id, text) {
   const el = document.getElementById(id);
@@ -137,10 +138,7 @@ async function startSimulation(event) {
 
   // Validate we have at least one task
   if (data.length === 0) {
-    // Use showError from simulation-results-view
-    // (imported via destructuring if needed)
-    // showError('No valid tasks found...');
-    // For now, just return
+    showError('No tasks found. Please add at least one task before running the simulation.');
     return;
   }
 
@@ -151,9 +149,8 @@ async function startSimulation(event) {
 
   const runButton = document.getElementById('startSimulationButton');
   const runStartTime = Date.now();
-  const updateRunningTimeDisplay = () => {
-    // updateElementText from simulation-results-view
-    // updateElementText('simulationRunningTime', ...)
+  const updateRunningTimeDisplay = (elapsedMs) => {
+    updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${elapsedMs}`);
   };
   const stopwatchInterval = setInterval(() => {
     updateRunningTimeDisplay(Date.now() - runStartTime);
@@ -167,17 +164,17 @@ async function startSimulation(event) {
   updateRunningTimeDisplay(0);
 
   // Clear previous statistics at the start of a new simulation
-  // clearStatistics from simulation-results-view
+  clearStatistics();
 
   try {
     // Run main simulator with progressive graph updates.
     document.getElementById('costHistoGram').innerHTML = '';
-    // showCostResults(false) from simulation-results-view
+    showCostResults(false);
 
-    // const currencyFormatter = new Intl.NumberFormat('en-US', {
-    //   style: 'currency',
-    //   currency: 'USD',
-    // });
+    const currencyFormatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    });
 
     const graphProgressInterval = 1000;
     const results = await sim.runSimulationProgressive(
@@ -194,14 +191,25 @@ async function startSimulation(event) {
             timeUnit,
           );
         }
-        // updateProgress from simulation-results-view
+        updateProgress(
+          progress,
+          timeUnit,
+          currencyFormatter,
+          appState.enableCost,
+        );
       },
       graphProgressInterval,
       hoursPerTimeUnit,
     );
 
     // Display final summary data (one last update with complete results)
-    // renderFinalResults from simulation-results-view
+    // Display final summary data (one last update with complete results)
+    renderFinalResults(
+      results,
+      timeUnit,
+      new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
+      appState.enableCost,
+    );
 
     // Render row-level task distributions as soon as simulation data is available.
     renderTaskRowHistograms(results.taskResults);
@@ -217,7 +225,7 @@ async function startSimulation(event) {
       timeUnit,
       graphSetting,
     );
-    // showTimeResults from simulation-results-view
+    showTimeResults();
 
     // Only build cost histogram if cost tracking is enabled
     if (appState.enableCost) {
@@ -231,12 +239,12 @@ async function startSimulation(event) {
         'Cost',
         graphSetting,
       );
-      // showCostResults(true) from simulation-results-view
+      showCostResults(true);
     } else {
-      // showCostResults(false) from simulation-results-view
+      showCostResults(false);
     }
   } catch (error) {
-    // showError from simulation-results-view
+    showError(`Simulation failed: ${error.message}`);
   } finally {
     clearInterval(stopwatchInterval);
     if (runButton) {
