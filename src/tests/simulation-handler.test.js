@@ -313,6 +313,22 @@ describe('simulation-handler.js', () => {
         buildHistogramPreview: jest.fn(),
         buildHistogram: jest.fn(),
       };
+      // Ensure all required DOM elements exist
+      // Already appended above: simulationPasses, LimitGraph, startSimulationButton, timeHistoGram, costHistoGram
+      // If startSimulation uses querySelector on any of these, they will be found
+      // Add messages container for showError
+      const messagesDiv = document.createElement('div');
+      messagesDiv.id = 'messages';
+      document.body.appendChild(messagesDiv);
+      // Add required elements for querySelectorAll and querySelector
+      const taskRowGraph = document.createElement('div');
+      taskRowGraph.className = 'task-row-graph';
+      taskRowGraph.setAttribute('data-row-id', '1');
+      document.body.appendChild(taskRowGraph);
+      const taskRowStats = document.createElement('div');
+      taskRowStats.className = 'task-row-stats';
+      taskRowStats.setAttribute('data-row-id', '1');
+      document.body.appendChild(taskRowStats);
       await expect(startSimulation(event)).resolves.toBeUndefined();
       expect(event.preventDefault).toHaveBeenCalled();
     });
