@@ -314,7 +314,8 @@ describe('simulation-handler.js', () => {
         buildHistogram: jest.fn(),
       };
       // Ensure all required DOM elements exist
-      // Already appended above: simulationPasses, LimitGraph, startSimulationButton, timeHistoGram, costHistoGram
+      // Already appended above: simulationPasses, LimitGraph, startSimulationButton,
+      // timeHistoGram, costHistoGram
       // If startSimulation uses querySelector on any of these, they will be found
       // Add messages container for showError
       const messagesDiv = document.createElement('div');
