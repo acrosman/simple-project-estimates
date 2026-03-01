@@ -33,7 +33,7 @@ function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {
 }
 
 function renderFinalResults(results, timeUnit, currencyFormatter, enableCost) {
-  updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime ?? ''}`);
+  updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
   updateElementText('simulationTimeMedian', `Median Time: ${(results.times && results.times.median !== undefined) ? results.times.median : ''} ${timeUnit.toLowerCase()}`);
   updateElementText('simulationTimeStandRange', `Likely Range: ${(results.times && results.times.likelyMin !== undefined) ? results.times.likelyMin : ''} - ${(results.times && results.times.likelyMax !== undefined) ? results.times.likelyMax : ''} ${timeUnit.toLowerCase()}`);
   updateElementText('simulationTimeMax', `Max Time: ${(results.times && results.times.max !== undefined) ? results.times.max : ''} ${timeUnit.toLowerCase()}`);
