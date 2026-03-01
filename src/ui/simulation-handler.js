@@ -12,7 +12,7 @@ function updateElementText(id, text) {
 }
 
 function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {
-  if (progress.times.min > -1 && progress.times.max >= progress.times.min) {
+  if (progress.times && progress.times.min > -1 && progress.times.max >= progress.times.min) {
     // Update time histogram preview
     // (Histogram preview handled by simulation module)
     document.getElementById('timeEstimateHeader').style.display = 'block';
@@ -33,12 +33,12 @@ function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {
 }
 
 function renderFinalResults(results, timeUnit, currencyFormatter, enableCost) {
-  updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
-  updateElementText('simulationTimeMedian', `Median Time: ${results.times.median} ${timeUnit.toLowerCase()}`);
-  updateElementText('simulationTimeStandRange', `Likely Range: ${results.times.likelyMin} - ${results.times.likelyMax} ${timeUnit.toLowerCase()}`);
-  updateElementText('simulationTimeMax', `Max Time: ${results.times.max} ${timeUnit.toLowerCase()}`);
-  updateElementText('simulationTimeMin', `Min Time: ${results.times.min} ${timeUnit.toLowerCase()}`);
-  updateElementText('simulationTimeStandDev', `Standard Deviation: ${results.times.sd}`);
+  updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime ?? ''}`);
+  updateElementText('simulationTimeMedian', `Median Time: ${(results.times && results.times.median !== undefined) ? results.times.median : ''} ${timeUnit.toLowerCase()}`);
+  updateElementText('simulationTimeStandRange', `Likely Range: ${(results.times && results.times.likelyMin !== undefined) ? results.times.likelyMin : ''} - ${(results.times && results.times.likelyMax !== undefined) ? results.times.likelyMax : ''} ${timeUnit.toLowerCase()}`);
+  updateElementText('simulationTimeMax', `Max Time: ${(results.times && results.times.max !== undefined) ? results.times.max : ''} ${timeUnit.toLowerCase()}`);
+  updateElementText('simulationTimeMin', `Min Time: ${(results.times && results.times.min !== undefined) ? results.times.min : ''} ${timeUnit.toLowerCase()}`);
+  updateElementText('simulationTimeStandDev', `Standard Deviation: ${(results.times && results.times.sd !== undefined) ? results.times.sd : ''}`);
   if (enableCost) {
     updateElementText('simulationCostMedian', `Median cost: ${currencyFormatter.format(results.costs.median)}`);
     updateElementText('simulationCostStandRange', `Likely Range: ${currencyFormatter.format(results.costs.likelyMin)} - ${currencyFormatter.format(results.costs.likelyMax)}`);
@@ -62,13 +62,17 @@ function clearStatistics() {
 }
 
 function showTimeResults() {
-  document.getElementById('timeEstimateHeader').style.display = 'block';
-  document.getElementById('timeSaveButtons').style.display = 'block';
+  const timeHeader = document.getElementById('timeEstimateHeader');
+  if (timeHeader) timeHeader.style.display = 'block';
+  const timeButtons = document.getElementById('timeSaveButtons');
+  if (timeButtons) timeButtons.style.display = 'block';
 }
 
 function showCostResults(enable) {
-  document.getElementById('costEstimateHeader').style.display = enable ? 'block' : 'none';
-  document.getElementById('costSaveButtons').style.display = enable ? 'block' : 'none';
+  const costHeader = document.getElementById('costEstimateHeader');
+  if (costHeader) costHeader.style.display = enable ? 'block' : 'none';
+  const costButtons = document.getElementById('costSaveButtons');
+  if (costButtons) costButtons.style.display = enable ? 'block' : 'none';
 }
 
 /**
