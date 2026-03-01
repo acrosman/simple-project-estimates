@@ -1,8 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-import * as layout from '../ui/layout';
-import * as simulationHandler from '../ui/simulation-handler';
 
 describe('index.js', () => {
   let sharedNode;
