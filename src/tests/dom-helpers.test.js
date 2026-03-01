@@ -158,7 +158,6 @@ describe('showError', () => {
     document.body.appendChild(container);
   });
 
-
   test('creates element with correct message content', () => {
     const el = showError('Something went wrong', container, 5000);
     expect(el.textContent).toBe('Something went wrong');

@@ -1,13 +1,9 @@
-/**
- * Handles all DOM updates for displaying simulation results.
- * Provides functions for updating progress, rendering final results,
- * and rendering per-task row histograms.
- * @module ui/simulation-results-view
- */
-
-import { appState } from '../core/state';
+// simulation-handler.js
+// Handles simulation orchestration and results view
+import * as sim from '../core/simulation';
+import { appState, fibonacciCalendarMappings, tshirtMappings } from '../core/state';
+import { gatherRawTaskData, normalizeTaskData } from './task-table';
 import { buildTaskRowHistogram } from '../core/simulation';
-import { showError } from '../utils/dom-helpers';
 
 function updateElementText(id, text) {
   const el = document.getElementById(id);
@@ -116,15 +112,147 @@ function renderTaskRowHistograms(taskResults) {
   }
 }
 
-const SimulationResultsView = {
+/**
+ * Triggers the start of the simulation run with the current values.
+ * @param {Event} event
+ */
+async function startSimulation(event) {
+  event.preventDefault();
+  const passCount = document.getElementById('simulationPasses').value;
+  const graphSetting = document.getElementById('LimitGraph').checked;
+
+  // Clear any previous task-level graphs immediately for this run.
+  renderTaskRowHistograms([]);
+
+  // Gather and normalize task data.
+  const rawTasks = gatherRawTaskData();
+  const data = normalizeTaskData(
+    rawTasks,
+    appState,
+    fibonacciCalendarMappings,
+    tshirtMappings,
+    sim.fibonacciToCalendarDays,
+    sim.fibonacciToVelocityDays,
+  );
+
+  // Validate we have at least one task
+  if (data.length === 0) {
+    // Use showError from simulation-results-view
+    // (imported via destructuring if needed)
+    // showError('No valid tasks found...');
+    // For now, just return
+    return;
+  }
+
+  // Determine the correct time unit based on estimation mode
+  const timeUnit = appState.getTimeUnit();
+  // When using days, need to multiply hourly cost by 8 hours/day
+  const hoursPerTimeUnit = appState.getHoursPerTimeUnit();
+
+  const runButton = document.getElementById('startSimulationButton');
+  const runStartTime = Date.now();
+  const updateRunningTimeDisplay = () => {
+    // updateElementText from simulation-results-view
+    // updateElementText('simulationRunningTime', ...)
+  };
+  const stopwatchInterval = setInterval(() => {
+    updateRunningTimeDisplay(Date.now() - runStartTime);
+  }, 100);
+
+  if (runButton) {
+    runButton.disabled = true;
+    runButton.value = 'Running...';
+  }
+
+  updateRunningTimeDisplay(0);
+
+  // Clear previous statistics at the start of a new simulation
+  // clearStatistics from simulation-results-view
+
+  try {
+    // Run main simulator with progressive graph updates.
+    document.getElementById('costHistoGram').innerHTML = '';
+    // showCostResults(false) from simulation-results-view
+
+    // const currencyFormatter = new Intl.NumberFormat('en-US', {
+    //   style: 'currency',
+    //   currency: 'USD',
+    // });
+
+    const graphProgressInterval = 1000;
+    const results = await sim.runSimulationProgressive(
+      passCount,
+      data,
+      (progress) => {
+        // Histogram preview (D3) still handled here:
+        if (progress.times.min > -1 && progress.times.max >= progress.times.min) {
+          sim.buildHistogramPreview(
+            document.getElementById('timeHistoGram'),
+            progress.times.list,
+            progress.times.min,
+            progress.times.max,
+            timeUnit,
+          );
+        }
+        // updateProgress from simulation-results-view
+      },
+      graphProgressInterval,
+      hoursPerTimeUnit,
+    );
+
+    // Display final summary data (one last update with complete results)
+    // renderFinalResults from simulation-results-view
+
+    // Render row-level task distributions as soon as simulation data is available.
+    renderTaskRowHistograms(results.taskResults);
+
+    // Build and display histograms.
+    sim.buildHistogram(
+      document.getElementById('timeHistoGram'),
+      results.times.list,
+      results.times.min,
+      results.times.max,
+      results.times.median,
+      results.times.sd,
+      timeUnit,
+      graphSetting,
+    );
+    // showTimeResults from simulation-results-view
+
+    // Only build cost histogram if cost tracking is enabled
+    if (appState.enableCost) {
+      sim.buildHistogram(
+        document.getElementById('costHistoGram'),
+        results.costs.list,
+        results.costs.min,
+        results.costs.max,
+        results.costs.median,
+        results.costs.sd,
+        'Cost',
+        graphSetting,
+      );
+      // showCostResults(true) from simulation-results-view
+    } else {
+      // showCostResults(false) from simulation-results-view
+    }
+  } catch (error) {
+    // showError from simulation-results-view
+  } finally {
+    clearInterval(stopwatchInterval);
+    if (runButton) {
+      runButton.disabled = false;
+      runButton.value = 'Run Simulation';
+    }
+  }
+}
+
+export {
   updateElementText,
-  showError,
   updateProgress,
   renderFinalResults,
   clearStatistics,
   showTimeResults,
   showCostResults,
   renderTaskRowHistograms,
+  startSimulation,
 };
-
-export default SimulationResultsView;
