@@ -31,6 +31,12 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
 - DOM elements: descriptive names (`taskField`, `resultContainer`)
 - CSS classes: kebab-case (`data-row`, `histogram-container`)
 
+### Comments
+
+- Comments should explain the "why" behind complex logic.
+- Use JSDoc for function signatures and parameter explanations.
+- Avoid comments that explain changes in the code.
+
 ## Architecture
 
 ### Core Modules
