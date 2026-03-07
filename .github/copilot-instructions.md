@@ -192,6 +192,9 @@ Not
 
 ## When Adding Features
 
+- Always use single export statements at the end of the file:
+  `export { functionName, anotherFunction };`
+
 ### New Simulation Parameters
 
 1. Add to task data model
@@ -204,11 +207,10 @@ Not
 ### New Statistical Measures
 
 1. Create pure function in `stats.js`
-2. Export for testing: `export { functionName }`
-3. Re-export from `simulation.js` if callers need it via that module
-4. Call from `runSimulation()` return object if needed
-5. Display in UI (`index.js`)
-6. Add Jest tests in `src/tests/stats.test.js` with edge cases
+2. Re-export from `simulation.js` if callers need it via that module
+3. Call from `runSimulation()` return object if needed
+4. Display in UI (`index.js`)
+5. Add Jest tests in `src/tests/stats.test.js` with edge cases
 
 ### UI Components
 
