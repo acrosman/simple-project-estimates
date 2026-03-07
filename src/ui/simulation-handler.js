@@ -6,11 +6,25 @@ import { gatherRawTaskData, normalizeTaskData } from './task-table';
 import { buildTaskRowHistogram } from '../core/simulation';
 import { showError } from '../utils/dom-helpers';
 
+/**
+ * Sets the text content of a DOM element by its ID.
+ * @param {string} id - The ID of the target element.
+ * @param {string} text - The text content to assign.
+ */
 function updateElementText(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text;
 }
 
+/**
+ * Updates the statistics display elements with intermediate simulation progress data.
+ * @param {object} progress - The current progress snapshot from the simulation.
+ * @param {object} progress.times - Time statistics (min, max, median, likelyMin, likelyMax, sd).
+ * @param {object} progress.costs - Cost statistics (min, median, likelyMin, likelyMax, sd).
+ * @param {string} timeUnit - Label for the time unit (e.g. 'Days', 'Hours').
+ * @param {Intl.NumberFormat} currencyFormatter - Formatter used to display cost values.
+ * @param {boolean} enableCost - Whether cost tracking is active.
+ */
 function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {
   if (progress.times && progress.times.min > -1 && progress.times.max >= progress.times.min) {
     // Update time histogram preview
@@ -32,6 +46,18 @@ function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {
   }
 }
 
+/**
+ * Populates the statistics display elements with the final simulation results.
+ * @param {object} results - The completed simulation results object.
+ * @param {object} results.times - Final time statistics
+ *   (min, max, median, likelyMin, likelyMax, sd).
+ * @param {object} results.costs - Final cost statistics
+ *   (min, max, median, likelyMin, likelyMax, sd).
+ * @param {number} results.runningTime - Total simulation wall-clock time in milliseconds.
+ * @param {string} timeUnit - Label for the time unit (e.g. 'Days', 'Hours').
+ * @param {Intl.NumberFormat} currencyFormatter - Formatter used to display cost values.
+ * @param {boolean} enableCost - Whether cost tracking is active.
+ */
 function renderFinalResults(results, timeUnit, currencyFormatter, enableCost) {
   updateElementText('simulationRunningTime', `Simulation Running Time (ms): ${results.runningTime}`);
   updateElementText('simulationTimeMedian', `Median Time: ${(results.times && results.times.median !== undefined) ? results.times.median : ''} ${timeUnit.toLowerCase()}`);
@@ -48,6 +74,9 @@ function renderFinalResults(results, timeUnit, currencyFormatter, enableCost) {
   }
 }
 
+/**
+ * Clears all simulation statistics display elements, resetting them to empty strings.
+ */
 function clearStatistics() {
   updateElementText('simulationTimeMedian', '');
   updateElementText('simulationTimeStandRange', '');
@@ -61,6 +90,9 @@ function clearStatistics() {
   updateElementText('simulationCostStandDev', '');
 }
 
+/**
+ * Makes the time estimate header and save buttons visible in the results area.
+ */
 function showTimeResults() {
   const timeHeader = document.getElementById('timeEstimateHeader');
   if (timeHeader) timeHeader.style.display = 'block';
@@ -68,6 +100,10 @@ function showTimeResults() {
   if (timeButtons) timeButtons.style.display = 'block';
 }
 
+/**
+ * Shows or hides the cost estimate header and save buttons in the results area.
+ * @param {boolean} enable - When true, the cost results section is shown; otherwise hidden.
+ */
 function showCostResults(enable) {
   const costHeader = document.getElementById('costEstimateHeader');
   if (costHeader) costHeader.style.display = enable ? 'block' : 'none';
