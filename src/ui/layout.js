@@ -49,9 +49,8 @@ function createHeader() {
 
   // Fork Me ribbon
   const githubRibbon = createDivWithIdAndClasses('forkOnGithub', ['github-ribbon']);
-  const githubLink = document.createElement('a');
+  const githubLink = createTextElement('a', 'Fork me on GitHub');
   githubLink.href = 'https://github.com/acrosman/simple-project-estimates';
-  githubLink.textContent = 'Fork me on GitHub';
   githubRibbon.appendChild(githubLink);
   headerDiv.appendChild(githubRibbon);
 
@@ -99,9 +98,8 @@ function createSimulationPanel() {
   const simResultWrapper = createDivWithIdAndClasses('simulationResultsWrapper', ['section', 'wrap-simulation-results']);
   simResultWrapper.appendChild(createDivWithIdAndClasses('simulationRunningTime', ['simulation-result', 'text']));
   const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
-  const timeHeader = createTextElement('h3', 'Time Estimates', ['result-display', 'time-info']);
+  const timeHeader = createTextElement('h3', 'Time Estimates', ['result-display', 'time-info', 'hidden']);
   timeHeader.id = 'timeEstimateHeader';
-  timeHeader.classList.add('hidden');
   simTimeResultWrapper.appendChild(timeHeader);
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMedian', ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandRange', ['simulation-result', 'time-info', 'text']));
@@ -137,9 +135,8 @@ function createSimulationPanel() {
 
   // Simulation Cost Results elements
   const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
-  const costHeader = createTextElement('h3', 'Cost Estimates', ['result-display', 'cost-info']);
+  const costHeader = createTextElement('h3', 'Cost Estimates', ['result-display', 'cost-info', 'hidden']);
   costHeader.id = 'costEstimateHeader';
-  costHeader.classList.add('hidden');
   simCostResultWrapper.appendChild(costHeader);
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMedian', ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandRange', ['simulation-result', 'cost-info', 'text']));
