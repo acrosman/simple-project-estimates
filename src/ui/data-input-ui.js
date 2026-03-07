@@ -26,7 +26,11 @@ function handleCostToggle(event) {
   const costResults = document.getElementById('simulationCostResultsWrapper');
 
   if (costResults) {
-    costResults.style.display = appState.getEnableCost() ? 'block' : 'none';
+    if (appState.getEnableCost()) {
+      costResults.classList.remove('hidden');
+    } else {
+      costResults.classList.add('hidden');
+    }
   }
 }
 
@@ -42,24 +46,24 @@ function handleModeChange(event) {
   const sampleLink = document.querySelector('.link-sample');
 
   if (appState.estimationMode === 'fibonacci') {
-    fibConfig.style.display = 'block';
-    tshirtMapping.style.display = 'none';
+    fibConfig.classList.remove('hidden');
+    tshirtMapping.classList.add('hidden');
     if (sampleLink) {
       sampleLink.href = sampleFibData;
       sampleLink.textContent = 'Sample Fibonacci CSV File';
       sampleLink.download = 'sample-fib.csv';
     }
   } else if (appState.estimationMode === 'tshirt') {
-    fibConfig.style.display = 'none';
-    tshirtMapping.style.display = 'block';
+    fibConfig.classList.add('hidden');
+    tshirtMapping.classList.remove('hidden');
     if (sampleLink) {
       sampleLink.href = sampleTshirtData;
       sampleLink.textContent = 'Sample T-Shirt CSV File';
       sampleLink.download = 'sample-tshirt.csv';
     }
   } else {
-    fibConfig.style.display = 'none';
-    tshirtMapping.style.display = 'none';
+    fibConfig.classList.add('hidden');
+    tshirtMapping.classList.add('hidden');
     if (sampleLink) {
       sampleLink.href = sampleData;
       sampleLink.textContent = 'Sample CSV File';

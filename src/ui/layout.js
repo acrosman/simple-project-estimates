@@ -39,8 +39,7 @@ function createLogoElement() {
 function createMessageSection() {
   const messagesSection = document.createElement('div');
   messagesSection.id = 'messages';
-  messagesSection.classList.add('messages-section');
-  messagesSection.style.display = 'none';
+  messagesSection.classList.add('messages-section', 'hidden');
   return messagesSection;
 }
 
@@ -106,7 +105,7 @@ function createSimulationPanel() {
   const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
   const timeHeader = createTextElement('h3', 'Time Estimates', ['result-display', 'time-info']);
   timeHeader.id = 'timeEstimateHeader';
-  timeHeader.style.display = 'none';
+  timeHeader.classList.add('hidden');
   simTimeResultWrapper.appendChild(timeHeader);
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMedian', ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandRange', ['simulation-result', 'time-info', 'text']));
@@ -118,8 +117,7 @@ function createSimulationPanel() {
   // Add save buttons for time histogram
   const timeSaveButtonsDiv = document.createElement('div');
   timeSaveButtonsDiv.id = 'timeSaveButtons';
-  timeSaveButtonsDiv.classList.add('save-buttons', 'no-print');
-  timeSaveButtonsDiv.style.display = 'none';
+  timeSaveButtonsDiv.classList.add('save-buttons', 'no-print', 'hidden');
 
   const saveTimePng = document.createElement('input');
   Object.assign(saveTimePng, {
@@ -147,7 +145,7 @@ function createSimulationPanel() {
   const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
   const costHeader = createTextElement('h3', 'Cost Estimates', ['result-display', 'cost-info']);
   costHeader.id = 'costEstimateHeader';
-  costHeader.style.display = 'none';
+  costHeader.classList.add('hidden');
   simCostResultWrapper.appendChild(costHeader);
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMedian', ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandRange', ['simulation-result', 'cost-info', 'text']));
@@ -159,8 +157,7 @@ function createSimulationPanel() {
   // Add save buttons for cost histogram
   const costSaveButtonsDiv = document.createElement('div');
   costSaveButtonsDiv.id = 'costSaveButtons';
-  costSaveButtonsDiv.classList.add('save-buttons', 'no-print');
-  costSaveButtonsDiv.style.display = 'none';
+  costSaveButtonsDiv.classList.add('save-buttons', 'no-print', 'hidden');
 
   const saveCostPng = document.createElement('input');
   Object.assign(saveCostPng, {

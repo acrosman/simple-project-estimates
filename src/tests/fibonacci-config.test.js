@@ -32,7 +32,7 @@ describe('handleFibonacciModeChange', () => {
     const mockEvent = { target: { value: 'calendar-days' } };
 
     handleFibonacciModeChange(mockEvent);
-    expect(calendarWrapper.style.display).toBe('block');
+    expect(calendarWrapper.classList.contains('hidden')).toBe(false);
   });
 
   test('hides calendar mapping wrapper for velocity-based mode', () => {
@@ -40,7 +40,7 @@ describe('handleFibonacciModeChange', () => {
     const mockEvent = { target: { value: 'velocity-based' } };
 
     handleFibonacciModeChange(mockEvent);
-    expect(calendarWrapper.style.display).toBe('none');
+    expect(calendarWrapper.classList.contains('hidden')).toBe(true);
   });
 
   test('shows velocity config wrapper for velocity-based mode', () => {
@@ -48,7 +48,7 @@ describe('handleFibonacciModeChange', () => {
     const mockEvent = { target: { value: 'velocity-based' } };
 
     handleFibonacciModeChange(mockEvent);
-    expect(wrapper.style.display).toBe('block');
+    expect(wrapper.classList.contains('hidden')).toBe(false);
   });
 
   test('hides velocity config wrapper for calendar-days mode', () => {
@@ -56,7 +56,7 @@ describe('handleFibonacciModeChange', () => {
     const mockEvent = { target: { value: 'calendar-days' } };
 
     handleFibonacciModeChange(mockEvent);
-    expect(wrapper.style.display).toBe('none');
+    expect(wrapper.classList.contains('hidden')).toBe(true);
   });
 
   test('handles missing DOM elements gracefully', () => {
@@ -227,7 +227,7 @@ describe('createFibonacciConfigPanel', () => {
 
   test('is hidden by default', () => {
     const panel = createFibonacciConfigPanel();
-    expect(panel.style.display).toBe('none');
+    expect(panel.classList.contains('hidden')).toBe(true);
   });
 
   test('contains mode radio buttons', () => {

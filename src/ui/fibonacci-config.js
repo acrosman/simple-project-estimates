@@ -18,13 +18,13 @@ function handleFibonacciModeChange(event) {
   // Show/hide calendar mapping table based on mode
   const calendarMapping = document.getElementById('fibonacciCalendarMappingWrapper');
   if (calendarMapping) {
-    calendarMapping.style.display = mode === 'calendar-days' ? 'block' : 'none';
+    calendarMapping.classList.toggle('hidden', mode !== 'calendar-days');
   }
 
   // Show/hide velocity configuration based on mode
   const velocityConfig = document.getElementById('velocityConfigWrapper');
   if (velocityConfig) {
-    velocityConfig.style.display = mode === 'velocity-based' ? 'block' : 'none';
+    velocityConfig.classList.toggle('hidden', mode !== 'velocity-based');
   }
 }
 
@@ -90,7 +90,9 @@ function updateFibonacciCalendarMapping(event) {
  */
 function createFibonacciCalendarMappingTable() {
   const wrapper = createDivWithIdAndClasses('fibonacciCalendarMappingWrapper', ['config-section', 'calendar-mapping']);
-  wrapper.style.display = appState.getFibonacciMode() === 'calendar-days' ? 'block' : 'none';
+  if (appState.getFibonacciMode() !== 'calendar-days') {
+    wrapper.classList.add('hidden');
+  }
 
   const header = createTextElement('h4', 'Story Points to Calendar Days Mapping', ['config-subheader']);
   wrapper.appendChild(header);
@@ -251,7 +253,9 @@ function createFibonacciConfigPanel() {
 
   // Velocity configuration (shown only for velocity-based mode)
   const velocityConfigWrapper = createDivWithIdAndClasses('velocityConfigWrapper', ['config-section', 'velocity-config']);
-  velocityConfigWrapper.style.display = appState.getFibonacciMode() === 'velocity-based' ? 'block' : 'none';
+  if (appState.getFibonacciMode() !== 'velocity-based') {
+    velocityConfigWrapper.classList.add('hidden');
+  }
 
   const velocityConfigHeader = createTextElement('h4', 'Team Velocity Configuration', ['config-subheader']);
   velocityConfigWrapper.appendChild(velocityConfigHeader);
@@ -307,7 +311,8 @@ function createFibonacciConfigPanel() {
   velocityConfigWrapper.appendChild(velocityExample);
 
   wrapper.appendChild(velocityConfigWrapper);
-  wrapper.style.display = 'none'; // Hidden by default
+  // Hidden by default
+  wrapper.classList.add('hidden');
 
   return wrapper;
 }

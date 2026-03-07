@@ -152,7 +152,7 @@ function createTshirtMappingTable() {
   wrapper.appendChild(header);
   wrapper.appendChild(helpText);
   wrapper.appendChild(table);
-  wrapper.style.display = 'none';
+  wrapper.classList.add('hidden');
 
   return wrapper;
 }

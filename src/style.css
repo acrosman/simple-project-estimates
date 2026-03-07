@@ -1,4 +1,10 @@
 /* General Layout */
+
+/* Utility class to hide elements. Use classList.add/remove('hidden') instead of inline styles. */
+.hidden {
+  display: none;
+}
+
 .project-icon {
   flex-shrink: 0;
   align-self: flex-start;
@@ -28,15 +34,18 @@ input[type="button"] {
 .table {
   display: table;
 }
+
 .tr {
   display: table-row;
 }
+
 .th {
   display: table-cell;
   font-weight: bold;
   padding-left: 1em;
   white-space: nowrap;
 }
+
 .td {
   display: table-cell;
   padding-left: 1em;
@@ -327,10 +336,12 @@ input[required]:invalid:not([type="button"]) {
   left: 0px;
   width: 100%;
 }
+
 #forkOnGithub a:hover {
   background: #c11;
   color: #fff;
 }
+
 #forkOnGithub a::before,
 #forkOnGithub a::after {
   content: "";
@@ -342,10 +353,12 @@ input[required]:invalid:not([type="button"]) {
   height: 1px;
   background: #fff;
 }
+
 #forkOnGithub a::after {
   bottom: 1px;
   top: auto;
 }
+
 @media screen and (min-width: 800px) {
   #forkOnGithub {
     position: fixed;
@@ -357,6 +370,7 @@ input[required]:invalid:not([type="button"]) {
     height: 200px;
     z-index: 9999;
   }
+
   #forkOnGithub a {
     width: 200px;
     top: 10px;
@@ -372,6 +386,7 @@ input[required]:invalid:not([type="button"]) {
 
 /* Print Styles */
 @media print {
+
   /* Set page margins to minimal */
   @page {
     margin: 0.5in;

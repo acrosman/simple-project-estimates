@@ -202,7 +202,7 @@ describe('createTshirtMappingTable', () => {
 
   test('is hidden by default', () => {
     const table = createTshirtMappingTable();
-    expect(table.style.display).toBe('none');
+    expect(table.classList.contains('hidden')).toBe(true);
   });
 
   test('contains inputs for each t-shirt size', () => {

@@ -83,18 +83,18 @@ function showError(message, container = null, timeoutMs = 5000) {
   errorDiv.textContent = message;
 
   containerElement.appendChild(errorDiv);
-  // Only set style.display if using the default container
+  // Only toggle visibility class if using the default container
   if (!container || container === document.getElementById('messages')) {
-    containerElement.style.display = 'block';
+    containerElement.classList.remove('hidden');
   }
 
   // Auto hide errors after a timeout.
   if (timeoutMs > 0) {
     setTimeout(() => {
       errorDiv.remove();
-      // Only set style.display if using the default container
+      // Only toggle visibility class if using the default container
       if (!container || container === document.getElementById('messages')) {
-        containerElement.style.display = 'none';
+        containerElement.classList.add('hidden');
       }
     }, timeoutMs);
   }

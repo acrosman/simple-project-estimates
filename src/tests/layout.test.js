@@ -99,7 +99,7 @@ describe('createMessageSection', () => {
 
   test('is initially hidden', () => {
     const el = createMessageSection();
-    expect(el.style.display).toBe('none');
+    expect(el.classList.contains('hidden')).toBe(true);
   });
 });
 
@@ -191,14 +191,14 @@ describe('createSimulationPanel', () => {
 
   test('time and cost headers are initially hidden', () => {
     const el = createSimulationPanel();
-    expect(el.querySelector('#timeEstimateHeader').style.display).toBe('none');
-    expect(el.querySelector('#costEstimateHeader').style.display).toBe('none');
+    expect(el.querySelector('#timeEstimateHeader').classList.contains('hidden')).toBe(true);
+    expect(el.querySelector('#costEstimateHeader').classList.contains('hidden')).toBe(true);
   });
 
   test('time and cost save buttons are initially hidden', () => {
     const el = createSimulationPanel();
-    expect(el.querySelector('#timeSaveButtons').style.display).toBe('none');
-    expect(el.querySelector('#costSaveButtons').style.display).toBe('none');
+    expect(el.querySelector('#timeSaveButtons').classList.contains('hidden')).toBe(true);
+    expect(el.querySelector('#costSaveButtons').classList.contains('hidden')).toBe(true);
   });
 
   test('contains PNG and JPEG save buttons for time graph', () => {

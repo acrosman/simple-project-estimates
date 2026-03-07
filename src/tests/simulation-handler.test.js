@@ -298,8 +298,8 @@ describe('showTimeResults', () => {
     buttons.id = 'timeSaveButtons';
     document.body.appendChild(buttons);
     expect(() => showTimeResults()).not.toThrow();
-    expect(header.style.display).toBe('block');
-    expect(buttons.style.display).toBe('block');
+    expect(header.classList.contains('hidden')).toBe(false);
+    expect(buttons.classList.contains('hidden')).toBe(false);
   });
   it('does not throw if elements are missing', () => {
     document.body.innerHTML = '';
@@ -317,11 +317,11 @@ describe('showCostResults', () => {
     buttons.id = 'costSaveButtons';
     document.body.appendChild(buttons);
     showCostResults(true);
-    expect(header.style.display).toBe('block');
-    expect(buttons.style.display).toBe('block');
+    expect(header.classList.contains('hidden')).toBe(false);
+    expect(buttons.classList.contains('hidden')).toBe(false);
     showCostResults(false);
-    expect(header.style.display).toBe('none');
-    expect(buttons.style.display).toBe('none');
+    expect(header.classList.contains('hidden')).toBe(true);
+    expect(buttons.classList.contains('hidden')).toBe(true);
   });
   it('does not throw if elements are missing', () => {
     document.body.innerHTML = '';

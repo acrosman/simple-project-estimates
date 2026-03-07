@@ -29,8 +29,8 @@ function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {
   if (progress.times && progress.times.min > -1 && progress.times.max >= progress.times.min) {
     // Update time histogram preview
     // (Histogram preview handled by simulation module)
-    document.getElementById('timeEstimateHeader').style.display = 'block';
-    document.getElementById('timeSaveButtons').style.display = 'block';
+    document.getElementById('timeEstimateHeader').classList.remove('hidden');
+    document.getElementById('timeSaveButtons').classList.remove('hidden');
     updateElementText('simulationTimeMedian', `Median Time: ${progress.times.median} ${timeUnit.toLowerCase()}`);
     updateElementText('simulationTimeStandRange', `Likely Range: ${progress.times.likelyMin} - ${progress.times.likelyMax} ${timeUnit.toLowerCase()}`);
     updateElementText('simulationTimeMax', `Max Time: ${progress.times.max} ${timeUnit.toLowerCase()}`);
@@ -95,9 +95,9 @@ function clearStatistics() {
  */
 function showTimeResults() {
   const timeHeader = document.getElementById('timeEstimateHeader');
-  if (timeHeader) timeHeader.style.display = 'block';
+  if (timeHeader) timeHeader.classList.remove('hidden');
   const timeButtons = document.getElementById('timeSaveButtons');
-  if (timeButtons) timeButtons.style.display = 'block';
+  if (timeButtons) timeButtons.classList.remove('hidden');
 }
 
 /**
@@ -106,9 +106,9 @@ function showTimeResults() {
  */
 function showCostResults(enable) {
   const costHeader = document.getElementById('costEstimateHeader');
-  if (costHeader) costHeader.style.display = enable ? 'block' : 'none';
+  if (costHeader) costHeader.classList.toggle('hidden', !enable);
   const costButtons = document.getElementById('costSaveButtons');
-  if (costButtons) costButtons.style.display = enable ? 'block' : 'none';
+  if (costButtons) costButtons.classList.toggle('hidden', !enable);
 }
 
 /**

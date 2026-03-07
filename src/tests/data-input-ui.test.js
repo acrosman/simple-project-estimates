@@ -38,15 +38,15 @@ describe('handleCostToggle', () => {
     const costResults = document.getElementById('simulationCostResultsWrapper');
     const mockEvent = { target: { checked: false } };
     dataInput.handleCostToggle(mockEvent);
-    expect(costResults.style.display).toBe('none');
+    expect(costResults.classList.contains('hidden')).toBe(true);
   });
 
   test('shows cost results wrapper when cost enabled', () => {
     const costResults = document.getElementById('simulationCostResultsWrapper');
-    costResults.style.display = 'none';
+    costResults.classList.add('hidden');
     const mockEvent = { target: { checked: true } };
     dataInput.handleCostToggle(mockEvent);
-    expect(costResults.style.display).toBe('block');
+    expect(costResults.classList.contains('hidden')).toBe(false);
   });
 });
 
@@ -74,8 +74,8 @@ describe('handleModeChange', () => {
 
     dataInput.handleModeChange({ target: { value: 'fibonacci' } });
 
-    expect(fibConfig.style.display).toBe('block');
-    expect(tshirtMapping.style.display).toBe('none');
+    expect(fibConfig.classList.contains('hidden')).toBe(false);
+    expect(tshirtMapping.classList.contains('hidden')).toBe(true);
   });
 
   test('shows tshirt mapping and hides fibonacci config in tshirt mode', () => {
@@ -84,20 +84,20 @@ describe('handleModeChange', () => {
 
     dataInput.handleModeChange({ target: { value: 'tshirt' } });
 
-    expect(fibConfig.style.display).toBe('none');
-    expect(tshirtMapping.style.display).toBe('block');
+    expect(fibConfig.classList.contains('hidden')).toBe(true);
+    expect(tshirtMapping.classList.contains('hidden')).toBe(false);
   });
 
   test('hides both config panels in hours mode', () => {
     const fibConfig = document.getElementById('fibonacciConfigWrapper');
     const tshirtMapping = document.getElementById('tshirtMappingWrapper');
-    fibConfig.style.display = 'block';
-    tshirtMapping.style.display = 'block';
+    fibConfig.classList.remove('hidden');
+    tshirtMapping.classList.remove('hidden');
 
     dataInput.handleModeChange({ target: { value: 'hours' } });
 
-    expect(fibConfig.style.display).toBe('none');
-    expect(tshirtMapping.style.display).toBe('none');
+    expect(fibConfig.classList.contains('hidden')).toBe(true);
+    expect(tshirtMapping.classList.contains('hidden')).toBe(true);
   });
 
   test('updates sample link text and download for fibonacci mode', () => {
