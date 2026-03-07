@@ -37,10 +37,7 @@ function createLogoElement() {
  * @returns {HTMLElement} Message section
  */
 function createMessageSection() {
-  const messagesSection = document.createElement('div');
-  messagesSection.id = 'messages';
-  messagesSection.classList.add('messages-section', 'hidden');
-  return messagesSection;
+  return createDivWithIdAndClasses('messages', ['messages-section', 'hidden']);
 }
 
 /**
@@ -48,8 +45,7 @@ function createMessageSection() {
  * @returns {HTMLElement} Header section
  */
 function createHeader() {
-  const headerDiv = document.createElement('div');
-  headerDiv.classList.add('page-header', 'section');
+  const headerDiv = createDivWithIdAndClasses('pageHeader', ['page-header', 'section']);
 
   // Fork Me ribbon
   const githubRibbon = createDivWithIdAndClasses('forkOnGithub', ['github-ribbon']);
@@ -115,9 +111,7 @@ function createSimulationPanel() {
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('timeHistoGram', ['simulation-result', 'time-info', 'graph']));
 
   // Add save buttons for time histogram
-  const timeSaveButtonsDiv = document.createElement('div');
-  timeSaveButtonsDiv.id = 'timeSaveButtons';
-  timeSaveButtonsDiv.classList.add('save-buttons', 'no-print', 'hidden');
+  const timeSaveButtonsDiv = createDivWithIdAndClasses('timeSaveButtons', ['save-buttons', 'no-print', 'hidden']);
 
   const saveTimePng = document.createElement('input');
   Object.assign(saveTimePng, {
@@ -155,9 +149,7 @@ function createSimulationPanel() {
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('costHistoGram', ['simulation-result', 'cost-info', 'graph']));
 
   // Add save buttons for cost histogram
-  const costSaveButtonsDiv = document.createElement('div');
-  costSaveButtonsDiv.id = 'costSaveButtons';
-  costSaveButtonsDiv.classList.add('save-buttons', 'no-print', 'hidden');
+  const costSaveButtonsDiv = createDivWithIdAndClasses('costSaveButtons', ['save-buttons', 'no-print', 'hidden']);
 
   const saveCostPng = document.createElement('input');
   Object.assign(saveCostPng, {
