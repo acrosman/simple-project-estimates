@@ -67,6 +67,8 @@ function createSimulationPanel() {
 
   const simControls = createDivWithIdAndClasses('simulatorControlsWrapper', ['section', 'controls-simulation']);
 
+  // Attributes for the simulation pass count input: numeric field controlling how many
+  // times the simulation runs, bounded between 1,000 and 9,999,999 in steps of 1,000.
   const simCountFldAttr = {
     type: 'number',
     min: '1000',
@@ -78,6 +80,8 @@ function createSimulationPanel() {
   };
   const simCountCtl = createLabeledInput('Number of times to run the simulation:', simCountFldAttr, true);
 
+  // Attributes for the graph outlier limiter checkbox: toggles whether the histogram
+  // clips extreme outliers to keep the graph scale readable.
   const simLimitFldAttr = {
     type: 'checkbox',
     value: '1',
