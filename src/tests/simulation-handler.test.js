@@ -2,6 +2,30 @@
   * @jest-environment jsdom
   */
 
+jest.mock('../ui/task-table', () => ({
+  gatherRawTaskData: jest.fn(() => []),
+  normalizeTaskData: jest.fn(() => []),
+}));
+
+jest.mock('../core/simulation', () => ({
+  runSimulationProgressive: jest.fn(),
+  buildHistogramPreview: jest.fn(),
+  buildHistogram: jest.fn(),
+  buildTaskRowHistogram: jest.fn(),
+  fibonacciToCalendarDays: jest.fn(),
+  fibonacciToVelocityDays: jest.fn(),
+}));
+
+jest.mock('../core/state', () => ({
+  appState: {
+    getTimeUnit: jest.fn(() => 'Hours'),
+    getHoursPerTimeUnit: jest.fn(() => 1),
+    enableCost: false,
+  },
+  fibonacciCalendarMappings: {},
+  tshirtMappings: {},
+}));
+
 const {
   updateElementText,
   updateProgress,
@@ -12,6 +36,10 @@ const {
   renderTaskRowHistograms,
   startSimulation,
 } = require('../ui/simulation-handler');
+
+const taskTableMock = require('../ui/task-table');
+const simMock = require('../core/simulation');
+const stateMock = require('../core/state');
 
 describe('simulation-handler.js', () => {
   describe('updateElementText', () => {
@@ -520,27 +548,6 @@ it('handles simulation error gracefully', async () => {
   const runButton = document.createElement('input');
   runButton.id = 'startSimulationButton';
   document.body.appendChild(runButton);
-  global.gatherRawTaskData = () => [
-    {
-      Task: 'A',
-      Min: 1,
-      Max: 3,
-      Confidence: 0.9,
-      Cost: 100,
-    },
-  ];
-  global.normalizeTaskData = () => [
-    {
-      rowId: '1',
-      name: 'Task 1',
-      times: {
-        min: 1,
-        max: 3,
-        median: 2,
-        list: [1, 2, 2, 3],
-      },
-    },
-  ];
   global.appState = {
     getTimeUnit: () => 'Hours',
     getHoursPerTimeUnit: () => 1,
@@ -548,15 +555,188 @@ it('handles simulation error gracefully', async () => {
   };
   global.fibonacciCalendarMappings = {};
   global.tshirtMappings = {};
-  global.sim = {
-    runSimulationProgressive: async () => { throw new Error('Sim error'); },
-    buildHistogramPreview: jest.fn(),
-    buildHistogram: jest.fn(),
-  };
   // Add messages container for showError
   const messagesDiv = document.createElement('div');
   messagesDiv.id = 'messages';
   document.body.appendChild(messagesDiv);
   await expect(startSimulation(event)).resolves.toBeUndefined();
   expect(event.preventDefault).toHaveBeenCalled();
+});
+
+describe('startSimulation full-path inner-function coverage', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  /**
+   * Builds the minimum DOM required for startSimulation to run end-to-end
+   * without crashing on missing elements.
+   */
+  function buildFullSimulationDom() {
+    document.body.innerHTML = '';
+
+    const addEl = (tag, id, extras = {}) => {
+      const el = document.createElement(tag);
+      el.id = id;
+      Object.assign(el, extras);
+      document.body.appendChild(el);
+      return el;
+    };
+
+    addEl('input', 'simulationPasses', { value: 10 });
+    const limitGraph = addEl('input', 'LimitGraph', { type: 'checkbox' });
+    limitGraph.checked = false;
+    addEl('input', 'startSimulationButton');
+    addEl('div', 'timeHistoGram');
+    addEl('div', 'costHistoGram');
+    addEl('div', 'messages');
+    addEl('div', 'simulationRunningTime');
+    [
+      'simulationTimeMedian',
+      'simulationTimeStandRange',
+      'simulationTimeMax',
+      'simulationTimeMin',
+      'simulationTimeStandDev',
+      'simulationCostMedian',
+      'simulationCostStandRange',
+      'simulationCostMax',
+      'simulationCostMin',
+      'simulationCostStandDev',
+    ].forEach((id) => addEl('span', id));
+    addEl('div', 'timeEstimateHeader');
+    addEl('div', 'timeSaveButtons');
+    addEl('div', 'costEstimateHeader');
+    addEl('div', 'costSaveButtons');
+
+    const graph = document.createElement('div');
+    graph.className = 'task-row-graph';
+    graph.setAttribute('data-row-id', '1');
+    document.body.appendChild(graph);
+
+    const statsEl = document.createElement('div');
+    statsEl.className = 'task-row-stats';
+    statsEl.setAttribute('data-row-id', '1');
+    document.body.appendChild(statsEl);
+  }
+
+  it('covers updateRunningTimeDisplay, setInterval callback, and progress callback', async () => {
+    buildFullSimulationDom();
+
+    const taskData = [{
+      Task: 'A', Min: 1, Max: 3, Confidence: 0.9, Cost: 100,
+    }];
+    taskTableMock.normalizeTaskData.mockReturnValue(taskData);
+
+    const simResults = {
+      runningTime: 50,
+      times: {
+        min: 1, max: 3, median: 2, sd: 0.5, likelyMin: 1, likelyMax: 3, list: [],
+      },
+      costs: {
+        min: 100, max: 300, median: 200, sd: 50, likelyMin: 100, likelyMax: 300, list: [],
+      },
+      taskResults: [{
+        rowId: '1',
+        name: 'Task A',
+        times: {
+          min: 1, max: 3, median: 2, list: [],
+        },
+      }],
+    };
+
+    simMock.runSimulationProgressive.mockImplementation(
+      async (passes, data, progressCallback) => {
+        // Invoke the progress callback so that inner lambda is covered
+        progressCallback({
+          times: {
+            min: 1, max: 3, median: 2, sd: 0.5, likelyMin: 1, likelyMax: 3, list: [],
+          },
+          costs: {
+            min: 100, max: 300, median: 200, sd: 50, likelyMin: 100, likelyMax: 300,
+          },
+        });
+        return simResults;
+      },
+    );
+
+    const event = { preventDefault: jest.fn() };
+    const promise = startSimulation(event);
+
+    // Advance fake timers to fire the stopwatch setInterval callback at least once
+    jest.advanceTimersByTime(200);
+
+    await promise;
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(simMock.runSimulationProgressive).toHaveBeenCalled();
+    expect(document.getElementById('simulationRunningTime').textContent).toContain(
+      'Simulation Running Time (ms):',
+    );
+  });
+
+  it('covers the cost histogram branch when enableCost is true', async () => {
+    buildFullSimulationDom();
+
+    const taskData = [{
+      Task: 'B', Min: 2, Max: 5, Confidence: 0.8, Cost: 50,
+    }];
+    taskTableMock.normalizeTaskData.mockReturnValue(taskData);
+
+    const simResults = {
+      runningTime: 30,
+      times: {
+        min: 2, max: 5, median: 3, sd: 1, likelyMin: 2, likelyMax: 5, list: [],
+      },
+      costs: {
+        min: 50, max: 200, median: 100, sd: 25, likelyMin: 50, likelyMax: 200, list: [],
+      },
+      taskResults: [],
+    };
+
+    simMock.runSimulationProgressive.mockImplementation(
+      async (_passes, _data, progressCallback) => {
+        progressCallback({
+          times: {
+            min: 2, max: 5, median: 3, sd: 1, likelyMin: 2, likelyMax: 5, list: [],
+          },
+          costs: {
+            min: 50, max: 200, median: 100, sd: 25, likelyMin: 50, likelyMax: 200,
+          },
+        });
+        return simResults;
+      },
+    );
+
+    // Temporarily enable cost via module state mock override
+    stateMock.appState.enableCost = true;
+
+    const event = { preventDefault: jest.fn() };
+    const promise = startSimulation(event);
+    jest.advanceTimersByTime(200);
+    await promise;
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    stateMock.appState.enableCost = false;
+  });
+
+  it('covers simulation error path when tasks are present', async () => {
+    buildFullSimulationDom();
+
+    taskTableMock.normalizeTaskData.mockReturnValue(
+      [{
+        Task: 'C', Min: 1, Max: 4, Confidence: 0.75, Cost: 200,
+      }],
+    );
+
+    simMock.runSimulationProgressive.mockRejectedValue(new Error('Sim error'));
+
+    const event = { preventDefault: jest.fn() };
+    await expect(startSimulation(event)).resolves.toBeUndefined();
+    expect(event.preventDefault).toHaveBeenCalled();
+  });
 });
