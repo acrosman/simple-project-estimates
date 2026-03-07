@@ -194,6 +194,18 @@ export function createSimulationPanel() {
 }
 
 /**
+ * Creates the side-by-side wrapper with the mode selector on the left and logo on the right.
+ * @returns {HTMLElement} Mode selector with logo wrapper
+ */
+export function createModeSelectorWithLogo() {
+  const wrapper = document.createElement('div');
+  wrapper.classList.add('mode-selector-logo-wrapper');
+  wrapper.appendChild(createModeSelector());
+  wrapper.appendChild(createLogoElement());
+  return wrapper;
+}
+
+/**
  * Setup the Main application UI
  * @returns HTMLElement
  */
@@ -208,20 +220,13 @@ export function setupUi() {
 
   // Build UI sections
   const header = createHeader();
-  const modeSelector = createModeSelector();
   const fileLoader = createFileLoader();
   const dataEntry = createDataEntrySection();
   const simulationPanel = createSimulationPanel();
   const messagesSection = createMessageSection();
 
-  // Create side-by-side wrapper: mode selector on the left, logo on the right
-  const modeSelectorWithLogo = document.createElement('div');
-  modeSelectorWithLogo.classList.add('mode-selector-logo-wrapper');
-  modeSelectorWithLogo.appendChild(modeSelector);
-  modeSelectorWithLogo.appendChild(createLogoElement());
-
   // Assemble data area
-  dataWrapper.appendChild(modeSelectorWithLogo);
+  dataWrapper.appendChild(createModeSelectorWithLogo());
   dataWrapper.appendChild(messagesSection);
   dataWrapper.appendChild(fileLoader);
   dataWrapper.appendChild(dataEntry);

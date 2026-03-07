@@ -7,6 +7,7 @@ import {
   createHeader,
   createSimulationPanel,
   createMessageSection,
+  createModeSelectorWithLogo,
   setupUi,
 } from '../ui/layout';
 // import * as idx from '../index';
@@ -24,6 +25,7 @@ describe('Layout Module Exports', () => {
     expect(createHeader).toBeDefined();
     expect(createSimulationPanel).toBeDefined();
     expect(createMessageSection).toBeDefined();
+    expect(createModeSelectorWithLogo).toBeDefined();
     expect(setupUi).toBeDefined();
   });
 });
@@ -98,6 +100,35 @@ describe('createMessageSection', () => {
   test('is initially hidden', () => {
     const el = createMessageSection();
     expect(el.style.display).toBe('none');
+  });
+});
+
+describe('createModeSelectorWithLogo', () => {
+  test('returns a div element', () => {
+    const el = createModeSelectorWithLogo();
+    expect(el.tagName).toBe('DIV');
+  });
+
+  test('has the mode-selector-logo-wrapper class', () => {
+    const el = createModeSelectorWithLogo();
+    expect(el.classList.contains('mode-selector-logo-wrapper')).toBe(true);
+  });
+
+  test('contains exactly two children', () => {
+    const el = createModeSelectorWithLogo();
+    expect(el.children).toHaveLength(2);
+  });
+
+  test('second child is the logo image', () => {
+    const el = createModeSelectorWithLogo();
+    expect(el.children[1].tagName).toBe('IMG');
+    expect(el.children[1].classList.contains('project-icon')).toBe(true);
+  });
+
+  test('returns a new instance each call', () => {
+    const el1 = createModeSelectorWithLogo();
+    const el2 = createModeSelectorWithLogo();
+    expect(el1).not.toBe(el2);
   });
 });
 
