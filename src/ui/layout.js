@@ -24,10 +24,12 @@ import {
  */
 function createLogoElement() {
   const simIcon = document.createElement('img');
-  simIcon.src = Icon;
-  simIcon.alt = 'Project Estimate Simulator icon';
-  simIcon.width = 100;
-  simIcon.height = 100;
+  Object.assign(simIcon, {
+    src: Icon,
+    alt: 'Project Estimate Simulator icon',
+    width: 100,
+    height: 100,
+  });
   simIcon.classList.add('project-icon');
   return simIcon;
 }
@@ -50,7 +52,7 @@ function createHeader() {
   // Fork Me ribbon
   const githubRibbon = createDivWithIdAndClasses('forkOnGithub', ['github-ribbon']);
   const githubLink = createTextElement('a', 'Fork me on GitHub');
-  githubLink.href = 'https://github.com/acrosman/simple-project-estimates';
+  Object.assign(githubLink, { href: 'https://github.com/acrosman/simple-project-estimates' });
   githubRibbon.appendChild(githubLink);
   headerDiv.appendChild(githubRibbon);
 
@@ -89,11 +91,15 @@ function createSimulationPanel() {
   };
   const simLimitCtl = createLabeledInput('Limit graph outliers', simLimitFldAttr, false);
 
+  // Create the start simulation button.
   const simRun = document.createElement('input');
-  simRun.type = 'button';
-  simRun.id = 'startSimulationButton';
-  simRun.value = 'Run Simulation';
+  Object.assign(simRun, {
+    type: 'button',
+    id: 'startSimulationButton',
+    value: 'Run Simulation',
+  });
 
+  // Add new elements to controls wrapper.
   simControls.appendChild(simCountCtl);
   simControls.appendChild(simLimitCtl);
   simControls.appendChild(simRun);
@@ -103,7 +109,7 @@ function createSimulationPanel() {
   simResultWrapper.appendChild(createDivWithIdAndClasses('simulationRunningTime', ['simulation-result', 'text']));
   const simTimeResultWrapper = createDivWithIdAndClasses('simulationTimeResultsWrapper', ['section', 'wrap-simulation-time-results']);
   const timeHeader = createTextElement('h3', 'Time Estimates', ['result-display', 'time-info', 'hidden']);
-  timeHeader.id = 'timeEstimateHeader';
+  Object.assign(timeHeader, { id: 'timeEstimateHeader' });
   simTimeResultWrapper.appendChild(timeHeader);
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeMedian', ['simulation-result', 'time-info', 'text']));
   simTimeResultWrapper.appendChild(createDivWithIdAndClasses('simulationTimeStandRange', ['simulation-result', 'time-info', 'text']));
@@ -140,7 +146,7 @@ function createSimulationPanel() {
   // Simulation Cost Results elements
   const simCostResultWrapper = createDivWithIdAndClasses('simulationCostResultsWrapper', ['section', 'wrap-simulation-cost-results']);
   const costHeader = createTextElement('h3', 'Cost Estimates', ['result-display', 'cost-info', 'hidden']);
-  costHeader.id = 'costEstimateHeader';
+  Object.assign(costHeader, { id: 'costEstimateHeader' });
   simCostResultWrapper.appendChild(costHeader);
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostMedian', ['simulation-result', 'cost-info', 'text']));
   simCostResultWrapper.appendChild(createDivWithIdAndClasses('simulationCostStandRange', ['simulation-result', 'cost-info', 'text']));
