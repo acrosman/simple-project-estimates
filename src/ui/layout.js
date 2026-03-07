@@ -22,7 +22,7 @@ import {
  * Creates the project logo image element.
  * @returns {HTMLImageElement} Logo image
  */
-export function createLogoElement() {
+function createLogoElement() {
   const simIcon = document.createElement('img');
   simIcon.src = Icon;
   simIcon.alt = 'Project Estimate Simulator icon';
@@ -36,7 +36,7 @@ export function createLogoElement() {
  * Creates the message section for displaying simulation messages.
  * @returns {HTMLElement} Message section
  */
-export function createMessageSection() {
+function createMessageSection() {
   const messagesSection = document.createElement('div');
   messagesSection.id = 'messages';
   messagesSection.classList.add('messages-section');
@@ -48,7 +48,7 @@ export function createMessageSection() {
  * Creates the page header with GitHub ribbon.
  * @returns {HTMLElement} Header section
  */
-export function createHeader() {
+function createHeader() {
   const headerDiv = document.createElement('div');
   headerDiv.classList.add('page-header', 'section');
 
@@ -67,7 +67,7 @@ export function createHeader() {
  * Creates the simulation control panel and results display.
  * @returns {HTMLElement} Simulation panel section
  */
-export function createSimulationPanel() {
+function createSimulationPanel() {
   const simWrapper = createDivWithIdAndClasses('simulationAreaWrapper', ['section', 'container']);
   const simHeader = createTextElement('h2', 'Simulator', ['header', 'simulation']);
 
@@ -197,7 +197,7 @@ export function createSimulationPanel() {
  * Creates the side-by-side wrapper with the mode selector on the left and logo on the right.
  * @returns {HTMLElement} Mode selector with logo wrapper
  */
-export function createModeSelectorWithLogo() {
+function createModeSelectorWithLogo() {
   const wrapper = document.createElement('div');
   wrapper.classList.add('mode-selector-logo-wrapper');
   wrapper.appendChild(createModeSelector());
@@ -209,14 +209,10 @@ export function createModeSelectorWithLogo() {
  * Setup the Main application UI
  * @returns HTMLElement
  */
-export function setupUi() {
-  // === Main page structures ===
-  const mainElement = document.createElement('div');
-
+function setupUi() {
   // Setup data entry section wrapper
-  const dataWrapper = document.createElement('div');
-  dataWrapper.classList.add('section');
-  dataWrapper.id = 'dataAreaWrapper';
+  const mainElement = document.createElement('div');
+  const dataWrapper = createDivWithIdAndClasses('dataAreaWrapper', ['section']);
 
   // Build UI sections
   const header = createHeader();
@@ -238,3 +234,12 @@ export function setupUi() {
 
   return mainElement;
 }
+
+export {
+  createLogoElement,
+  createMessageSection,
+  createHeader,
+  createSimulationPanel,
+  createModeSelectorWithLogo,
+  setupUi,
+};
