@@ -175,7 +175,7 @@ Object.assign(input, { type: 'number', value: 10, name: 'fieldName' });
 
 - Always remove existing SVG before creating new: `targetNode.innerHTML = ''`
 - Use margins for axes: `{ top: 10, right: 30, bottom: 50, left: 60 }`
-- Switch to scatter plot when data points > 600
+- Switch to scatter plot when data points > configured threshold
 - Standard scales: `d3.scaleLinear()` for both axes
 
 ### Testing Pure Functions
