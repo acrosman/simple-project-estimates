@@ -140,7 +140,7 @@ describe('validateCsvData', () => {
         Task: 'Test Task', Confidence: 90,
       },
     ];
-    expect(() => validateCsvData(data, 'hours', true)).toThrow('Cost (optional)');
+    expect(() => validateCsvData(data, 'hours', true)).toThrow('Cost (when enabled)');
   });
 
   test('handles string numbers for Min and Max', () => {
