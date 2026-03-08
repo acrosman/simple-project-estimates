@@ -1,60 +1,49 @@
 /**
  * D3-powered chart and histogram visualization module.
  * Builds time and cost histograms, per-task mini graphs, and histogram previews.
- * Exposes GRAPH_CONFIG for runtime customisation and GRAPH_CONFIG_DEFAULTS for resets.
+ * Exposes GRAPH_CONFIG for runtime customization and GRAPH_CONFIG_DEFAULTS for resets.
  * @module visualization/charts
  */
 import * as d3 from 'd3';
 import { calculateKDE } from '../core/stats';
 
 /**
- * Configuration constants for all graph visualization.
- * Consolidates settings for main histograms, preview histograms, and task row mini graphs.
+ * Immutable snapshot of the original default graph configuration values.
+ * Use this as the source of truth for initial values and reset operations.
  */
-const GRAPH_CONFIG = {
-  // Main histogram settings
-  histogram: {
+const GRAPH_CONFIG_DEFAULTS = Object.freeze({
+  histogram: Object.freeze({
     barCutoff: 600, // Switch to scatter plot above this threshold
     maxBuckets: 120, // Maximum buckets for preview histograms
     width: 800, // Default histogram width
     height: 500, // Default histogram height
-    margin: { // SVG margins
+    margin: Object.freeze({ // SVG margins
       top: 10,
       right: 30,
       bottom: 50,
       left: 60,
-    },
-  },
-  // Task row mini graph settings
-  miniGraph: {
-    width: 140,
-    height: 26,
-    maxBuckets: 24,
-    gap: 1, // Gap between bars
-  },
-};
-
-/**
- * Immutable snapshot of the original default graph configuration values.
- * Use this in reset operations rather than repeating the literal defaults.
- */
-const GRAPH_CONFIG_DEFAULTS = Object.freeze({
-  histogram: Object.freeze({
-    barCutoff: 600,
-    maxBuckets: 120,
-    width: 800,
-    height: 500,
-    margin: Object.freeze({
-      top: 10, right: 30, bottom: 50, left: 60,
     }),
   }),
   miniGraph: Object.freeze({
     width: 140,
     height: 26,
     maxBuckets: 24,
-    gap: 1,
+    gap: 1, // Gap between bars
   }),
 });
+
+/**
+ * Configuration constants for all graphs.
+ * Includes settings for main histograms, preview histograms, and task row mini graphs.
+ * Initialized from GRAPH_CONFIG_DEFAULTS; mutated at runtime by Advanced Settings UI.
+ */
+const GRAPH_CONFIG = {
+  histogram: {
+    ...GRAPH_CONFIG_DEFAULTS.histogram,
+    margin: { ...GRAPH_CONFIG_DEFAULTS.histogram.margin },
+  },
+  miniGraph: { ...GRAPH_CONFIG_DEFAULTS.miniGraph },
+};
 
 /**
  * Builds the histogram graph into the target DOM node using D3. When there is lots of
