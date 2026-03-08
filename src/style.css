@@ -318,6 +318,10 @@ input[required]:invalid:not([type="button"]) {
   fill: steelblue;
 }
 
+.kde-curve {
+  stroke: #22c55e;
+}
+
 /* Github Ribbon */
 
 #forkOnGithub a {

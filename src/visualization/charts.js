@@ -61,12 +61,13 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   // Remove any existing graphs
   targetNode.innerHTML = '';
 
+  // Pull graph dimensions and thresholds from the config
   const {
     barCutoff, width: imageWidth, height: imageHeight, margin,
   } = GRAPH_CONFIG.histogram;
 
-  const binMargin = 0.2;
-
+  // When limitGraph is true, set the visible range to two standard deviations
+  // around the median so extreme outliers don't distract from core display.
   let minBin = min;
   let maxBin = max;
 
@@ -74,6 +75,9 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     maxBin = median + (stdDev * 2) < max ? median + (stdDev * 2) : max;
     minBin = median - (stdDev * 2) > min ? median - (stdDev * 2) : min;
   }
+
+  // Slice the histogram array to only the visible range, and precompute indices for median and
+  // stdDev styling.
   const data = list.filter((e, i) => (i >= minBin && i <= maxBin));
 
   const medianIndex = Math.round(median - minBin);
@@ -81,20 +85,31 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   const stdDevLowIndex = medianIndex - stdDevOffset;
   const stdDevHighIndex = medianIndex + stdDevOffset;
 
+  // Derive the inner drawing area by subtracting margins from the total SVG size
   const width = imageWidth - margin.left - margin.right;
   const height = imageHeight - margin.top - margin.bottom;
 
+  // Add a one-unit buffer on each side so bars at the edges don't touch the axes
   const xMin = minBin - 1;
   const xMax = maxBin + 1;
 
+  // Switch to a scatter-plot + KDE curve when the data range is too wide for readable bars
   const useBars = (xMax - xMin) < barCutoff;
 
+  // binMargin is calculated dynamically based on number of bins and image size.
+  // It is capped at 0.4 so bars remain at least ~20% of their slot width when data is dense.
+  const BIN_GAP_PX = 1;
+  const binMargin = Math.min(0.4, (BIN_GAP_PX * (xMax - xMin)) / width);
+
+  // Set the y-axis ceiling to the maximum result count.
   const yMax = data.reduce((acc, val) => (val > acc ? val : acc), 0);
 
+  // x maps bar index (0-based within the visible range) to pixel position; used for bar widths
   const x = d3.scaleLinear()
     .domain([0, (xMax - xMin)])
     .range([0, width]);
 
+  // x2 maps the actual data value to pixel position; used for axis labels and positioning.
   const x2 = d3.scaleLinear()
     .domain([xMin, xMax])
     .range([0, width]);
@@ -106,17 +121,16 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
   const xAxis = d3.axisBottom().scale(x2);
   const yAxis = d3.axisLeft().scale(y).ticks(8);
 
+  // Create the root SVG element
   const svg = d3.select(targetNode).append('svg')
     .attr('role', 'img')
     .attr('aria-label', `Histogram showing distribution of ${xLabel}. Median: ${median.toFixed(2)}, Standard Deviation: ${stdDev.toFixed(2)}, Range: ${min} to ${max}`)
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom)
-    .style('opacity', 0)
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  const renderTransition = d3.transition().duration(250).ease(d3.easeCubicOut);
-
+  // Append x-axis at the bottom of the drawing area with its label.
   svg.append('g')
     .attr('class', 'x axis')
     .attr('transform', `translate(0,${height})`)
@@ -128,6 +142,7 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     .attr('y', height + margin.bottom - 10)
     .text(xLabel);
 
+  // Append y-axis on the left side, rotated 90° so "Frequency" reads vertically.
   svg.append('g')
     .attr('class', 'y axis')
     .attr('transform', 'translate(0,0)')
@@ -142,6 +157,8 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
     .text('Frequency');
 
   if (useBars) {
+    // Bar graph: each bucket is a <g> that animates upward from the x-axis baseline.
+    // CSS classes distinguish the median bar, one-stdDev band, and ordinary bars.
     const bar = svg.selectAll('.bar')
       .data(data)
       .enter().append('g')
@@ -153,24 +170,22 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
         }
         return 'bar';
       })
-      .attr('transform', (d, i) => `translate(${x2(i + minBin)},${height})`);
-
-    bar.transition(renderTransition)
       .attr('transform', (d, i) => `translate(${x2(i + minBin)},${y(d)})`);
 
     bar.append('rect')
       .attr('x', x(binMargin))
       .attr('width', x(2 * binMargin))
-      .attr('height', 0)
-      .transition(renderTransition)
       .attr('height', (d) => height - y(d));
   } else {
-    const points = svg.selectAll('dot')
+    // Scatter plot: used when the data range exceeds barCutoff and individual bars
+    // would be too narrow to be meaningful.
+    svg.selectAll('dot')
       .data(data)
       .join('circle')
       .attr('cx', (d, i) => x2(i + minBin))
       .attr('cy', (d) => y(d))
-      .attr('opacity', 0)
+      .attr('opacity', 1)
+      // The median point is drawn larger so it stays visible at small radii
       .attr('r', (d, i) => {
         if (i === medianIndex) {
           return 3;
@@ -186,10 +201,9 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
         return 'graphXY';
       });
 
-    points.transition(renderTransition)
-      .attr('opacity', 1);
-
+    // Overlay a KDE smoothing curve to show the overall distribution shape
     const kdeData = calculateKDE(data, minBin, maxBin);
+    // kdeStep maps each KDE sample back to the original value domain
     const kdeStep = (maxBin - minBin) / kdeData.length;
 
     const lineGenerator = d3.line()
@@ -201,18 +215,10 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
       .datum(kdeData)
       .attr('class', 'kde-curve')
       .attr('fill', 'none')
-      .attr('stroke', '#ef4444')
       .attr('stroke-width', 2.5)
-      .attr('opacity', 0)
-      .attr('d', lineGenerator)
-      .transition(renderTransition)
-      .attr('opacity', 0.8);
+      .attr('opacity', 0.8)
+      .attr('d', lineGenerator);
   }
-
-  d3.select(targetNode)
-    .select('svg')
-    .transition(renderTransition)
-    .style('opacity', 1);
 }
 
 /**
@@ -310,11 +316,9 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
   const barWidth = Math.max((width / bucketCount) - 1, 1);
-  const renderTransition = d3.transition().duration(180).ease(d3.easeCubicOut);
 
   root.select('.x.axis')
     .attr('transform', `translate(0,${height})`)
-    .transition(renderTransition)
     .call(xAxis);
 
   root.select('.xLabel')
@@ -323,7 +327,6 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
     .text(xLabel);
 
   root.select('.y.axis')
-    .transition(renderTransition)
     .call(yAxis);
 
   root.select('.yLabel')
@@ -338,22 +341,14 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
       .attr('class', 'preview-bar')
       .attr('x', (d, i) => x(i) + 0.5)
       .attr('width', barWidth)
-      .attr('y', height)
-      .attr('height', 0)
-      .call((selection) => selection.transition(renderTransition)
-        .attr('y', (d) => y(d))
-        .attr('height', (d) => height - y(d))),
+      .attr('y', (d) => y(d))
+      .attr('height', (d) => height - y(d)),
     (update) => update
-      .call((selection) => selection.transition(renderTransition)
-        .attr('x', (d, i) => x(i) + 0.5)
-        .attr('width', barWidth)
-        .attr('y', (d) => y(d))
-        .attr('height', (d) => height - y(d))),
-    (exit) => exit
-      .call((selection) => selection.transition(renderTransition)
-        .attr('y', height)
-        .attr('height', 0)
-        .remove()),
+      .attr('x', (d, i) => x(i) + 0.5)
+      .attr('width', barWidth)
+      .attr('y', (d) => y(d))
+      .attr('height', (d) => height - y(d)),
+    (exit) => exit.remove(),
   );
 }
 
