@@ -10,7 +10,7 @@ import sampleData from '../data/sample.csv';
 import sampleFibData from '../data/sample-fib.csv';
 import sampleTshirtData from '../data/sample-tshirt.csv';
 import { appState } from '../core/state';
-import { createTextElement, showError } from '../utils/dom-helpers';
+import { createTextElement, createDivWithIdAndClasses, showError } from '../utils/dom-helpers';
 import { createEntryTable } from './task-table';
 import { createFibonacciConfigPanel } from './fibonacci-config';
 import { createTshirtMappingTable } from './tshirt-config';
@@ -112,8 +112,7 @@ function importCsvFile(event) {
  * @returns {HTMLElement} Mode selector section
  */
 function createModeSelector() {
-  const modeSelectorDiv = document.createElement('div');
-  modeSelectorDiv.classList.add('section', 'wrapper-mode-selector');
+  const modeSelectorDiv = createDivWithIdAndClasses('modeSelectorWrapper', ['section', 'wrapper-mode-selector']);
   const modeHeader = createTextElement('h2', 'Estimation Mode', ['header', 'mode-selector']);
 
   const modeFieldset = document.createElement('fieldset');
@@ -195,8 +194,7 @@ function createModeSelector() {
  * @returns {HTMLElement} File loader section
  */
 function createFileLoader() {
-  const fileDiv = document.createElement('div');
-  fileDiv.classList.add('section', 'wrapper-file-load');
+  const fileDiv = createDivWithIdAndClasses('fileLoadWrapper', ['section', 'wrapper-file-load']);
   const csvHeader = createTextElement('h2', 'Upload Task CSV File', ['header', 'csv-file']);
   const fieldSet = document.createElement('fieldset');
 
@@ -244,8 +242,7 @@ function createFileLoader() {
  * @returns {HTMLElement} Data entry section
  */
 function createDataEntrySection() {
-  const dataEntryDiv = document.createElement('div');
-  dataEntryDiv.classList.add('section', 'wrapper-direct-load');
+  const dataEntryDiv = createDivWithIdAndClasses('dataEntryWrapper', ['section', 'wrapper-direct-load']);
   const dataEntryHeader = createTextElement('h2', 'Add Tasks By Hand', ['header', 'data-input']);
   const dataEntryTable = createEntryTable();
 

@@ -48,13 +48,15 @@ function createLabeledInput(labelText, inputAttributes, labelFirst = true) {
 
 /**
  * Creates an HTML div with the ID and classes set.
- * @param {*} id The id for the div
- * @param {*} classList list of classes to add.
+ * @param {string|null} id The id for the div, or null to omit the id attribute.
+ * @param {Array} classList list of classes to add.
  * @returns HTMLElement
  */
-function createDivWithIdAndClasses(id, classList = []) {
+function createDivWithIdAndClasses(id = null, classList = []) {
   const el = document.createElement('div');
-  el.id = id;
+  if (id) {
+    el.id = id;
+  }
   el.classList.add(...classList);
 
   return el;
