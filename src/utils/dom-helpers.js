@@ -105,6 +105,17 @@ function showError(message, container = null, timeoutMs = 5000) {
 }
 
 /**
+ * Sets the text content of a DOM element by its ID.
+ * Does nothing if the element is not found.
+ * @param {string} id - The ID of the target element.
+ * @param {string} text - The text content to assign.
+ */
+function updateElementText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+/**
  * Reads an input element's value by ID and returns it as a parsed integer.
  * Returns the fallback if the element is not found or the value is not a valid integer.
  * @param {string} id The ID of the input element.
@@ -139,4 +150,5 @@ export {
   showError,
   getIntegerInputValue,
   getFloatInputValue,
+  updateElementText,
 };

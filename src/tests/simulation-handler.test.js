@@ -27,7 +27,6 @@ jest.mock('../core/state', () => ({
 }));
 
 const {
-  updateElementText,
   updateProgress,
   renderFinalResults,
   clearStatistics,
@@ -42,156 +41,135 @@ const simMock = require('../core/simulation');
 const stateMock = require('../core/state');
 
 describe('simulation-handler.js', () => {
-  describe('updateElementText', () => {
-    it('updates text content of an element', () => {
-      const el = document.createElement('span');
-      el.id = 'test-span';
-      document.body.appendChild(el);
-      updateElementText('test-span', 'Hello World');
-      expect(el.textContent).toBe('Hello World');
-      // ...existing code...
-    });
-    // Remove stray closing bracket
-    // Additional tests to ensure all exported functions are called
-    describe('simulation-handler exports coverage', () => {
-      it('calls updateElementText safely', () => {
-        const el = document.createElement('div');
-        el.id = 'coverage-test';
-        document.body.appendChild(el);
-        updateElementText('coverage-test', 'Coverage');
-        expect(el.textContent).toBe('Coverage');
-        expect(() => updateElementText('no-such-id', 'Coverage')).not.toThrow();
-      });
-
-      it('calls updateProgress with edge cases', () => {
-        expect(() => updateProgress({}, 'Hours', { format: (v) => v }, false)).not.toThrow();
-        expect(() => updateProgress({ times: { min: -1 }, costs: { min: -1 } }, 'Hours', { format: (v) => v }, false)).not.toThrow();
-      });
-
-      it('calls renderFinalResults with edge cases', () => {
-        expect(() => renderFinalResults({}, 'Hours', { format: (v) => v }, false)).not.toThrow();
-        expect(() => renderFinalResults({ times: { min: -1 }, costs: { min: -1 } }, 'Hours', { format: (v) => v }, false)).not.toThrow();
-      });
-
-      it('calls clearStatistics safely', () => {
-        expect(() => clearStatistics()).not.toThrow();
-      });
-
-      it('calls showTimeResults safely', () => {
-        expect(() => showTimeResults()).not.toThrow();
-      });
-
-      it('calls showCostResults safely', () => {
-        expect(() => showCostResults(true)).not.toThrow();
-        expect(() => showCostResults(false)).not.toThrow();
-      });
-
-      it('calls renderTaskRowHistograms with edge cases', () => {
-        expect(() => renderTaskRowHistograms([])).not.toThrow();
-        expect(() => renderTaskRowHistograms([
-          {
-            rowId: 'none',
-            name: 'None',
-            times: {
-              min: 0,
-              max: 0,
-              median: 0,
-              list: [],
-            },
-          },
-        ])).not.toThrow();
-      });
-
-      it('calls startSimulation with minimal DOM', async () => {
-        const event = { preventDefault: jest.fn() };
-        document.body.innerHTML = '';
-        const passes = document.createElement('input');
-        passes.id = 'simulationPasses';
-        passes.value = 1;
-        document.body.appendChild(passes);
-        const limitGraph = document.createElement('input');
-        limitGraph.id = 'LimitGraph';
-        document.body.appendChild(limitGraph);
-        const runButton = document.createElement('input');
-        runButton.id = 'startSimulationButton';
-        document.body.appendChild(runButton);
-        global.gatherRawTaskData = () => [];
-        global.normalizeTaskData = () => [];
-        global.appState = { getTimeUnit: () => 'Hours', getHoursPerTimeUnit: () => 1, enableCost: false };
-        global.fibonacciCalendarMappings = {};
-        global.tshirtMappings = {};
-        global.sim = {
-          runSimulationProgressive: async () => ({}),
-          buildHistogramPreview: jest.fn(),
-          buildHistogram: jest.fn(),
-        };
-        const messagesDiv = document.createElement('div');
-        messagesDiv.id = 'messages';
-        document.body.appendChild(messagesDiv);
-        await expect(startSimulation(event)).resolves.toBeUndefined();
-        expect(event.preventDefault).toHaveBeenCalled();
-      });
+  describe('simulation-handler exports coverage', () => {
+    it('calls updateProgress with edge cases', () => {
+      expect(() => updateProgress({}, 'Hours', { format: (v) => v }, false)).not.toThrow();
+      expect(() => updateProgress({ times: { min: -1 }, costs: { min: -1 } }, 'Hours', { format: (v) => v }, false)).not.toThrow();
     });
 
-    describe('updateProgress', () => {
-      it('runs without error for valid progress', () => {
-        // Create required DOM elements
-        const timeHeader = document.createElement('div');
-        timeHeader.id = 'timeEstimateHeader';
-        document.body.appendChild(timeHeader);
-        const timeSaveButtons = document.createElement('div');
-        timeSaveButtons.id = 'timeSaveButtons';
-        document.body.appendChild(timeSaveButtons);
-        const costHeader = document.createElement('div');
-        costHeader.id = 'costEstimateHeader';
-        document.body.appendChild(costHeader);
-        const costSaveButtons = document.createElement('div');
-        costSaveButtons.id = 'costSaveButtons';
-        document.body.appendChild(costSaveButtons);
-        [
-          'simulationTimeMedian',
-          'simulationTimeStandRange',
-          'simulationTimeMax',
-          'simulationTimeMin',
-          'simulationTimeStandDev',
-          'simulationCostMedian',
-          'simulationCostStandRange',
-          'simulationCostMax',
-          'simulationCostMin',
-          'simulationCostStandDev',
-        ].forEach((id) => {
-          const el = document.createElement('span');
-          el.id = id;
-          document.body.appendChild(el);
-        });
-        const progress = {
+    it('calls renderFinalResults with edge cases', () => {
+      expect(() => renderFinalResults({}, 'Hours', { format: (v) => v }, false)).not.toThrow();
+      expect(() => renderFinalResults({ times: { min: -1 }, costs: { min: -1 } }, 'Hours', { format: (v) => v }, false)).not.toThrow();
+    });
+
+    it('calls clearStatistics safely', () => {
+      expect(() => clearStatistics()).not.toThrow();
+    });
+
+    it('calls showTimeResults safely', () => {
+      expect(() => showTimeResults()).not.toThrow();
+    });
+
+    it('calls showCostResults safely', () => {
+      expect(() => showCostResults(true)).not.toThrow();
+      expect(() => showCostResults(false)).not.toThrow();
+    });
+
+    it('calls renderTaskRowHistograms with edge cases', () => {
+      expect(() => renderTaskRowHistograms([])).not.toThrow();
+      expect(() => renderTaskRowHistograms([
+        {
+          rowId: 'none',
+          name: 'None',
           times: {
-            min: 1,
-            max: 3,
-            median: 2,
-            sd: 0.5,
-            likelyMin: 1,
-            likelyMax: 3,
+            min: 0,
+            max: 0,
+            median: 0,
+            list: [],
           },
-          costs: {
-            min: 100,
-            max: 300,
-            median: 200,
-            sd: 50,
-            likelyMin: 100,
-            likelyMax: 300,
-          },
-        };
-        expect(() => updateProgress(
-          progress,
-          'Hours',
-          { format: (v) => `$${v}` },
-          true,
-        )).not.toThrow();
+        },
+      ])).not.toThrow();
+    });
+
+    it('calls startSimulation with minimal DOM', async () => {
+      const event = { preventDefault: jest.fn() };
+      document.body.innerHTML = '';
+      const passes = document.createElement('input');
+      passes.id = 'simulationPasses';
+      passes.value = 1;
+      document.body.appendChild(passes);
+      const limitGraph = document.createElement('input');
+      limitGraph.id = 'LimitGraph';
+      document.body.appendChild(limitGraph);
+      const runButton = document.createElement('input');
+      runButton.id = 'startSimulationButton';
+      document.body.appendChild(runButton);
+      global.gatherRawTaskData = () => [];
+      global.normalizeTaskData = () => [];
+      global.appState = { getTimeUnit: () => 'Hours', getHoursPerTimeUnit: () => 1, enableCost: false };
+      global.fibonacciCalendarMappings = {};
+      global.tshirtMappings = {};
+      global.sim = {
+        runSimulationProgressive: async () => ({}),
+        buildHistogramPreview: jest.fn(),
+        buildHistogram: jest.fn(),
+      };
+      const messagesDiv = document.createElement('div');
+      messagesDiv.id = 'messages';
+      document.body.appendChild(messagesDiv);
+      await expect(startSimulation(event)).resolves.toBeUndefined();
+      expect(event.preventDefault).toHaveBeenCalled();
+    });
+  });
+
+  describe('updateProgress', () => {
+    it('runs without error for valid progress', () => {
+      // Create required DOM elements
+      const timeHeader = document.createElement('div');
+      timeHeader.id = 'timeEstimateHeader';
+      document.body.appendChild(timeHeader);
+      const timeSaveButtons = document.createElement('div');
+      timeSaveButtons.id = 'timeSaveButtons';
+      document.body.appendChild(timeSaveButtons);
+      const costHeader = document.createElement('div');
+      costHeader.id = 'costEstimateHeader';
+      document.body.appendChild(costHeader);
+      const costSaveButtons = document.createElement('div');
+      costSaveButtons.id = 'costSaveButtons';
+      document.body.appendChild(costSaveButtons);
+      [
+        'simulationTimeMedian',
+        'simulationTimeStandRange',
+        'simulationTimeMax',
+        'simulationTimeMin',
+        'simulationTimeStandDev',
+        'simulationCostMedian',
+        'simulationCostStandRange',
+        'simulationCostMax',
+        'simulationCostMin',
+        'simulationCostStandDev',
+      ].forEach((id) => {
+        const el = document.createElement('span');
+        el.id = id;
+        document.body.appendChild(el);
       });
-      it('does nothing if progress.times.min is -1', () => {
-        expect(() => updateProgress({ times: { min: -1, max: 0 }, costs: { min: -1 } }, 'Hours', { format: (v) => `$${v}` }, true)).not.toThrow();
-      });
+      const progress = {
+        times: {
+          min: 1,
+          max: 3,
+          median: 2,
+          sd: 0.5,
+          likelyMin: 1,
+          likelyMax: 3,
+        },
+        costs: {
+          min: 100,
+          max: 300,
+          median: 200,
+          sd: 50,
+          likelyMin: 100,
+          likelyMax: 300,
+        },
+      };
+      expect(() => updateProgress(
+        progress,
+        'Hours',
+        { format: (v) => `$${v}` },
+        true,
+      )).not.toThrow();
+    });
+    it('does nothing if progress.times.min is -1', () => {
+      expect(() => updateProgress({ times: { min: -1, max: 0 }, costs: { min: -1 } }, 'Hours', { format: (v) => `$${v}` }, true)).not.toThrow();
     });
   });
 

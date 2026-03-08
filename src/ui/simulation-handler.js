@@ -1,20 +1,13 @@
-// simulation-handler.js
-// Handles simulation orchestration and results view
+/**
+ * @module simulation-handler
+ * @description Handles simulation orchestration and results display,
+ * including progressive run callbacks, summary statistics, and per-task histograms.
+ */
 import * as sim from '../core/simulation';
 import { appState, fibonacciCalendarMappings, tshirtMappings } from '../core/state';
 import { gatherRawTaskData, normalizeTaskData } from './task-table';
 import { buildTaskRowHistogram } from '../core/simulation';
-import { showError } from '../utils/dom-helpers';
-
-/**
- * Sets the text content of a DOM element by its ID.
- * @param {string} id - The ID of the target element.
- * @param {string} text - The text content to assign.
- */
-function updateElementText(id, text) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = text;
-}
+import { showError, updateElementText } from '../utils/dom-helpers';
 
 /**
  * Updates the statistics display elements with intermediate simulation progress data.
@@ -295,7 +288,6 @@ async function startSimulation(event) {
 }
 
 export {
-  updateElementText,
   updateProgress,
   renderFinalResults,
   clearStatistics,

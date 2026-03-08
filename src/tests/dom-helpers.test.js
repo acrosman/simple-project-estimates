@@ -9,6 +9,7 @@ import {
   showError,
   getIntegerInputValue,
   getFloatInputValue,
+  updateElementText,
 } from '../utils/dom-helpers';
 
 describe('createTextElement', () => {
@@ -284,5 +285,30 @@ describe('getFloatInputValue', () => {
   test('returns fallback when value is empty string', () => {
     input.value = '';
     expect(getFloatInputValue('testFloatInput', 1.0)).toBe(1.0);
+  });
+});
+
+describe('updateElementText', () => {
+  test('sets text content of an element by id', () => {
+    const el = document.createElement('span');
+    el.id = 'uet-test-span';
+    document.body.appendChild(el);
+    updateElementText('uet-test-span', 'Hello World');
+    expect(el.textContent).toBe('Hello World');
+    el.remove();
+  });
+
+  test('does not throw when element does not exist', () => {
+    expect(() => updateElementText('no-such-element', 'Text')).not.toThrow();
+  });
+
+  test('overwrites existing text content', () => {
+    const el = document.createElement('div');
+    el.id = 'uet-overwrite';
+    el.textContent = 'old';
+    document.body.appendChild(el);
+    updateElementText('uet-overwrite', 'new');
+    expect(el.textContent).toBe('new');
+    el.remove();
   });
 });
