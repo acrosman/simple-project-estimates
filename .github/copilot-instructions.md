@@ -37,6 +37,12 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
 - Use JSDoc for function signatures and parameter explanations.
 - Avoid comments that explain changes in the code.
 
+### Test Coverage
+
+- Aim for 100% coverage on all functions.
+- Test edge cases and typical use cases.
+- Use descriptive test names that explain the scenario being tested.
+
 ## Architecture
 
 ### Core Modules
