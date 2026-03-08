@@ -222,14 +222,11 @@ function createEntryTable(data = []) {
   }
 
   // Generate new table.
-  const form = document.createElement('div');
-  form.classList.add('table', 'data-entry');
+  const form = createDivWithIdAndClasses('DataEntryTable', ['table', 'data-entry']);
   form.setAttribute('role', 'table');
   form.setAttribute('aria-label', 'Task data entry');
-  form.id = 'DataEntryTable';
   form.dataset.currentMaxRow = 1;
-  const header = document.createElement('div');
-  header.classList.add('tr', 'table-header-row');
+  const header = createDivWithIdAndClasses(null, ['tr', 'table-header-row']);
   header.setAttribute('role', 'row');
   header.appendChild(createTextElement('div', 'Task *', ['th'], 'columnheader'));
 
