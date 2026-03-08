@@ -5,20 +5,26 @@
  * @module ui/graph-settings
  */
 import { GRAPH_CONFIG, GRAPH_CONFIG_DEFAULTS } from '../visualization/charts';
-import { createDivWithIdAndClasses, createTextElement, createLabeledInput } from '../utils/dom-helpers';
+import {
+  createDivWithIdAndClasses,
+  createTextElement,
+  createLabeledInput,
+  getIntegerInputValue,
+  getFloatInputValue,
+} from '../utils/dom-helpers';
 
 /**
  * Applies user-modified graph settings to GRAPH_CONFIG.
  */
 function applyGraphSettings() {
-  GRAPH_CONFIG.histogram.width = parseInt(document.getElementById('histogramWidth').value, 10);
-  GRAPH_CONFIG.histogram.height = parseInt(document.getElementById('histogramHeight').value, 10);
-  GRAPH_CONFIG.histogram.barCutoff = parseInt(document.getElementById('histogramBarCutoff').value, 10);
-  GRAPH_CONFIG.histogram.maxBuckets = parseInt(document.getElementById('histogramMaxBuckets').value, 10);
-  GRAPH_CONFIG.miniGraph.width = parseInt(document.getElementById('miniGraphWidth').value, 10);
-  GRAPH_CONFIG.miniGraph.height = parseInt(document.getElementById('miniGraphHeight').value, 10);
-  GRAPH_CONFIG.miniGraph.maxBuckets = parseInt(document.getElementById('miniGraphMaxBuckets').value, 10);
-  GRAPH_CONFIG.miniGraph.gap = parseFloat(document.getElementById('miniGraphGap').value);
+  GRAPH_CONFIG.histogram.width = getIntegerInputValue('histogramWidth', GRAPH_CONFIG.histogram.width);
+  GRAPH_CONFIG.histogram.height = getIntegerInputValue('histogramHeight', GRAPH_CONFIG.histogram.height);
+  GRAPH_CONFIG.histogram.barCutoff = getIntegerInputValue('histogramBarCutoff', GRAPH_CONFIG.histogram.barCutoff);
+  GRAPH_CONFIG.histogram.maxBuckets = getIntegerInputValue('histogramMaxBuckets', GRAPH_CONFIG.histogram.maxBuckets);
+  GRAPH_CONFIG.miniGraph.width = getIntegerInputValue('miniGraphWidth', GRAPH_CONFIG.miniGraph.width);
+  GRAPH_CONFIG.miniGraph.height = getIntegerInputValue('miniGraphHeight', GRAPH_CONFIG.miniGraph.height);
+  GRAPH_CONFIG.miniGraph.maxBuckets = getIntegerInputValue('miniGraphMaxBuckets', GRAPH_CONFIG.miniGraph.maxBuckets);
+  GRAPH_CONFIG.miniGraph.gap = getFloatInputValue('miniGraphGap', GRAPH_CONFIG.miniGraph.gap);
 
   // Show confirmation
   const details = document.getElementById('advancedSettings');

@@ -160,13 +160,15 @@ describe('applyGraphSettings', () => {
     expect(GRAPH_CONFIG.miniGraph.gap).toBe(1.5);
   });
 
-  test('produces NaN for empty string inputs', () => {
+  test('leaves GRAPH_CONFIG unchanged for empty string inputs', () => {
+    const originalWidth = GRAPH_CONFIG.histogram.width;
+    const originalHeight = GRAPH_CONFIG.histogram.height;
     setupGraphSettingsDOM({ histogramWidth: '', histogramHeight: '' });
 
     applyGraphSettings();
 
-    expect(Number.isNaN(GRAPH_CONFIG.histogram.width)).toBe(true);
-    expect(Number.isNaN(GRAPH_CONFIG.histogram.height)).toBe(true);
+    expect(GRAPH_CONFIG.histogram.width).toBe(originalWidth);
+    expect(GRAPH_CONFIG.histogram.height).toBe(originalHeight);
   });
 
   test('shows confirmation summary text and restores it after 2 seconds', () => {

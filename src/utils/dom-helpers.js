@@ -104,9 +104,39 @@ function showError(message, container = null, timeoutMs = 5000) {
   return errorDiv;
 }
 
+/**
+ * Reads an input element's value by ID and returns it as a parsed integer.
+ * Returns the fallback if the element is not found or the value is not a valid integer.
+ * @param {string} id The ID of the input element.
+ * @param {number} fallback Value to return if parsing fails or element is missing.
+ * @returns {number} The parsed integer or the fallback value.
+ */
+function getIntegerInputValue(id, fallback) {
+  const el = document.getElementById(id);
+  if (!el) return fallback;
+  const parsed = parseInt(el.value, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+/**
+ * Reads an input element's value by ID and returns it as a parsed float.
+ * Returns the fallback if the element is not found or the value is not a valid number.
+ * @param {string} id The ID of the input element.
+ * @param {number} fallback Value to return if parsing fails or element is missing.
+ * @returns {number} The parsed float or the fallback value.
+ */
+function getFloatInputValue(id, fallback) {
+  const el = document.getElementById(id);
+  if (!el) return fallback;
+  const parsed = parseFloat(el.value);
+  return Number.isNaN(parsed) ? fallback : parsed;
+}
+
 export {
   createTextElement,
   createLabeledInput,
   createDivWithIdAndClasses,
   showError,
+  getIntegerInputValue,
+  getFloatInputValue,
 };

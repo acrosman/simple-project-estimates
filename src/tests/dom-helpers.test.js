@@ -7,6 +7,8 @@ import {
   createLabeledInput,
   createDivWithIdAndClasses,
   showError,
+  getIntegerInputValue,
+  getFloatInputValue,
 } from '../utils/dom-helpers';
 
 describe('createTextElement', () => {
@@ -204,5 +206,83 @@ describe('showError', () => {
     expect(container.contains(el)).toBe(true);
 
     jest.useRealTimers();
+  });
+});
+
+describe('getIntegerInputValue', () => {
+  let input;
+
+  beforeEach(() => {
+    input = document.createElement('input');
+    input.type = 'number';
+    input.id = 'testIntInput';
+    document.body.appendChild(input);
+  });
+
+  afterEach(() => {
+    input.remove();
+  });
+
+  test('returns parsed integer for a valid numeric string', () => {
+    input.value = '42';
+    expect(getIntegerInputValue('testIntInput', 0)).toBe(42);
+  });
+
+  test('returns fallback when element does not exist', () => {
+    expect(getIntegerInputValue('nonExistentId', 99)).toBe(99);
+  });
+
+  test('returns fallback when value is non-numeric', () => {
+    input.value = 'abc';
+    expect(getIntegerInputValue('testIntInput', 10)).toBe(10);
+  });
+
+  test('returns fallback when value is empty string', () => {
+    input.value = '';
+    expect(getIntegerInputValue('testIntInput', 5)).toBe(5);
+  });
+
+  test('truncates float string to integer', () => {
+    input.value = '3.9';
+    expect(getIntegerInputValue('testIntInput', 0)).toBe(3);
+  });
+});
+
+describe('getFloatInputValue', () => {
+  let input;
+
+  beforeEach(() => {
+    input = document.createElement('input');
+    input.type = 'number';
+    input.id = 'testFloatInput';
+    document.body.appendChild(input);
+  });
+
+  afterEach(() => {
+    input.remove();
+  });
+
+  test('returns parsed float for a valid decimal string', () => {
+    input.value = '1.5';
+    expect(getFloatInputValue('testFloatInput', 0)).toBe(1.5);
+  });
+
+  test('returns parsed float for an integer string', () => {
+    input.value = '3';
+    expect(getFloatInputValue('testFloatInput', 0)).toBe(3);
+  });
+
+  test('returns fallback when element does not exist', () => {
+    expect(getFloatInputValue('nonExistentId', 2.5)).toBe(2.5);
+  });
+
+  test('returns fallback when value is non-numeric', () => {
+    input.value = 'xyz';
+    expect(getFloatInputValue('testFloatInput', 0.5)).toBe(0.5);
+  });
+
+  test('returns fallback when value is empty string', () => {
+    input.value = '';
+    expect(getFloatInputValue('testFloatInput', 1.0)).toBe(1.0);
   });
 });
