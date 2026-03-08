@@ -5,7 +5,7 @@
  */
 
 /**
- * Validates CSV data structure and content. Pure function for testing.
+ * Validates CSV data structure and content.
  * @param {Array} data Parsed CSV data as array of objects
  * @param {string} estimationMode Current estimation mode ('hours', 'fibonacci', 'tshirt')
  * @param {boolean} enableCost Whether cost tracking is enabled
@@ -32,7 +32,7 @@ function validateCsvData(data, estimationMode, enableCost) {
   const missingColumns = requiredColumns.filter((col) => !(col in firstRow));
 
   if (missingColumns.length > 0) {
-    throw new Error(`Missing required columns: ${missingColumns.join(', ')}. Expected columns: ${requiredColumns.join(', ')}${enableCost ? ', Cost (optional)' : ''}.`);
+    throw new Error(`Missing required columns: ${missingColumns.join(', ')}. Expected columns: ${requiredColumns.join(', ')}${enableCost ? ', Cost (when enabled)' : ''}.`);
   }
 
   // Validate data types for first few rows
