@@ -231,16 +231,21 @@ function buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limi
  * @param {string} xLabel X axis label.
  */
 function buildHistogramPreview(targetNode, list, min, max, xLabel) {
+  // Reject invalid ranges before doing any work.
   if (min < 0 || max < min) {
     return;
   }
 
+  // Derive drawable area by subtracting margins from total image dimensions.
   const {
     width: imageWidth, height: imageHeight, margin,
   } = GRAPH_CONFIG.histogram;
   const width = imageWidth - margin.left - margin.right;
   const height = imageHeight - margin.top - margin.bottom;
 
+  // Determine how many buckets to draw. The config value is validated and
+  // clamped so that there is never more than one bucket per value and never
+  // fewer than one bucket overall.
   const valueRange = (max - min) + 1;
   const rawMaxBuckets = GRAPH_CONFIG.histogram.maxBuckets;
   const maxBuckets = (Number.isFinite(rawMaxBuckets) && rawMaxBuckets > 0)
@@ -255,17 +260,23 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
     buckets[bucketIndex] += list[i] || 0;
   }
 
+  // Find the tallest bucket to set the y-axis ceiling. If no bucket has
+  // any data yet the chart would be empty, so bail out early.
   let yMax = 0;
   for (const bucketValue of buckets) {
     if (bucketValue > yMax) {
       yMax = bucketValue;
     }
   }
-
   if (yMax < 1) {
     return;
   }
 
+  // Build two x-scales: x maps bucket indices to pixel positions for bar
+  // placement, while x2 maps raw values to the same pixel range so that the
+  // visible axis labels reflect actual simulated values rather than bucket
+  // numbers. y maps frequency counts to pixel heights (inverted, as SVG y
+  // increases downward).
   const x = d3.scaleLinear()
     .domain([0, bucketCount])
     .range([0, width]);
@@ -281,6 +292,11 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
   const xAxis = d3.axisBottom().scale(x2).ticks(8);
   const yAxis = d3.axisLeft().scale(y).ticks(8);
 
+  // Reuse an existing SVG element if the preview has already been rendered
+  // into this container (e.g. from a previous simulation pass). When the
+  // container is empty, build the full static DOM skeleton — SVG, group
+  // wrapper, axis placeholders, and axis labels — so subsequent updates
+  // only need to change dynamic attributes rather than rebuild the structure.
   const container = d3.select(targetNode);
   let svg = container.select('svg.preview-svg');
 
@@ -307,11 +323,16 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
       .text('Frequency');
   }
 
+  // Refresh SVG dimensions and the accessible label each pass so that any
+  // config changes (e.g. from Advanced Settings) are reflected immediately.
   svg
     .attr('aria-label', `Histogram preview showing distribution of ${xLabel}. Range: ${min} to ${max}`)
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
 
+  // Position the root group to leave room for the left and top margins, then
+  // update axes and labels. barWidth is floored to a minimum of 1 px so bars
+  // remain visible even when there are a large number of buckets.
   const root = svg.select('g.preview-root')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -333,6 +354,10 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
     .attr('y', 0 - margin.left)
     .attr('x', 0 - (height / 2));
 
+  // Bind bucket data to bar rectangles using the bucket index as the key so
+  // D3 can match existing bars to updated data across progressive simulation
+  // passes. Enter and update paths set identical geometry so the chart
+  // redraws smoothly without a flash.
   const bars = root.selectAll('rect.preview-bar')
     .data(buckets, (d, i) => i);
 
