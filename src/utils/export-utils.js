@@ -1,12 +1,11 @@
 /**
  * Export utilities for saving simulation result graphs.
- * Supports saving D3-generated SVGs as PNG or JPEG images via canvas conversion.
+ * Supports saving D3-generated SVGs as PNG or JPEG images.
  * @module utils/export-utils
  */
-import { showError } from './dom-helpers';
 
 /**
- * Saves an SVG element as a PNG or JPEG image
+ * Saves an SVG element as a PNG or JPEG image via canvas conversion.
  * @param {string} svgContainerId ID of the element containing the SVG
  * @param {string} filename Name for the downloaded file
  * @param {string} format 'png' or 'jpeg'
@@ -22,8 +21,7 @@ function saveSvgAsImage(svgContainerId, filename, format = 'png') {
   const svg = container.querySelector('svg');
 
   if (!svg) {
-    showError('No graph to save. Please run a simulation first.');
-    return;
+    throw new Error('No graph to save. Please run a simulation first.');
   }
 
   // Clone the SVG to avoid modifying the original

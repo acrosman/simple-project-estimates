@@ -16,6 +16,7 @@ import {
   createDivWithIdAndClasses,
   createTextElement,
   createLabeledInput,
+  showError,
 } from '../utils/dom-helpers';
 
 /**
@@ -127,7 +128,13 @@ function createSimulationPanel() {
     value: 'Save Time Graph as PNG',
     id: 'saveTimePngBtn',
   });
-  saveTimePng.addEventListener('click', () => saveSvgAsImage('timeHistoGram', 'time-estimates', 'png'));
+  saveTimePng.addEventListener('click', () => {
+    try {
+      saveSvgAsImage('timeHistoGram', 'time-estimates', 'png');
+    } catch (e) {
+      showError(e.message);
+    }
+  });
 
   const saveTimeJpeg = document.createElement('input');
   Object.assign(saveTimeJpeg, {
@@ -135,7 +142,13 @@ function createSimulationPanel() {
     value: 'Save Time Graph as JPEG',
     id: 'saveTimeJpegBtn',
   });
-  saveTimeJpeg.addEventListener('click', () => saveSvgAsImage('timeHistoGram', 'time-estimates', 'jpeg'));
+  saveTimeJpeg.addEventListener('click', () => {
+    try {
+      saveSvgAsImage('timeHistoGram', 'time-estimates', 'jpeg');
+    } catch (e) {
+      showError(e.message);
+    }
+  });
 
   timeSaveButtonsDiv.appendChild(saveTimePng);
   timeSaveButtonsDiv.appendChild(saveTimeJpeg);
@@ -164,7 +177,13 @@ function createSimulationPanel() {
     value: 'Save Cost Graph as PNG',
     id: 'saveCostPngBtn',
   });
-  saveCostPng.addEventListener('click', () => saveSvgAsImage('costHistoGram', 'cost-estimates', 'png'));
+  saveCostPng.addEventListener('click', () => {
+    try {
+      saveSvgAsImage('costHistoGram', 'cost-estimates', 'png');
+    } catch (e) {
+      showError(e.message);
+    }
+  });
 
   const saveCostJpeg = document.createElement('input');
   Object.assign(saveCostJpeg, {
@@ -172,7 +191,13 @@ function createSimulationPanel() {
     value: 'Save Cost Graph as JPEG',
     id: 'saveCostJpegBtn',
   });
-  saveCostJpeg.addEventListener('click', () => saveSvgAsImage('costHistoGram', 'cost-estimates', 'jpeg'));
+  saveCostJpeg.addEventListener('click', () => {
+    try {
+      saveSvgAsImage('costHistoGram', 'cost-estimates', 'jpeg');
+    } catch (e) {
+      showError(e.message);
+    }
+  });
 
   costSaveButtonsDiv.appendChild(saveCostPng);
   costSaveButtonsDiv.appendChild(saveCostJpeg);

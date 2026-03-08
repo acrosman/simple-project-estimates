@@ -3,11 +3,6 @@
  */
 
 import saveSvgAsImage from '../utils/export-utils';
-import { showError } from '../utils/dom-helpers';
-
-jest.mock('../utils/dom-helpers', () => ({
-  showError: jest.fn(),
-}));
 
 describe('saveSvgAsImage', () => {
   // mockContainer is declared above, do not redeclare
@@ -165,11 +160,6 @@ describe('saveSvgAsImage', () => {
       saveSvgAsImage('missingId', 'test-file', 'png');
       expect(global.XMLSerializer).not.toHaveBeenCalled();
     });
-
-    test('does not call showError', () => {
-      saveSvgAsImage('missingId', 'test-file', 'png');
-      expect(showError).not.toHaveBeenCalled();
-    });
   });
 
   describe('when no SVG is present in the container', () => {
@@ -177,15 +167,14 @@ describe('saveSvgAsImage', () => {
       mockContainer.querySelector = jest.fn(() => null);
     });
 
-    test('calls showError with the container and an error message', () => {
-      saveSvgAsImage('testId', 'test-file', 'png');
-      expect(showError).toHaveBeenCalledWith(
+    test('throws an error with the expected message', () => {
+      expect(() => saveSvgAsImage('testId', 'test-file', 'png')).toThrow(
         'No graph to save. Please run a simulation first.',
       );
     });
 
     test('does not attempt to serialize an SVG', () => {
-      saveSvgAsImage('testId', 'test-file', 'png');
+      expect(() => saveSvgAsImage('testId', 'test-file', 'png')).toThrow();
       expect(global.XMLSerializer).not.toHaveBeenCalled();
     });
   });
@@ -227,9 +216,8 @@ describe('saveSvgAsImage', () => {
       expect(link.click).toHaveBeenCalled();
     });
 
-    test('does not call showError', () => {
-      saveSvgAsImage('testId', 'test-file', 'png');
-      expect(showError).not.toHaveBeenCalled();
+    test('does not throw', () => {
+      expect(() => saveSvgAsImage('testId', 'test-file', 'png')).not.toThrow();
     });
   });
 
