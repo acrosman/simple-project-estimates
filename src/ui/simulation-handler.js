@@ -20,8 +20,6 @@ import { showError, updateElementText } from '../utils/dom-helpers';
  */
 function updateProgress(progress, timeUnit, currencyFormatter, enableCost) {
   if (progress.times && progress.times.min > -1 && progress.times.max >= progress.times.min) {
-    // Update time histogram preview
-    // (Histogram preview handled by simulation module)
     document.getElementById('timeEstimateHeader').classList.remove('hidden');
     document.getElementById('timeSaveButtons').classList.remove('hidden');
     updateElementText('simulationTimeMedian', `Median Time: ${progress.times.median} ${timeUnit.toLowerCase()}`);
@@ -177,7 +175,6 @@ async function startSimulation(event) {
 
   // Determine the correct time unit based on estimation mode
   const timeUnit = appState.getTimeUnit();
-  // When using days, need to multiply hourly cost by 8 hours/day
   const hoursPerTimeUnit = appState.getHoursPerTimeUnit();
 
   const runButton = document.getElementById('startSimulationButton');
@@ -189,14 +186,13 @@ async function startSimulation(event) {
     updateRunningTimeDisplay(Date.now() - runStartTime);
   }, 100);
 
+  // Setup complete, set displays for running state and kick off simulation.
   if (runButton) {
     runButton.disabled = true;
     runButton.value = 'Running...';
   }
 
   updateRunningTimeDisplay(0);
-
-  // Clear previous statistics at the start of a new simulation
   clearStatistics();
 
   try {
@@ -235,8 +231,7 @@ async function startSimulation(event) {
       hoursPerTimeUnit,
     );
 
-    // Display final summary data (one last update with complete results)
-    // Display final summary data (one last update with complete results)
+    // Display final summary data (one last update with complete results).
     renderFinalResults(
       results,
       timeUnit,
