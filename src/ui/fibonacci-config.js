@@ -5,7 +5,7 @@
  * @module ui/fibonacci-config
  */
 import { appState, fibonacciCalendarMappings } from '../core/state';
-import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
+import { createTextElement, createDivWithIdAndClasses, getFloatInputValue } from '../utils/dom-helpers';
 
 /**
  * Handles Fibonacci mode changes (calendar-days vs velocity-based)
@@ -32,14 +32,9 @@ function handleFibonacciModeChange(event) {
  * Updates velocity configuration when user changes values.
  */
 function handleVelocityConfigChange() {
-  const pointsInput = document.getElementById('velocityPoints');
-  const daysInput = document.getElementById('velocityDays');
-
-  if (pointsInput && daysInput) {
-    const points = parseFloat(pointsInput.value) || 25;
-    const days = parseFloat(daysInput.value) || 10;
-    appState.setVelocityConfig(points, days);
-  }
+  const points = getFloatInputValue('velocityPoints', 25);
+  const days = getFloatInputValue('velocityDays', 10);
+  appState.setVelocityConfig(points, days);
 }
 
 /**
@@ -100,8 +95,7 @@ function createFibonacciCalendarMappingTable() {
   const helpText = createTextElement('p', 'Customize how many calendar days each story point value represents:', ['help-text']);
   wrapper.appendChild(helpText);
 
-  const table = document.createElement('div');
-  table.classList.add('table', 'fib-mapping-table');
+  const table = createDivWithIdAndClasses(null, ['table', 'fib-mapping-table']);
 
   // Get Fibonacci numbers dynamically from the mappings object
   const fibNumbers = Object.keys(fibonacciCalendarMappings)
@@ -109,26 +103,22 @@ function createFibonacciCalendarMappingTable() {
     .sort((a, b) => a - b);
 
   // Row 1: Fibonacci Numbers
-  const fibRow = document.createElement('div');
-  fibRow.classList.add('tr', 'fib-mapping-row');
+  const fibRow = createDivWithIdAndClasses(null, ['tr', 'fib-mapping-row']);
   fibRow.appendChild(createTextElement('div', 'Story Points', ['th']));
 
   for (const fibNum of fibNumbers) {
-    const fibCell = document.createElement('div');
-    fibCell.classList.add('td');
+    const fibCell = createDivWithIdAndClasses(null, ['td']);
     fibCell.appendChild(createTextElement('span', fibNum.toString(), []));
     fibRow.appendChild(fibCell);
   }
   table.appendChild(fibRow);
 
   // Row 2: Min Days
-  const minRow = document.createElement('div');
-  minRow.classList.add('tr', 'fib-mapping-row');
+  const minRow = createDivWithIdAndClasses(null, ['tr', 'fib-mapping-row']);
   minRow.appendChild(createTextElement('div', 'Min Days', ['th']));
 
   for (const fibNum of fibNumbers) {
-    const minCell = document.createElement('div');
-    minCell.classList.add('td');
+    const minCell = createDivWithIdAndClasses(null, ['td']);
     const minInput = document.createElement('input');
     Object.assign(minInput, {
       type: 'number',
@@ -147,13 +137,11 @@ function createFibonacciCalendarMappingTable() {
   table.appendChild(minRow);
 
   // Row 3: Max Days
-  const maxRow = document.createElement('div');
-  maxRow.classList.add('tr', 'fib-mapping-row');
+  const maxRow = createDivWithIdAndClasses(null, ['tr', 'fib-mapping-row']);
   maxRow.appendChild(createTextElement('div', 'Max Days', ['th']));
 
   for (const fibNum of fibNumbers) {
-    const maxCell = document.createElement('div');
-    maxCell.classList.add('td');
+    const maxCell = createDivWithIdAndClasses(null, ['td']);
     const maxInput = document.createElement('input');
     Object.assign(maxInput, {
       type: 'number',
@@ -185,8 +173,7 @@ function createFibonacciConfigPanel() {
   const header = createTextElement('h3', 'Fibonacci Estimation Configuration', ['header', 'fib-config']);
 
   // Mode selector
-  const modeSection = document.createElement('div');
-  modeSection.classList.add('config-section');
+  const modeSection = createDivWithIdAndClasses(null, ['config-section']);
 
   const modeLabel = createTextElement('label', 'Fibonacci Mapping Mode:', ['config-label']);
   modeSection.appendChild(modeLabel);
@@ -194,12 +181,10 @@ function createFibonacciConfigPanel() {
   const modeDescription = createTextElement('p', 'Choose how Fibonacci story points are converted to time estimates:', ['help-text']);
   modeSection.appendChild(modeDescription);
 
-  const modeSelector = document.createElement('div');
-  modeSelector.classList.add('radio-group');
+  const modeSelector = createDivWithIdAndClasses(null, ['radio-group']);
 
   // Calendar Days option
-  const calendarOption = document.createElement('div');
-  calendarOption.classList.add('radio-option');
+  const calendarOption = createDivWithIdAndClasses(null, ['radio-option']);
   const calendarRadio = document.createElement('input');
   Object.assign(calendarRadio, {
     type: 'radio',
@@ -221,8 +206,7 @@ function createFibonacciConfigPanel() {
   modeSelector.appendChild(calendarOption);
 
   // Velocity-Based option
-  const velocityOption = document.createElement('div');
-  velocityOption.classList.add('radio-option');
+  const velocityOption = createDivWithIdAndClasses(null, ['radio-option']);
   const velocityRadio = document.createElement('input');
   Object.assign(velocityRadio, {
     type: 'radio',
@@ -264,8 +248,7 @@ function createFibonacciConfigPanel() {
   velocityConfigWrapper.appendChild(velocityConfigHelp);
 
   // Points per sprint input
-  const pointsGroup = document.createElement('div');
-  pointsGroup.classList.add('input-group');
+  const pointsGroup = createDivWithIdAndClasses(null, ['input-group']);
   const pointsLabel = createTextElement('label', 'Points Per Sprint:', ['config-label']);
   pointsLabel.htmlFor = 'velocityPoints';
   const pointsInput = document.createElement('input');
@@ -284,8 +267,7 @@ function createFibonacciConfigPanel() {
   velocityConfigWrapper.appendChild(pointsGroup);
 
   // Sprint length input
-  const daysGroup = document.createElement('div');
-  daysGroup.classList.add('input-group');
+  const daysGroup = createDivWithIdAndClasses(null, ['input-group']);
   const daysLabel = createTextElement('label', 'Sprint Length (Working Days):', ['config-label']);
   daysLabel.htmlFor = 'velocityDays';
   const daysInput = document.createElement('input');
