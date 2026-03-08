@@ -5,7 +5,11 @@
  * @module ui/task-table
  */
 import { appState } from '../core/state';
-import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
+import {
+  createTextElement,
+  createDivWithIdAndClasses,
+  createLabeledInput,
+} from '../utils/dom-helpers';
 
 /**
  * Checks if a row is empty (all input fields are empty except the button).
@@ -35,21 +39,33 @@ function generateDataField(label, fieldValue, fieldType, rowId, isRequired = fal
   const cell = document.createElement('div');
   cell.classList.add('td');
   cell.setAttribute('role', 'cell');
-  const element = document.createElement('input');
-  const values = {
-    type: fieldType,
-    value: fieldValue,
-    name: label,
-  };
-  Object.assign(element, values);
-  element.setAttribute('aria-label', label);
-  if (isRequired) {
-    element.setAttribute('aria-required', 'true');
-    element.required = true;
-  }
-  element.dataset.rowId = rowId;
 
-  cell.appendChild(element);
+  if (fieldType === 'button') {
+    const element = document.createElement('input');
+    Object.assign(element, { type: fieldType, value: fieldValue, name: label });
+    element.dataset.rowId = rowId;
+    cell.appendChild(element);
+  } else {
+    const inputId = `${label.replace(/\s+/g, '-')}-${rowId}`;
+    const inputAttributes = {
+      type: fieldType,
+      value: fieldValue,
+      name: label,
+      id: inputId,
+    };
+    const ariaAttributes = { 'aria-label': label };
+    if (isRequired) {
+      ariaAttributes['aria-required'] = 'true';
+    }
+    const labeled = createLabeledInput(label, inputAttributes, true, ariaAttributes);
+    const input = labeled.querySelector('input');
+    if (isRequired) {
+      input.required = true;
+    }
+    input.dataset.rowId = rowId;
+    cell.appendChild(labeled);
+  }
+
   return cell;
 }
 
@@ -99,17 +115,14 @@ function generateDataRow(
   const conf = generateDataField('Confidence', confidence, 'number', rowId, true);
   const cost = generateDataField('Cost', hourlyCost, 'number', rowId);
   const rmButton = generateDataField('Clear Row', 'Clear Row', 'button', rowId);
-  const taskGraphCell = document.createElement('div');
-  taskGraphCell.classList.add('td', 'task-row-graph-cell');
+  const taskGraphCell = createDivWithIdAndClasses(null, ['td', 'task-row-graph-cell']);
   taskGraphCell.setAttribute('role', 'cell');
-  const taskGraph = document.createElement('div');
-  taskGraph.classList.add('task-row-graph');
+  const taskGraph = createDivWithIdAndClasses(null, ['task-row-graph']);
   taskGraph.dataset.rowId = rowId;
   taskGraphCell.appendChild(taskGraph);
 
   // Add statistics display for min, max, median
-  const taskStats = document.createElement('div');
-  taskStats.classList.add('task-row-stats');
+  const taskStats = createDivWithIdAndClasses(null, ['task-row-stats']);
   taskStats.dataset.rowId = rowId;
   taskGraphCell.appendChild(taskStats);
 

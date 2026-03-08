@@ -116,6 +116,25 @@ describe('createLabeledInput', () => {
 
     expect(label.htmlFor).toBe('myId');
   });
+
+  test('sets aria attributes via setAttribute when ariaAttributes provided', () => {
+    const attributes = { name: 'myField', type: 'text' };
+    const ariaAttributes = { 'aria-label': 'My Field', 'aria-required': 'true' };
+    const wrapper = createLabeledInput('Label', attributes, true, ariaAttributes);
+    const input = wrapper.querySelector('input');
+
+    expect(input.getAttribute('aria-label')).toBe('My Field');
+    expect(input.getAttribute('aria-required')).toBe('true');
+  });
+
+  test('does not set aria attributes when ariaAttributes is empty', () => {
+    const attributes = { name: 'myField', type: 'text' };
+    const wrapper = createLabeledInput('Label', attributes);
+    const input = wrapper.querySelector('input');
+
+    expect(input.getAttribute('aria-label')).toBeNull();
+    expect(input.getAttribute('aria-required')).toBeNull();
+  });
 });
 
 describe('createDivWithIdAndClasses', () => {

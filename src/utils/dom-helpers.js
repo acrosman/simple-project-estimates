@@ -27,14 +27,18 @@ function createTextElement(wrapperTag, text, classList = [], role = null) {
  * @param {string} labelText Text for input label.
  * @param {*} inputAttributes A collection of attributes to set on the input.
  * @param {boolean} labelFirst when true, puts the label before the input and vice versa.
+ * @param {Object} ariaAttributes Key/value pairs applied via setAttribute (e.g. aria-label).
  * @returns HTMLElement
  */
-function createLabeledInput(labelText, inputAttributes, labelFirst = true) {
+function createLabeledInput(labelText, inputAttributes, labelFirst = true, ariaAttributes = {}) {
   const wrapper = document.createElement('div');
   const fldLabel = createTextElement('label', labelText);
   fldLabel.htmlFor = inputAttributes.id || inputAttributes.name;
   const field = document.createElement('input');
   Object.assign(field, inputAttributes);
+  for (const [key, value] of Object.entries(ariaAttributes)) {
+    field.setAttribute(key, value);
+  }
 
   if (labelFirst) {
     wrapper.appendChild(fldLabel);
