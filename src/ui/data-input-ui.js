@@ -16,6 +16,8 @@ import { createFibonacciConfigPanel } from './fibonacci-config';
 import { createTshirtMappingTable } from './tshirt-config';
 import validateCsvData from '../utils/csv-parser';
 
+// ============= Event Handlers ================
+
 /**
  * Handles cost tracking toggle
  * @param {Event} event
@@ -72,8 +74,6 @@ function handleModeChange(event) {
   }
 }
 
-// ============= Interface Behaviors ================
-
 /**
  * Client event handler for the import button
  * @param {Event} event Fired event.
@@ -104,6 +104,8 @@ function importCsvFile(event) {
     reader.readAsDataURL(file);
   }
 }
+
+// ============= Interface Behaviors ================
 
 /**
  * Creates the estimation mode selector with radio buttons and cost toggle.
