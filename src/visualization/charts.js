@@ -386,15 +386,19 @@ function buildHistogramPreview(targetNode, list, min, max, xLabel) {
  * @param {string} taskName Task display name.
  */
 function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
+  // Clear the container, and bail out if the range is invalid.
   targetNode.innerHTML = '';
 
   if (min < 0 || max < min) {
     return;
   }
 
+  // Pull dimensions from config.
   const {
     width: graphWidth, height: graphHeight, maxBuckets, gap,
   } = GRAPH_CONFIG.miniGraph;
+
+  // Aggregate raw histogram counts into a fixed number of buckets.
   const valueRange = max - min + 1;
   const bucketCount = Math.min(maxBuckets, valueRange);
   const bucketSize = Math.ceil(valueRange / bucketCount);
@@ -405,6 +409,8 @@ function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
     buckets[bucketIndex] += list[i];
   }
 
+  // Find the tallest bucket so bar heights can be normalized relative to it.
+  // If every bucket is empty there is nothing to draw, so bail out.
   let peak = 0;
   for (const value of buckets) {
     if (value > peak) {
@@ -416,6 +422,9 @@ function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
     return;
   }
 
+  // Build the SVG element directly via the DOM API instead of D3 because this
+  // mini-graph has no axes or scales — just a row of proportional bars. Avoids
+  // unnecessary overhead for many simultaneous task rows.
   const svgNs = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNs, 'svg');
   svg.setAttribute('width', String(graphWidth));
@@ -424,6 +433,10 @@ function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
   svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label', `Task outcome histogram for ${taskName || 'task'}`);
 
+  // barWidth is derived from the available width divided evenly across all
+  // buckets, with the gap subtracted and a minimum of 1 px so bars are always
+  // rendered. Each bar's height is proportional to its bucket's share of the
+  // peak count, with a minimum of 1 px for non-zero buckets.
   const barWidth = Math.max((graphWidth / bucketCount) - gap, 1);
 
   for (let i = 0; i < buckets.length; i += 1) {
@@ -438,6 +451,7 @@ function buildTaskRowHistogram(targetNode, list, min, max, taskName) {
     svg.appendChild(rect);
   }
 
+  // Finally, append the constructed SVG to the target container.
   targetNode.appendChild(svg);
 }
 
