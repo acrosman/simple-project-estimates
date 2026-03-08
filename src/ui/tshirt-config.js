@@ -25,10 +25,12 @@ function normalizeTshirtSize(size) {
  * @param {Array<string|number>} orderedKeys Ordered mapping keys.
  */
 function handleMappingTabNavigation(event, keyField, orderedKeys) {
+  // Only intercept plain Tab/Shift+Tab; let browser handle all other key combos.
   if (event.key !== 'Tab' || event.altKey || event.ctrlKey || event.metaKey) {
     return;
   }
 
+  // Guard against synthetic or malformed events missing target/dataset.
   const target = event && event.target ? event.target : null;
   const dataset = target && target.dataset ? target.dataset : null;
   const currentKey = dataset ? dataset[keyField] : null;
@@ -37,6 +39,9 @@ function handleMappingTabNavigation(event, keyField, orderedKeys) {
     return;
   }
 
+  // Build a flat ordered sequence of every focusable input in the table:
+  // [key0-min, key0-max, key1-min, key1-max, …]. Normalizing keys ensures
+  // t-shirt sizes like "xs" and "XS" resolve to the same position.
   const normalizedCurrentKey = keyField === 'tshirt' ? normalizeTshirtSize(currentKey) : currentKey;
   const sequence = [];
   for (const key of orderedKeys) {
@@ -53,9 +58,11 @@ function handleMappingTabNavigation(event, keyField, orderedKeys) {
     return;
   }
 
+  // Shift+Tab moves backward through the sequence; plain Tab moves forward.
   const direction = event.shiftKey ? -1 : 1;
   const nextIndex = currentIndex + direction;
 
+  // Allow the browser's default Tab behavior when focus would leave the table.
   if (nextIndex < 0 || nextIndex >= sequence.length) {
     return;
   }
@@ -109,30 +116,25 @@ function createTshirtMappingTable() {
   const header = createTextElement('h3', 'T-Shirt Size to Fibonacci Mapping', ['header', 'fib-mapping']);
   const helpText = createTextElement('p', 'Map t-shirt sizes to Fibonacci story points. These will be converted to days using the Fibonacci calendar day mappings.', ['help-text']);
 
-  const table = document.createElement('div');
-  table.classList.add('table', 'fib-mapping-table');
+  const table = createDivWithIdAndClasses(null, ['table', 'fib-mapping-table']);
 
   const sizes = Object.keys(tshirtMappings);
 
-  const sizeRow = document.createElement('div');
-  sizeRow.classList.add('tr', 'fib-mapping-row');
+  const sizeRow = createDivWithIdAndClasses(null, ['tr', 'fib-mapping-row']);
   sizeRow.appendChild(createTextElement('div', 'T-Shirt Size', ['th']));
 
   for (const size of sizes) {
-    const sizeCell = document.createElement('div');
-    sizeCell.classList.add('td');
+    const sizeCell = createDivWithIdAndClasses(null, ['td']);
     sizeCell.appendChild(createTextElement('span', size, []));
     sizeRow.appendChild(sizeCell);
   }
   table.appendChild(sizeRow);
 
-  const fibRow = document.createElement('div');
-  fibRow.classList.add('tr', 'fib-mapping-row');
+  const fibRow = createDivWithIdAndClasses(null, ['tr', 'fib-mapping-row']);
   fibRow.appendChild(createTextElement('div', 'Fibonacci Points', ['th']));
 
   for (const size of sizes) {
-    const fibCell = document.createElement('div');
-    fibCell.classList.add('td');
+    const fibCell = createDivWithIdAndClasses(null, ['td']);
     const fibInput = document.createElement('input');
     Object.assign(fibInput, {
       type: 'number',
