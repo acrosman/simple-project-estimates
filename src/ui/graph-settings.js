@@ -1,6 +1,6 @@
 /**
  * Advanced graph settings UI panel.
- * Renders controls that allow the user to customise D3 histogram appearance.
+ * Renders controls that allow the user to customize D3 histogram appearance.
  * Reads from and writes to GRAPH_CONFIG in visualization/charts.
  * @module ui/graph-settings
  */
