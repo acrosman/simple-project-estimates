@@ -47,7 +47,7 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
 
 ### Core Modules
 
-- **src/stats.js**: Pure math and statistics — no DOM, no D3; all functions are fully testable in isolation
+- **src/core/stats.js**: Pure math and statistics — no DOM, no D3; all functions are fully testable in isolation
   - `generateEstimate(min, max, confidence)` - Single task estimate
   - `getMedian(data)` - Calculate median from histogram array
   - `getStandardDeviation(data)` - Calculate std dev from histogram array
@@ -55,49 +55,60 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
   - `taskLowerBound(minEstimate, confidence)` - Best-case lower bound for one task
   - `getRandom`, `getValueCount`, `calculateKDE`, `calculateUpperBound`
 
-- **src/charts.js**: D3 visualization and graph configuration; imports `calculateKDE` from `stats.js`; everything else is D3
+- **src/visualization/charts.js**: D3 visualization and graph configuration; imports `calculateKDE` from `src/core/stats.js`; everything else is D3
   - `buildHistogram(targetNode, list, min, max, median, stdDev, xLabel, limitGraph)` - Final D3 histogram
   - `buildHistogramPreview(targetNode, list, min, max, xLabel)` - Fast bucketed preview during progressive runs
   - `buildTaskRowHistogram(targetNode, list, min, max, taskName)` - Compact per-task mini graph
   - `GRAPH_CONFIG` - Mutable graph settings object (modified by Advanced Settings UI)
   - `GRAPH_CONFIG_DEFAULTS` - Frozen copy of original defaults for reset operations
 
-- **src/simulation.js**: Simulation engine; re-exports selected symbols from `stats.js` and `charts.js` for backward compatibility; no direct D3 usage
+- **src/core/simulation.js**: Synchronous and async simulation engine; no direct D3 usage
   - `runSimulation(passes, data, hoursPerTimeUnit)` - Synchronous simulation entry
   - `runSimulationProgressive(passes, data, hoursPerTimeUnit)` - Async simulation with progress callbacks; returns a Promise
   - `fibonacciToCalendarDays(fibonacci, mappings)` - Story points → calendar day range
   - `fibonacciToVelocityDays(fibonacci, pointsPerSprint, sprintLengthDays)` - Story points → velocity-based day range
 
-- **src/data-input.js**: CSV parsing, data validation, and top-level data entry UI assembly
-  - `handleCostToggle`, `handleModeChange`, `validateCsvData`, `importCsvFile`
-  - `createModeSelector`, `createFileLoader`, `createDataEntrySection`
-
-- **src/state.js**: Application state (`AppState` class)
+- **src/core/state.js**: Application state (`AppState` class)
   - Estimation mode, cost toggle, velocity config
   - Fibonacci calendar and T-shirt mappings
 
-- **src/dom-helpers.js**: Reusable DOM element factories — no state, no D3
+- **src/ui/data-input-ui.js**: Top-level data entry UI assembly and event handlers
+  - `handleCostToggle`, `handleModeChange`, `importCsvFile`
+  - `createModeSelector`, `createFileLoader`, `createDataEntrySection`
+
+- **src/utils/csv-parser.js**: CSV data validation
+  - `validateCsvData(data, estimationMode, enableCost)` - Validates parsed CSV task data
+
+- **src/utils/dom-helpers.js**: Reusable DOM element factories — no state, no D3
   - `createTextElement`, `createLabeledInput`, `createDivWithIdAndClasses`
+  - `showError`, `updateElementText`, `getIntegerInputValue`, `getFloatInputValue`
   - Preferred over raw `document.createElement` patterns elsewhere in the codebase
 
-- **src/task-table.js**: Task data-entry table creation and row lifecycle
+- **src/ui/task-table.js**: Task data-entry table creation and row lifecycle
   - Renders the manual task input table; handles row add/remove
 
-- **src/fibonacci-config.js**: Fibonacci/velocity configuration UI panel
+- **src/ui/fibonacci-config.js**: Fibonacci/velocity configuration UI panel
   - `handleFibonacciModeChange`, `handleVelocityConfigChange`
   - `createFibonacciConfigPanel`, `createFibonacciCalendarMappingTable`
 
-- **src/tshirt-config.js**: T-shirt size mapping configuration UI panel
+- **src/ui/tshirt-config.js**: T-shirt size mapping configuration UI panel
   - `createTshirtMappingTable`, `updateTshirtMapping`
 
-- **src/index.js**: UI orchestration and event handlers
-  - Wires together data-input, simulation, and charts
-  - `startSimulation`, `renderTaskRowHistograms`, `saveSvgAsImage`
-  - `applyGraphSettings`, `resetGraphSettings`
-  - No direct math or D3 calls — delegates to the appropriate module
+- **src/ui/layout.js**: Main application layout builder; wires all UI components into the top-level DOM tree
+  - `setupUi` - Builds the page header, logo, simulation control panel, and root UI structure
 
-- **src/export-utils.js**: Utilities for exporting results (CSV/SVG/PNG helpers)
-- **src/graph-settings.js**: Central mutable graph settings and helpers referenced by UI
+- **src/ui/simulation-handler.js**: Simulation orchestration, progress updates, and results display
+  - `startSimulation` - Entry point wired to the start button
+  - `updateProgress`, `renderFinalResults`
+
+- **src/ui/graph-settings.js**: Advanced graph settings panel and apply/reset handlers
+  - `applyGraphSettings`, `resetGraphSettings`, `createAdvancedSettings`
+
+- **src/utils/export-utils.js**: Utilities for exporting result graphs (SVG/PNG)
+  - `saveSvgAsImage(svgContainerId, filename, format)`
+
+- **src/index.js**: Application entry point; wires UI setup and simulation button event listener
+  - Imports `setupUi` from `src/ui/layout.js` and `startSimulation` from `src/ui/simulation-handler.js`
 
 ### Data Flow
 
@@ -108,6 +119,8 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
 
 ### Task Data Model
 
+All parameters must be configurable via the UI and passed as arguments — avoid hardcoding values in logic.
+
 ```javascript
 {
   Task: string,        // Task name
@@ -117,10 +130,6 @@ Monte Carlo simulation tool for project time and cost estimation. Runs 10,000+ s
   Cost: number        // Hourly rate
 }
 ```
-
-### Simulation Parameters
-
-All parameters and settings in the project should be configurable via the UI and passed as arguments to the relevant functions. Avoid hardcoding values in the logic.
 
 ## Key Algorithms
 
@@ -154,22 +163,12 @@ Array where index = value, cell = frequency count
 Prefer helpers from `dom-helpers.js` over raw `document.createElement`:
 
 ```javascript
-// Text element (any tag)
 const el = createTextElement('h2', 'Title Text', ['my-class']);
-
-// Labeled input wrapped in a div
 const field = createLabeledInput('Field Label', { type: 'number', value: 10, name: 'fieldName' });
-
-// Div with id and classes
 const container = createDivWithIdAndClasses('my-id', ['class1', 'class2']);
 ```
 
-For inputs not covered by helpers, use `Object.assign()` for multiple attributes:
-
-```javascript
-const input = document.createElement('input');
-Object.assign(input, { type: 'number', value: 10, name: 'fieldName' });
-```
+For inputs not covered by helpers, use `Object.assign(input, { ...attrs })`.
 
 ### D3 Visualization
 
@@ -204,39 +203,25 @@ Not
 ### New Simulation Parameters
 
 1. Add to task data model
-2. Update task row UI in `task-table.js` (`generateDataField`)
-3. Update CSV parsing logic in `data-input.js`
+2. Update task row UI in `src/ui/task-table.js` (`generateDataField`)
+3. Update CSV parsing logic in `src/utils/csv-parser.js`; update UI in `src/ui/data-input-ui.js`
 4. Modify `generateEstimate()` or `runSimulation()`
-5. Add to sample.csv
+5. Add to `src/data/sample.csv`
 6. Write unit tests
 
 ### New Statistical Measures
 
-1. Create pure function in `stats.js`
-2. Re-export from `simulation.js` if callers need it via that module
+1. Create pure function in `src/core/stats.js`
+2. Re-export from `src/core/simulation.js` if callers need it via that module
 3. Call from `runSimulation()` return object if needed
-4. Display in UI (`index.js`)
+4. Display in UI (`src/index.js`)
 5. Add Jest tests in `src/tests/stats.test.js` with edge cases
-
-### UI Components
-
-1. Create element factory function
-2. Add CSS classes in style.css
-3. Attach event listeners in setup code
-4. Validate inputs before processing
 
 ## Testing Guidelines
 
 ### What to Test
 
-- Every function you create, you must create a test for it.
-- All pure math functions in `stats.js` (`stats.test.js`)
-- Graph config structure and histogram builder guards in `charts.test.js`
-- Simulation engine behavior in `simulation.test.js`
-- DOM helper utilities in `dom-helpers.test.js`
-- Task table creation and row logic in `task-table.test.js`
-- Fibonacci config panel and velocity handlers in `fibonacci-config.test.js`
-- T-shirt mapping logic in `tshirt-config.test.js`
+- Every function you create must have a test. The File Modification Guide maps each module to its test file.
 - Edge cases: empty arrays, single values, gaps in data
 - Random functions: verify output ranges
 - Statistical accuracy with known datasets
@@ -265,13 +250,15 @@ Not
 | Simulation engine           | `src/core/simulation.js`, `src/tests/simulation.test.js`                      |
 | D3 charts / graph config    | `src/visualization/charts.js`, `src/tests/charts.test.js`                              |
 | UI orchestration            | `src/index.js`, `src/style.css`, `src/index.html`                        |
-| Form / data entry           | `src/ui/data-input.js`, `src/tests/data-input.test.js`                      |
+| Form / data entry           | `src/ui/data-input-ui.js`, `src/tests/data-input-ui.test.js`                |
 | Task input table            | `src/ui/task-table.js`, `src/tests/task-table.test.js`                      |
-| DOM element helpers         | `src/utils/dom-helpers.js`, `src/tests/dom-helpers.test.js`                    |
-| Fibonacci config UI         | `src/fibonacci-config.js`, `src/tests/fibonacci-config.test.js`          |
+| DOM element helpers         | `src/utils/dom-helpers.js`, `src/tests/dom-helpers.test.js`                 |
+| Fibonacci config UI         | `src/ui/fibonacci-config.js`, `src/tests/fibonacci-config.test.js`          |
 | T-shirt config UI           | `src/ui/tshirt-config.js`, `src/tests/tshirt-config.test.js`                |
-| Application state           | `src/core/state.js`, `src/tests/state.test.js`                                |
-| Data format / CSV           | `src/ui/data-input.js` (parsing), `src/data/sample.csv`                     |
+| Application state           | `src/core/state.js`, `src/tests/state.test.js`                              |
+| Application layout          | `src/ui/layout.js`, `src/tests/layout.test.js`                              |
+| Simulation orchestration    | `src/ui/simulation-handler.js`, `src/tests/simulation-handler.test.js`      |
+| Data format / CSV           | `src/utils/csv-parser.js`, `src/tests/csv-parser.test.js`, `src/data/sample.csv` |
 | Build config                | `webpack.config.js`                                                      |
 | Code style                  | `.eslintrc.js`                                                           |
 
@@ -280,18 +267,11 @@ Not
 ### Don't
 
 - Use `innerHTML` for user-generated content (XSS risk)
-- Add D3 or DOM code to `stats.js` (keep it pure math)
-- Add math or statistics logic to `charts.js` or `index.js`
+- Add D3 or DOM code to `src/core/stats.js` (keep it pure math)
+- Add math or statistics logic to `src/visualization/charts.js` or `src/index.js`
 - Forget to validate min < max and 0 <= confidence <= 1
 - Modify DOM directly in event handlers (use helper functions)
 - Call `Math.max(...largeArray)` (stack overflow)
-
-## Build Process
-
-- Entry: `src/index.js`
-- Template: `src/index.html`
-- Output: `dist/main.js`
-- Dev mode: `inline-source-map`
 
 ## Quick Reference
 
