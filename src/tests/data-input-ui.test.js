@@ -381,4 +381,14 @@ describe('createDataEntrySection', () => {
     expect(events).toContain('costToggled');
     subscribeSpy.mockRestore();
   });
+
+  test('modeChanged callback calls createEntryTable without throwing', () => {
+    dataInput.createDataEntrySection();
+    expect(() => appState.setEstimationMode('fibonacci')).not.toThrow();
+  });
+
+  test('costToggled callback calls createEntryTable without throwing', () => {
+    dataInput.createDataEntrySection();
+    expect(() => appState.setEnableCost(false)).not.toThrow();
+  });
 });
