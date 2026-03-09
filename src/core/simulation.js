@@ -90,6 +90,7 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
       const taskOutcome = taskOutcomes[rowId];
       const taskTime = generateEstimate(row.Min, row.Max, row.Confidence);
       const taskCost = taskTime * row.Cost * costMultiplier;
+      const taskCostBucket = Math.round(taskCost);
       totalTime += taskTime;
       totalCost += taskCost;
       outcome[row.Name] = {
@@ -98,18 +99,18 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
       };
 
       taskOutcome.times.list[taskTime] += 1;
-      taskOutcome.costs.list[taskCost] += 1;
+      taskOutcome.costs.list[taskCostBucket] += 1;
       if (taskOutcome.times.min === -1 || taskTime < taskOutcome.times.min) {
         taskOutcome.times.min = taskTime;
       }
       if (taskTime > taskOutcome.times.max) {
         taskOutcome.times.max = taskTime;
       }
-      if (taskOutcome.costs.min === -1 || taskCost < taskOutcome.costs.min) {
-        taskOutcome.costs.min = taskCost;
+      if (taskOutcome.costs.min === -1 || taskCostBucket < taskOutcome.costs.min) {
+        taskOutcome.costs.min = taskCostBucket;
       }
-      if (taskCost > taskOutcome.costs.max) {
-        taskOutcome.costs.max = taskCost;
+      if (taskCostBucket > taskOutcome.costs.max) {
+        taskOutcome.costs.max = taskCostBucket;
       }
     }
 

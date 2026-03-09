@@ -147,7 +147,7 @@ function renderTaskRowHistograms(taskResults) {
     // Add statistics display
     const statsNode = document.querySelector(`.task-row-stats[data-row-id="${taskResult.rowId}"]`);
     if (statsNode) {
-      statsNode.innerHTML = `Min: ${taskResult.times.min} | Med: ${taskResult.times.median} | Max: ${taskResult.times.max} ${timeUnit}`;
+      statsNode.textContent = `Min: ${taskResult.times.min} | Med: ${taskResult.times.median} | Max: ${taskResult.times.max} ${timeUnit}`;
     }
   }
 }
