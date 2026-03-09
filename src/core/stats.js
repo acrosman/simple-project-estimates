@@ -17,10 +17,8 @@ function getRandom(minimum, maximum) {
 }
 
 /**
- * Calculates the upper bound for a specific task record. Because developers
- * are known to underestimate, the idea here is the less confidence they have
- * in their estimate the more risk that it could go much higher than expected.
- * So for every 10% drop in confidence we add the max estimate on again.
+ * Calculates the upper bound for a specific task record. For every 10% drop in
+ * confidence we add the max estimate on again.
  * 90% leaves the upper bound at max estimate.
  * 80% gives us max * 2.
  * 70% max * 3.
@@ -30,8 +28,6 @@ function getRandom(minimum, maximum) {
  * @returns {number} Integer upper bound for this task
  */
 function taskUpperBound(maxEstimate, confidence) {
-  // Calculate multiplier based on confidence level
-  // 100% conf = 1x, 90% = 1x, 80% = 2x, 70% = 3x, etc.
   const confidencePercent = Math.round(confidence * 100);
   const multiplier = Math.max(1, Math.ceil((100 - confidencePercent) / 10));
   const boundary = Math.ceil(maxEstimate * multiplier);
@@ -41,10 +37,6 @@ function taskUpperBound(maxEstimate, confidence) {
 /**
  * Calculates the lower bound for a specific task record. Mirrors taskUpperBound:
  * the less confidence in the estimate, the further an underrun can drop below min.
- * 90% leaves the lower bound at min estimate (no further underrun possible).
- * 80% gives us min / 2.
- * 70% min / 3.
- * And so on.
  * @param {number} minEstimate
  * @param {number} confidence
  * @returns {number}
@@ -58,12 +50,11 @@ function taskLowerBound(minEstimate, confidence) {
 /**
  * Does the estimate for one task. It picks a random number between min and
  * max confidence % of the time. If the number is outside the range, overruns
- * receive 75% of the outside-confidence budget and underruns receive 25%,
- * reflecting that tasks more often run over than under. Underruns are bounded
- * by a confidence-scaled floor: the lower the confidence, the further below
- * min the result can reach (mirroring the overrun upper-bound logic). For
- * every 10% drop in confidence the overrun ceiling grows by 100% of max,
- * and the underrun floor drops by 1/multiplier of min.
+ * receive 75% of the outside-confidence budget and underruns receive 25%.
+ * Underruns are bounded by a confidence-scaled floor: lower confidence means
+ * values further below min the result can reach. For every 10% drop in
+ * confidence the overrun ceiling grows by 100% of max, and the underrun floor
+ * drops by 1/multiplier of min.
  * @param {number} minimum
  * @param {number} maximum
  * @param {number} confidence
