@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { appState, tshirtMappings } from '../core/state';
+import { appState } from '../core/state';
 
 describe('Fibonacci Configuration', () => {
   test('appState has Fibonacci mode configuration', () => {
@@ -163,41 +163,56 @@ describe('Cost Tracking', () => {
   });
 });
 
+describe('getTshirtMappings()', () => {
+  test('returns the tshirt mappings object with default values', () => {
+    appState.reset();
+    const mappings = appState.getTshirtMappings();
+    expect(mappings).toEqual({
+      XS: 1,
+      S: 2,
+      M: 3,
+      L: 5,
+      XL: 8,
+      XXL: 13,
+    });
+  });
+});
+
 describe('AppState reset()', () => {
   test('reset() mutates existing objects instead of creating new ones', () => {
     // Store reference to the original t-shirt mappings object
-    const tshirtRef = tshirtMappings;
+    const tshirtRef = appState.getTshirtMappings();
 
     // Modify the mapping
-    tshirtMappings.XS = 888;
+    tshirtRef.XS = 888;
 
     // Verify modification
-    expect(tshirtMappings.XS).toBe(888);
+    expect(appState.getTshirtMappings().XS).toBe(888);
 
     // Call reset
     appState.reset();
 
     // Verify the values are reset
-    expect(tshirtMappings.XS).toBe(1);
+    expect(appState.getTshirtMappings().XS).toBe(1);
 
     // Verify the object still references the same memory address
-    expect(tshirtRef).toBe(tshirtMappings);
+    expect(tshirtRef).toBe(appState.getTshirtMappings());
   });
 
   test('reset() clears all existing keys before reassigning', () => {
     // Add an extra t-shirt size
-    tshirtMappings.XXXL = 34;
-    expect(tshirtMappings).toHaveProperty('XXXL');
+    appState.getTshirtMappings().XXXL = 34;
+    expect(appState.getTshirtMappings()).toHaveProperty('XXXL');
 
     // Reset should remove the extra key
     appState.reset();
 
     // Verify the extra key is gone
-    expect(tshirtMappings).not.toHaveProperty('XXXL');
+    expect(appState.getTshirtMappings()).not.toHaveProperty('XXXL');
 
     // Verify default keys are present
-    expect(tshirtMappings).toHaveProperty('XS');
-    expect(tshirtMappings).toHaveProperty('XXL');
+    expect(appState.getTshirtMappings()).toHaveProperty('XS');
+    expect(appState.getTshirtMappings()).toHaveProperty('XXL');
   });
 
   test('reset() resets all state properties', () => {
@@ -206,7 +221,7 @@ describe('AppState reset()', () => {
     appState.setEnableCost(false);
     appState.setFibonacciMode('velocity-based');
     appState.setVelocityConfig(40, 14);
-    tshirtMappings.XS = 100;
+    appState.getTshirtMappings().XS = 100;
 
     // Reset
     appState.reset();
@@ -216,7 +231,7 @@ describe('AppState reset()', () => {
     expect(appState.getEnableCost()).toBe(true);
     expect(appState.getFibonacciMode()).toBe('calendar-days');
     expect(appState.getVelocityConfig()).toEqual({ pointsPerSprint: 25, sprintLengthDays: 10 });
-    expect(tshirtMappings.XS).toBe(1);
+    expect(appState.getTshirtMappings().XS).toBe(1);
   });
 
   test('reset() clears all listeners', () => {

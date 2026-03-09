@@ -1,7 +1,6 @@
 /**
  * Application state management module.
- * Provides the AppState class and shared state instances
- * (appState, fibonacciCalendarMappings, tshirtMappings).
+ * Provides the AppState class and a shared appState instance.
  * Stores estimation mode, cost toggle, velocity configuration, and size mappings.
  * @module core/state
  */
@@ -39,11 +38,19 @@ class AppState {
     };
   }
 
+  /**
+   * Sets the current estimation mode and emits a modeChanged event.
+   * @param {'hours'|'fibonacci'|'tshirt'} mode The estimation mode to activate.
+   */
   setEstimationMode(mode) {
     this.estimationMode = mode;
     this.emit('modeChanged', mode);
   }
 
+  /**
+   * Returns the current estimation mode.
+   * @returns {'hours'|'fibonacci'|'tshirt'} The active estimation mode.
+   */
   getEstimationMode() {
     return this.estimationMode;
   }
@@ -64,24 +71,45 @@ class AppState {
     return (this.estimationMode === 'fibonacci' || this.estimationMode === 'tshirt') ? 8 : 1;
   }
 
+  /**
+   * Enables or disables cost tracking and emits a costToggled event.
+   * @param {boolean} enabled Whether cost tracking should be enabled.
+   */
   setEnableCost(enabled) {
     this.enableCost = enabled;
     this.emit('costToggled', enabled);
   }
 
+  /**
+   * Returns whether cost tracking is currently enabled.
+   * @returns {boolean} True if cost tracking is enabled.
+   */
   getEnableCost() {
     return this.enableCost;
   }
 
+  /**
+   * Sets the Fibonacci estimation sub-mode and emits a fibonacciModeChanged event.
+   * @param {'calendar-days'|'velocity-based'} mode The Fibonacci mode to activate.
+   */
   setFibonacciMode(mode) {
     this.fibonacciMode = mode;
     this.emit('fibonacciModeChanged', mode);
   }
 
+  /**
+   * Returns the current Fibonacci estimation sub-mode.
+   * @returns {'calendar-days'|'velocity-based'} The active Fibonacci mode.
+   */
   getFibonacciMode() {
     return this.fibonacciMode;
   }
 
+  /**
+   * Updates the velocity configuration and emits a velocityConfigChanged event.
+   * @param {number} pointsPerSprint The number of story points completed per sprint.
+   * @param {number} sprintLengthDays The length of a sprint in calendar days.
+   */
   setVelocityConfig(pointsPerSprint, sprintLengthDays) {
     this.velocityConfig = {
       pointsPerSprint: parseFloat(pointsPerSprint) || 25,
@@ -90,14 +118,26 @@ class AppState {
     this.emit('velocityConfigChanged', this.velocityConfig);
   }
 
+  /**
+   * Returns the current velocity configuration.
+   * @returns {{pointsPerSprint: number, sprintLengthDays: number}} The velocity config object.
+   */
   getVelocityConfig() {
     return this.velocityConfig;
   }
 
+  /**
+   * Returns the Fibonacci-to-calendar-day range mappings.
+   * @returns {Object.<number, {min: number, max: number}>} The Fibonacci calendar mappings.
+   */
   getFibonacciCalendarMappings() {
     return this.fibonacciCalendarMappings;
   }
 
+  /**
+   * Returns the T-shirt size to story point mappings.
+   * @returns {Object.<string, number>} The T-shirt size mappings.
+   */
   getTshirtMappings() {
     return this.tshirtMappings;
   }
@@ -172,12 +212,7 @@ class AppState {
 
 const appState = new AppState();
 
-// Maintain backward compatibility with existing code
-const { fibonacciCalendarMappings, tshirtMappings } = appState;
-
 export {
   AppState,
   appState,
-  fibonacciCalendarMappings,
-  tshirtMappings,
 };
