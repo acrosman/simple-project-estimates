@@ -4,7 +4,7 @@
  * and calendar or velocity-based day ranges.
  * @module ui/fibonacci-config
  */
-import { appState, fibonacciCalendarMappings } from '../core/state';
+import { appState } from '../core/state';
 import { createTextElement, createDivWithIdAndClasses, getFloatInputValue } from '../utils/dom-helpers';
 
 /**
@@ -60,6 +60,8 @@ function updateFibonacciCalendarMapping(event) {
     return;
   }
 
+  const fibonacciCalendarMappings = appState.getFibonacciCalendarMappings();
+
   if (!fibonacciCalendarMappings[fibNum] || !(type in fibonacciCalendarMappings[fibNum])) {
     return;
   }
@@ -98,6 +100,7 @@ function createFibonacciCalendarMappingTable() {
   const table = createDivWithIdAndClasses(null, ['table', 'fib-mapping-table']);
 
   // Get Fibonacci numbers dynamically from the mappings object
+  const fibonacciCalendarMappings = appState.getFibonacciCalendarMappings();
   const fibNumbers = Object.keys(fibonacciCalendarMappings)
     .map((n) => parseInt(n, 10))
     .sort((a, b) => a - b);

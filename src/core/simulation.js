@@ -1,7 +1,6 @@
 /**
  * Simulation engine for Monte Carlo project time and cost estimation.
  * Runs thousands of passes over task data to produce histogram distributions.
- * Re-exports selected symbols from stats.js and charts.js for backward compatibility.
  * @module core/simulation
  */
 import {
@@ -322,21 +321,6 @@ function fibonacciToVelocityDays(fibonacci, pointsPerSprint, sprintLengthDays) {
 
   return { min, max };
 }
-
-// Re-export everything from sub-modules so existing callers (index.js, tests) need no changes.
-export {
-  GRAPH_CONFIG,
-  GRAPH_CONFIG_DEFAULTS,
-  buildHistogram,
-  buildHistogramPreview,
-  buildTaskRowHistogram,
-} from '../visualization/charts';
-
-export {
-  getMedian,
-  getStandardDeviation,
-  taskUpperBound,
-} from './stats';
 
 export {
   runSimulation,

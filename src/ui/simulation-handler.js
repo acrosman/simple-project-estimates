@@ -3,10 +3,18 @@
  * @description Handles simulation orchestration and results display,
  * including progressive run callbacks, summary statistics, and per-task histograms.
  */
-import * as sim from '../core/simulation';
-import { appState, fibonacciCalendarMappings, tshirtMappings } from '../core/state';
+import {
+  runSimulationProgressive,
+  fibonacciToCalendarDays,
+  fibonacciToVelocityDays,
+} from '../core/simulation';
+import { appState } from '../core/state';
 import { gatherRawTaskData, normalizeTaskData } from './task-table';
-import { buildTaskRowHistogram } from '../core/simulation';
+import {
+  buildHistogram,
+  buildHistogramPreview,
+  buildTaskRowHistogram,
+} from '../visualization/charts';
 import { showError, updateElementText } from '../utils/dom-helpers';
 
 /**
@@ -161,10 +169,10 @@ async function startSimulation(event) {
   const data = normalizeTaskData(
     rawTasks,
     appState,
-    fibonacciCalendarMappings,
-    tshirtMappings,
-    sim.fibonacciToCalendarDays,
-    sim.fibonacciToVelocityDays,
+    appState.getFibonacciCalendarMappings(),
+    appState.getTshirtMappings(),
+    fibonacciToCalendarDays,
+    fibonacciToVelocityDays,
   );
 
   // Validate we have at least one task
@@ -206,13 +214,13 @@ async function startSimulation(event) {
     });
 
     const graphProgressInterval = 1000;
-    const results = await sim.runSimulationProgressive(
+    const results = await runSimulationProgressive(
       passCount,
       data,
       (progress) => {
         // Histogram preview (D3) still handled here:
         if (progress.times.min > -1 && progress.times.max >= progress.times.min) {
-          sim.buildHistogramPreview(
+          buildHistogramPreview(
             document.getElementById('timeHistoGram'),
             progress.times.list,
             progress.times.min,
@@ -224,7 +232,7 @@ async function startSimulation(event) {
           progress,
           timeUnit,
           currencyFormatter,
-          appState.enableCost,
+          appState.getEnableCost(),
         );
       },
       graphProgressInterval,
@@ -236,14 +244,14 @@ async function startSimulation(event) {
       results,
       timeUnit,
       new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
-      appState.enableCost,
+      appState.getEnableCost(),
     );
 
     // Render row-level task distributions as soon as simulation data is available.
     renderTaskRowHistograms(results.taskResults);
 
     // Build and display histograms.
-    sim.buildHistogram(
+    buildHistogram(
       document.getElementById('timeHistoGram'),
       results.times.list,
       results.times.min,
@@ -256,8 +264,8 @@ async function startSimulation(event) {
     showTimeResults();
 
     // Only build cost histogram if cost tracking is enabled
-    if (appState.enableCost) {
-      sim.buildHistogram(
+    if (appState.getEnableCost()) {
+      buildHistogram(
         document.getElementById('costHistoGram'),
         results.costs.list,
         results.costs.min,

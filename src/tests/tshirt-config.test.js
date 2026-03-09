@@ -8,7 +8,7 @@ import {
   updateTshirtMapping,
   createTshirtMappingTable,
 } from '../ui/tshirt-config';
-import { tshirtMappings } from '../core/state';
+import { appState } from '../core/state';
 
 describe('normalizeTshirtSize', () => {
   test('converts lowercase to uppercase', () => {
@@ -36,39 +36,40 @@ describe('normalizeTshirtSize', () => {
 
 describe('T-Shirt Mappings', () => {
   test('has expected t-shirt sizes as keys', () => {
-    const tshirtKeys = Object.keys(tshirtMappings);
+    const tshirtKeys = Object.keys(appState.getTshirtMappings());
     expect(tshirtKeys).toEqual(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
   });
 
   test('each t-shirt mapping has a Fibonacci number', () => {
-    Object.values(tshirtMappings).forEach((fibValue) => {
+    Object.values(appState.getTshirtMappings()).forEach((fibValue) => {
       expect(typeof fibValue).toBe('number');
       expect(fibValue).toBeGreaterThan(0);
     });
   });
 
   test('t-shirt mappings follow expected Fibonacci values', () => {
-    expect(tshirtMappings.XS).toBe(1);
-    expect(tshirtMappings.S).toBe(2);
-    expect(tshirtMappings.M).toBe(3);
-    expect(tshirtMappings.L).toBe(5);
-    expect(tshirtMappings.XL).toBe(8);
-    expect(tshirtMappings.XXL).toBe(13);
+    expect(appState.getTshirtMappings().XS).toBe(1);
+    expect(appState.getTshirtMappings().S).toBe(2);
+    expect(appState.getTshirtMappings().M).toBe(3);
+    expect(appState.getTshirtMappings().L).toBe(5);
+    expect(appState.getTshirtMappings().XL).toBe(8);
+    expect(appState.getTshirtMappings().XXL).toBe(13);
   });
 
   test('normalizes lowercase t-shirt input for mapping lookup', () => {
     expect(normalizeTshirtSize('xl')).toBe('XL');
-    expect(tshirtMappings[normalizeTshirtSize('xl')]).toBe(8);
+    expect(appState.getTshirtMappings()[normalizeTshirtSize('xl')]).toBe(8);
   });
 
   test('trims and normalizes t-shirt input for mapping lookup', () => {
     expect(normalizeTshirtSize('  xxl  ')).toBe('XXL');
-    expect(tshirtMappings[normalizeTshirtSize('  xxl  ')]).toBe(13);
+    expect(appState.getTshirtMappings()[normalizeTshirtSize('  xxl  ')]).toBe(13);
   });
 });
 
 describe('updateTshirtMapping', () => {
   beforeEach(() => {
+    const tshirtMappings = appState.getTshirtMappings();
     tshirtMappings.XS = 1;
     tshirtMappings.S = 2;
     tshirtMappings.M = 3;
@@ -84,7 +85,7 @@ describe('updateTshirtMapping', () => {
 
     updateTshirtMapping(mockEvent);
 
-    expect(tshirtMappings.XL).toBe(13);
+    expect(appState.getTshirtMappings().XL).toBe(13);
   });
 
   test('updates different size value', () => {
@@ -94,7 +95,7 @@ describe('updateTshirtMapping', () => {
 
     updateTshirtMapping(mockEvent);
 
-    expect(tshirtMappings.M).toBe(5);
+    expect(appState.getTshirtMappings().M).toBe(5);
   });
 
   test('normalizes lowercase size key before updating', () => {
@@ -104,7 +105,7 @@ describe('updateTshirtMapping', () => {
 
     updateTshirtMapping(mockEvent);
 
-    expect(tshirtMappings.XXL).toBe(21);
+    expect(appState.getTshirtMappings().XXL).toBe(21);
   });
 
   test('does not crash for unknown size', () => {
@@ -208,6 +209,6 @@ describe('createTshirtMappingTable', () => {
   test('contains inputs for each t-shirt size', () => {
     const table = createTshirtMappingTable();
     const inputs = table.querySelectorAll('input[data-tshirt]');
-    expect(inputs).toHaveLength(Object.keys(tshirtMappings).length);
+    expect(inputs).toHaveLength(Object.keys(appState.getTshirtMappings()).length);
   });
 });

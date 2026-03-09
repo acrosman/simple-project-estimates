@@ -9,7 +9,7 @@ import {
   createFibonacciCalendarMappingTable,
   createFibonacciConfigPanel,
 } from '../ui/fibonacci-config';
-import { appState, fibonacciCalendarMappings } from '../core/state';
+import { appState } from '../core/state';
 
 describe('handleFibonacciModeChange', () => {
   beforeEach(() => {
@@ -103,6 +103,7 @@ describe('handleVelocityConfigChange', () => {
 
 describe('updateFibonacciCalendarMapping', () => {
   beforeEach(() => {
+    const fibonacciCalendarMappings = appState.getFibonacciCalendarMappings();
     fibonacciCalendarMappings[1] = { min: 0.5, max: 1 };
     fibonacciCalendarMappings[2] = { min: 1, max: 2 };
     fibonacciCalendarMappings[3] = { min: 2, max: 3 };
@@ -119,8 +120,8 @@ describe('updateFibonacciCalendarMapping', () => {
 
     updateFibonacciCalendarMapping(mockEvent);
 
-    expect(fibonacciCalendarMappings[5].min).toBe(2.5);
-    expect(fibonacciCalendarMappings[5].max).toBe(5);
+    expect(appState.getFibonacciCalendarMappings()[5].min).toBe(2.5);
+    expect(appState.getFibonacciCalendarMappings()[5].max).toBe(5);
   });
 
   test('updates max value when max input changes', () => {
@@ -130,8 +131,8 @@ describe('updateFibonacciCalendarMapping', () => {
 
     updateFibonacciCalendarMapping(mockEvent);
 
-    expect(fibonacciCalendarMappings[8].max).toBe(10);
-    expect(fibonacciCalendarMappings[8].min).toBe(5);
+    expect(appState.getFibonacciCalendarMappings()[8].max).toBe(10);
+    expect(appState.getFibonacciCalendarMappings()[8].min).toBe(5);
   });
 
   test('handles decimal values correctly', () => {
@@ -141,8 +142,8 @@ describe('updateFibonacciCalendarMapping', () => {
 
     updateFibonacciCalendarMapping(mockEvent);
 
-    expect(fibonacciCalendarMappings[1].min).toBe(0.25);
-    expect(typeof fibonacciCalendarMappings[1].min).toBe('number');
+    expect(appState.getFibonacciCalendarMappings()[1].min).toBe(0.25);
+    expect(typeof appState.getFibonacciCalendarMappings()[1].min).toBe('number');
   });
 
   test('updates correct Fibonacci number mapping', () => {
@@ -152,9 +153,9 @@ describe('updateFibonacciCalendarMapping', () => {
 
     updateFibonacciCalendarMapping(mockEvent);
 
-    expect(fibonacciCalendarMappings[13].max).toBe(15);
-    expect(fibonacciCalendarMappings[8].max).toBe(8);
-    expect(fibonacciCalendarMappings[21].max).toBe(21);
+    expect(appState.getFibonacciCalendarMappings()[13].max).toBe(15);
+    expect(appState.getFibonacciCalendarMappings()[8].max).toBe(8);
+    expect(appState.getFibonacciCalendarMappings()[21].max).toBe(21);
   });
 
   test('does not crash for non-existent Fibonacci number', () => {
@@ -172,8 +173,8 @@ describe('updateFibonacciCalendarMapping', () => {
     updateFibonacciCalendarMapping(event1);
     updateFibonacciCalendarMapping(event2);
 
-    expect(fibonacciCalendarMappings[5].min).toBe(2);
-    expect(fibonacciCalendarMappings[5].max).toBe(6);
+    expect(appState.getFibonacciCalendarMappings()[5].min).toBe(2);
+    expect(appState.getFibonacciCalendarMappings()[5].max).toBe(6);
   });
 
   test('does nothing when event is null', () => {

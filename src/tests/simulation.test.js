@@ -5,23 +5,10 @@
 import * as sim from '../core/simulation';
 
 test('Validate simulation module exports', () => {
-  // Simulation engine
   expect(sim).toHaveProperty('runSimulation');
   expect(sim).toHaveProperty('runSimulationProgressive');
   expect(sim).toHaveProperty('fibonacciToCalendarDays');
   expect(sim).toHaveProperty('fibonacciToVelocityDays');
-
-  // Re-exports from charts
-  expect(sim).toHaveProperty('buildHistogram');
-  expect(sim).toHaveProperty('buildTaskRowHistogram');
-  expect(sim).toHaveProperty('buildHistogramPreview');
-  expect(sim).toHaveProperty('GRAPH_CONFIG');
-  expect(sim).toHaveProperty('GRAPH_CONFIG_DEFAULTS');
-
-  // Re-exports from stats
-  expect(sim).toHaveProperty('getMedian');
-  expect(sim).toHaveProperty('getStandardDeviation');
-  expect(sim).toHaveProperty('taskUpperBound');
 });
 
 test('RunSimulation: Single Task', () => {

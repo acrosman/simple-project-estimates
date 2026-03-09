@@ -3,7 +3,7 @@
  * Renders the table that lets users define hour-range mappings for each size (XS–XXL).
  * @module ui/tshirt-config
  */
-import { tshirtMappings } from '../core/state';
+import { appState } from '../core/state';
 import { createTextElement, createDivWithIdAndClasses } from '../utils/dom-helpers';
 
 /**
@@ -100,6 +100,8 @@ function updateTshirtMapping(event) {
     return;
   }
 
+  const tshirtMappings = appState.getTshirtMappings();
+
   if (!Object.hasOwn(tshirtMappings, size)) {
     return;
   }
@@ -118,6 +120,7 @@ function createTshirtMappingTable() {
 
   const table = createDivWithIdAndClasses(null, ['table', 'fib-mapping-table']);
 
+  const tshirtMappings = appState.getTshirtMappings();
   const sizes = Object.keys(tshirtMappings);
 
   const sizeRow = createDivWithIdAndClasses(null, ['tr', 'fib-mapping-row']);

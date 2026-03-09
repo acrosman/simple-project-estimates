@@ -9,21 +9,24 @@ jest.mock('../ui/task-table', () => ({
 
 jest.mock('../core/simulation', () => ({
   runSimulationProgressive: jest.fn(),
+  fibonacciToCalendarDays: jest.fn(),
+  fibonacciToVelocityDays: jest.fn(),
+}));
+
+jest.mock('../visualization/charts', () => ({
   buildHistogramPreview: jest.fn(),
   buildHistogram: jest.fn(),
   buildTaskRowHistogram: jest.fn(),
-  fibonacciToCalendarDays: jest.fn(),
-  fibonacciToVelocityDays: jest.fn(),
 }));
 
 jest.mock('../core/state', () => ({
   appState: {
     getTimeUnit: jest.fn(() => 'Hours'),
     getHoursPerTimeUnit: jest.fn(() => 1),
-    enableCost: false,
+    getFibonacciCalendarMappings: jest.fn(() => ({})),
+    getTshirtMappings: jest.fn(() => ({})),
+    getEnableCost: jest.fn(() => false),
   },
-  fibonacciCalendarMappings: {},
-  tshirtMappings: {},
 }));
 
 const {
@@ -96,9 +99,13 @@ describe('simulation-handler.js', () => {
       document.body.appendChild(runButton);
       global.gatherRawTaskData = () => [];
       global.normalizeTaskData = () => [];
-      global.appState = { getTimeUnit: () => 'Hours', getHoursPerTimeUnit: () => 1, enableCost: false };
-      global.fibonacciCalendarMappings = {};
-      global.tshirtMappings = {};
+      global.appState = {
+        getTimeUnit: () => 'Hours',
+        getHoursPerTimeUnit: () => 1,
+        getFibonacciCalendarMappings: () => ({}),
+        getTshirtMappings: () => ({}),
+        enableCost: false,
+      };
       global.sim = {
         runSimulationProgressive: async () => ({}),
         buildHistogramPreview: jest.fn(),
@@ -414,10 +421,10 @@ describe('startSimulation', () => {
     global.appState = {
       getTimeUnit: () => 'Hours',
       getHoursPerTimeUnit: () => 1,
+      getFibonacciCalendarMappings: () => ({}),
+      getTshirtMappings: () => ({}),
       enableCost: false,
     };
-    global.fibonacciCalendarMappings = {};
-    global.tshirtMappings = {};
     global.sim = {
       runSimulationProgressive: async () => ({
         times: {
@@ -494,10 +501,10 @@ it('shows error if no tasks found', async () => {
   global.appState = {
     getTimeUnit: () => 'Hours',
     getHoursPerTimeUnit: () => 1,
+    getFibonacciCalendarMappings: () => ({}),
+    getTshirtMappings: () => ({}),
     enableCost: false,
   };
-  global.fibonacciCalendarMappings = {};
-  global.tshirtMappings = {};
   global.sim = {
     runSimulationProgressive: async () => ({}),
     buildHistogramPreview: jest.fn(),
@@ -529,10 +536,10 @@ it('handles simulation error gracefully', async () => {
   global.appState = {
     getTimeUnit: () => 'Hours',
     getHoursPerTimeUnit: () => 1,
+    getFibonacciCalendarMappings: () => ({}),
+    getTshirtMappings: () => ({}),
     enableCost: false,
   };
-  global.fibonacciCalendarMappings = {};
-  global.tshirtMappings = {};
   // Add messages container for showError
   const messagesDiv = document.createElement('div');
   messagesDiv.id = 'messages';
@@ -691,7 +698,7 @@ describe('startSimulation full-path inner-function coverage', () => {
     );
 
     // Temporarily enable cost via module state mock override
-    stateMock.appState.enableCost = true;
+    stateMock.appState.getEnableCost.mockReturnValue(true);
 
     const event = { preventDefault: jest.fn() };
     const promise = startSimulation(event);
@@ -699,7 +706,7 @@ describe('startSimulation full-path inner-function coverage', () => {
     await promise;
 
     expect(event.preventDefault).toHaveBeenCalled();
-    stateMock.appState.enableCost = false;
+    stateMock.appState.getEnableCost.mockReturnValue(false);
   });
 
   it('covers simulation error path when tasks are present', async () => {
