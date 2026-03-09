@@ -42,9 +42,13 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
   const taskOutcomes = {};
   const estimateDetails = [];
   const startTime = Date.now();
+
+  // For min time and cost -1 acts as a sentinel meaning "not yet observed";
+  // any real value will replace it on the first iteration, while 0 is a valid
+  // maximum starting point.
   let minTime = -1;
-  let maxTime = 0;
   let minCost = -1;
+  let maxTime = 0;
   let maxCost = 0;
   let totalTime = 0;
   let totalCost = 0;
@@ -79,6 +83,8 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
     totalCost = 0;
     outcome = {};
 
+    // Generate a random estimate for each task, accumulate totals, and record
+    // per-task outcomes in the individual task histograms.
     for (const row of data) {
       const rowId = row.RowId || row.Name;
       const taskOutcome = taskOutcomes[rowId];
@@ -107,6 +113,8 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
       }
     }
 
+    // Record the aggregate totals for this pass into the overall histograms and
+    // update the running global min/max for both time and cost.
     times[totalTime] += 1;
     const totalCostBucket = Math.round(totalCost);
     costs[totalCostBucket] += 1;
@@ -139,6 +147,8 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
         },
       };
 
+      // likelyMin/likelyMax span median ± 1 standard deviation, which covers
+      // roughly 68% of outcomes and gives a pragmatic "most likely" range.
       result.times.likelyMin = Math.round(result.times.median - result.times.sd);
       result.times.likelyMax = Math.round(result.times.median + result.times.sd);
       result.costs.likelyMin = Math.round(result.costs.median - result.costs.sd);
@@ -188,6 +198,8 @@ function runSimulationCore(passes, data, callbacks = {}, hoursPerTimeUnit = 1) {
       const processedPasses = endIndex;
       const hasMoreBatches = endIndex < totalPasses;
 
+      // Compute a fresh statistical snapshot from the histograms accumulated so
+      // far so the progress callback receives up-to-date intermediate values.
       const currentTimeMedian = getMedian(times);
       const currentTimeSd = getStandardDeviation(times);
       const currentCostMedian = getMedian(costs);
@@ -268,6 +280,9 @@ async function runSimulationProgressive(
   return runSimulationCore(passes, data, {
     batchSize: updateInterval,
     onBatchComplete: async (progress) => {
+      // The !hasMoreBatches clause guarantees the final batch always triggers a
+      // progress update, even when the total pass count isn't evenly divisible
+      // by updateInterval.
       const shouldUpdate = typeof onProgress === 'function'
         && (progress.processedPasses % updateInterval === 0 || !progress.hasMoreBatches);
 
