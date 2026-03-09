@@ -7,6 +7,20 @@ const createScale = () => {
   return scale;
 };
 
+const createLineGenerator = () => {
+  const lineGen = jest.fn().mockReturnValue('M0,0');
+  lineGen.x = jest.fn().mockImplementation(function mockX(fn) {
+    if (typeof fn === 'function') { try { fn(1, 0); } catch (e) { /* ignore */ } }
+    return this;
+  });
+  lineGen.y = jest.fn().mockImplementation(function mockY(fn) {
+    if (typeof fn === 'function') { try { fn(1, 0); } catch (e) { /* ignore */ } }
+    return this;
+  });
+  lineGen.curve = jest.fn().mockReturnThis();
+  return lineGen;
+};
+
 const createAxis = () => {
   const axis = jest.fn();
   axis.scale = jest.fn().mockReturnThis();
@@ -30,17 +44,30 @@ const createSelection = () => {
       return sel;
     }),
     selectAll: jest.fn().mockReturnThis(),
-    data: jest.fn().mockReturnThis(),
+    data: jest.fn().mockImplementation(function mockData(values, keyFn) {
+      if (typeof keyFn === 'function') { try { keyFn(1, 0); } catch (e) { /* ignore */ } }
+      return this;
+    }),
     enter: jest.fn().mockReturnThis(),
     exit: jest.fn().mockReturnThis(),
     join: jest.fn((enterFn, updateFn, exitFn) => {
-      if (enterFn) enterFn(createSelection());
-      if (updateFn) updateFn(createSelection());
-      if (exitFn) exitFn(createSelection());
+      if (typeof enterFn === 'function') enterFn(createSelection());
+      if (typeof updateFn === 'function') updateFn(createSelection());
+      if (typeof exitFn === 'function') exitFn(createSelection());
       return createSelection();
     }),
-    attr: jest.fn().mockReturnThis(),
-    style: jest.fn().mockReturnThis(),
+    attr: jest.fn().mockImplementation(function mockAttr(name, value) {
+      if (typeof value === 'function') {
+        try { value(1, 0); } catch (e) { /* ignore errors from sample invocation */ }
+      }
+      return this;
+    }),
+    style: jest.fn().mockImplementation(function mockStyle(name, value) {
+      if (typeof value === 'function') {
+        try { value(1, 0); } catch (e) { /* ignore */ }
+      }
+      return this;
+    }),
     text: jest.fn().mockReturnThis(),
     call: jest.fn((fn) => {
       if (typeof fn === 'function') {
@@ -56,6 +83,7 @@ const createSelection = () => {
     }),
     remove: jest.fn().mockReturnThis(),
     empty: jest.fn().mockReturnValue(false),
+    datum: jest.fn().mockReturnThis(),
   };
   return selection;
 };
@@ -67,4 +95,6 @@ module.exports = {
   transition: jest.fn(createTransition),
   easeCubicOut: jest.fn(),
   select: jest.fn(() => createSelection()),
+  line: jest.fn(createLineGenerator),
+  curveCardinal: { tension: jest.fn().mockReturnValue(jest.fn()) },
 };

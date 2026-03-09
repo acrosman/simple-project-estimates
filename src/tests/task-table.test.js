@@ -1,0 +1,845 @@
+/**
+ * @jest-environment jsdom
+ */
+
+import {
+  isRowEmpty,
+  generateDataField,
+  generateDataRow,
+  createEntryTable,
+  gatherRawTaskData,
+  normalizeTaskData,
+} from '../ui/task-table';
+import { appState } from '../core/state';
+
+describe('isRowEmpty', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('returns true when all fields are empty', () => {
+    document.body.innerHTML = `
+      <input data-row-id="1" type="text" value="" />
+      <input data-row-id="1" type="number" value="" />
+      <input data-row-id="1" type="number" value="" />
+      <input data-row-id="1" type="button" value="Clear" />
+    `;
+    expect(isRowEmpty('1')).toBe(true);
+  });
+
+  test('returns false when at least one field has a value', () => {
+    document.body.innerHTML = `
+      <input data-row-id="2" type="text" value="Task Name" />
+      <input data-row-id="2" type="number" value="" />
+      <input data-row-id="2" type="number" value="" />
+      <input data-row-id="2" type="button" value="Clear" />
+    `;
+    expect(isRowEmpty('2')).toBe(false);
+  });
+
+  test('returns false when all fields have values', () => {
+    document.body.innerHTML = `
+      <input data-row-id="3" type="text" value="Task" />
+      <input data-row-id="3" type="number" value="10" />
+      <input data-row-id="3" type="number" value="20" />
+      <input data-row-id="3" type="number" value="90" />
+      <input data-row-id="3" type="button" value="Clear" />
+    `;
+    expect(isRowEmpty('3')).toBe(false);
+  });
+
+  test('returns true when fields contain only whitespace', () => {
+    document.body.innerHTML = `
+      <input data-row-id="4" type="text" value="   " />
+      <input data-row-id="4" type="number" value="  " />
+      <input data-row-id="4" type="button" value="Clear" />
+    `;
+    expect(isRowEmpty('4')).toBe(true);
+  });
+
+  test('ignores button inputs when checking', () => {
+    document.body.innerHTML = `
+      <input data-row-id="5" type="text" value="" />
+      <input data-row-id="5" type="number" value="" />
+      <input data-row-id="5" type="button" value="Clear" />
+    `;
+    expect(isRowEmpty('5')).toBe(true);
+  });
+
+  test('returns true when row has no input fields', () => {
+    document.body.innerHTML = `
+      <div data-row-id="6"></div>
+    `;
+    expect(isRowEmpty('6')).toBe(true);
+  });
+
+  test('correctly identifies different rows independently', () => {
+    document.body.innerHTML = `
+      <input data-row-id="7" type="text" value="Filled" />
+      <input data-row-id="8" type="text" value="" />
+    `;
+    expect(isRowEmpty('7')).toBe(false);
+    expect(isRowEmpty('8')).toBe(true);
+  });
+
+  test('returns false when any numeric field has value', () => {
+    document.body.innerHTML = `
+      <input data-row-id="9" type="text" value="" />
+      <input data-row-id="9" type="number" value="5" />
+      <input data-row-id="9" type="number" value="" />
+    `;
+    expect(isRowEmpty('9')).toBe(false);
+  });
+});
+
+describe('generateDataField', () => {
+  test('creates data field cell with input', () => {
+    const cell = generateDataField('Task', 'Test Task', 'text', 1);
+
+    expect(cell.tagName).toBe('DIV');
+    expect(cell.classList.contains('td')).toBe(true);
+    expect(cell.children).toHaveLength(1);
+  });
+
+  test('input has correct attributes', () => {
+    const cell = generateDataField('Min Time', '10', 'number', 2);
+    const input = cell.querySelector('input');
+
+    expect(input.type).toBe('number');
+    expect(input.value).toBe('10');
+    expect(input.name).toBe('Min Time');
+    expect(input.getAttribute('aria-label')).toBe('Min Time');
+    expect(input.dataset.rowId).toBe('2');
+  });
+
+  test('creates button type field', () => {
+    const cell = generateDataField('Clear', 'Clear', 'button', 3);
+    const input = cell.querySelector('input');
+
+    expect(input.type).toBe('button');
+    expect(input.value).toBe('Clear');
+    expect(input.dataset.rowId).toBe('3');
+  });
+
+  test('creates text input field', () => {
+    const cell = generateDataField('Task', 'Setup', 'text', 1);
+    const input = cell.querySelector('input');
+
+    expect(input.type).toBe('text');
+    expect(input.value).toBe('Setup');
+  });
+
+  test('rowId is stored as data attribute', () => {
+    const cell = generateDataField('Cost', '120', 'number', 99);
+    const input = cell.querySelector('input');
+
+    expect(input.dataset.rowId).toBe('99');
+  });
+
+  test('sets required attributes when isRequired is true', () => {
+    const cell = generateDataField('Task', 'My Task', 'text', 1, true);
+    const input = cell.querySelector('input');
+
+    expect(input.getAttribute('aria-required')).toBe('true');
+    expect(input.required).toBe(true);
+  });
+
+  test('does not set required when isRequired is false', () => {
+    const cell = generateDataField('Cost', '50', 'number', 1, false);
+    const input = cell.querySelector('input');
+
+    expect(input.required).toBe(false);
+  });
+});
+
+describe('generateDataRow', () => {
+  beforeEach(() => {
+    appState.reset();
+  });
+
+  test('creates a row div with correct classes and role', () => {
+    const row = generateDataRow(1, 'Task A', 10, 20, 90, 100);
+
+    expect(row.tagName).toBe('DIV');
+    expect(row.classList.contains('tr')).toBe(true);
+    expect(row.classList.contains('data-row')).toBe(true);
+    expect(row.getAttribute('role')).toBe('row');
+    expect(row.dataset.rowId).toBe('1');
+  });
+
+  test('contains min and max fields in hours mode', () => {
+    appState.setEstimationMode('hours');
+    const row = generateDataRow(1, 'Task', 5, 10, 90, 0);
+
+    const inputs = row.querySelectorAll('input');
+    const names = Array.from(inputs).map((i) => i.name);
+    expect(names).toContain('Min Time');
+    expect(names).toContain('Max Time');
+  });
+
+  test('contains Fibonacci field in fibonacci mode', () => {
+    appState.setEstimationMode('fibonacci');
+    const row = generateDataRow(1, 'Task', '', '', 90, 0, 5);
+
+    const inputs = row.querySelectorAll('input');
+    const names = Array.from(inputs).map((i) => i.name);
+    expect(names).toContain('Fibonacci');
+    expect(names).not.toContain('Min Time');
+    expect(names).not.toContain('Max Time');
+  });
+
+  test('contains T-Shirt field in tshirt mode', () => {
+    appState.setEstimationMode('tshirt');
+    const row = generateDataRow(1, 'Task', '', '', 90, 0, '', 'M');
+
+    const inputs = row.querySelectorAll('input');
+    const names = Array.from(inputs).map((i) => i.name);
+    expect(names).toContain('T-Shirt');
+    expect(names).not.toContain('Min Time');
+    expect(names).not.toContain('Max Time');
+  });
+
+  test('includes cost field when enableCost is true', () => {
+    appState.setEnableCost(true);
+    const row = generateDataRow(1, 'Task', 5, 10, 90, 100);
+
+    const inputs = row.querySelectorAll('input');
+    const names = Array.from(inputs).map((i) => i.name);
+    expect(names).toContain('Cost');
+  });
+
+  test('excludes cost field when enableCost is false', () => {
+    appState.setEnableCost(false);
+    const row = generateDataRow(1, 'Task', 5, 10, 90, 0);
+
+    const inputs = row.querySelectorAll('input');
+    const names = Array.from(inputs).map((i) => i.name);
+    expect(names).not.toContain('Cost');
+  });
+
+  test('includes a task graph cell', () => {
+    const row = generateDataRow(1, 'Task', 5, 10, 90, 0);
+    const graphCell = row.querySelector('.task-row-graph');
+
+    expect(graphCell).not.toBeNull();
+    expect(graphCell.dataset.rowId).toBe('1');
+  });
+});
+
+describe('createEntryTable', () => {
+  beforeEach(() => {
+    appState.reset();
+    document.body.innerHTML = '';
+  });
+
+  test('creates a wrapper with correct id', () => {
+    const wrapper = createEntryTable();
+
+    expect(wrapper.id).toBe('dataTableWrapper');
+  });
+
+  test('creates an empty table with one blank row when no data provided', () => {
+    const wrapper = createEntryTable();
+    const rows = wrapper.querySelectorAll('.data-row');
+
+    expect(rows).toHaveLength(1);
+  });
+
+  test('creates rows for each data item', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 5, Max: 10, Confidence: 0.9, Cost: 100,
+      },
+      {
+        Task: 'Task 2', Min: 3, Max: 8, Confidence: 0.8, Cost: 80,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    const rows = wrapper.querySelectorAll('.data-row');
+
+    expect(rows).toHaveLength(2);
+  });
+
+  test('includes Add Task button', () => {
+    const wrapper = createEntryTable();
+    const addBtn = wrapper.querySelector('#addTaskBtn');
+
+    expect(addBtn).not.toBeNull();
+    expect(addBtn.value).toBe('Add Task');
+  });
+
+  test('reuses existing wrapper if already in DOM', () => {
+    document.body.innerHTML = '<div id="dataTableWrapper"></div>';
+    const existing = document.getElementById('dataTableWrapper');
+    document.body.appendChild(existing);
+
+    const wrapper = createEntryTable();
+    expect(wrapper.id).toBe('dataTableWrapper');
+    expect(document.querySelectorAll('#dataTableWrapper')).toHaveLength(1);
+  });
+
+  test('creates fibonacci header column in fibonacci mode', () => {
+    appState.setEstimationMode('fibonacci');
+    const wrapper = createEntryTable();
+    const headers = wrapper.querySelectorAll('[role="columnheader"]');
+    const headerTexts = Array.from(headers).map((h) => h.textContent);
+    expect(headerTexts).toContain('Fibonacci # *');
+    expect(headerTexts).not.toContain('Min Time *');
+  });
+
+  test('creates tshirt header column in tshirt mode', () => {
+    appState.setEstimationMode('tshirt');
+    const wrapper = createEntryTable();
+    const headers = wrapper.querySelectorAll('[role="columnheader"]');
+    const headerTexts = Array.from(headers).map((h) => h.textContent);
+    expect(headerTexts).toContain('T-Shirt Size *');
+    expect(headerTexts).not.toContain('Min Time *');
+  });
+
+  test('includes hourly cost header when enableCost is true', () => {
+    appState.setEnableCost(true);
+    const wrapper = createEntryTable();
+    const headers = wrapper.querySelectorAll('[role="columnheader"]');
+    const headerTexts = Array.from(headers).map((h) => h.textContent);
+    expect(headerTexts).toContain('Hourly Cost');
+  });
+
+  test('excludes hourly cost header when enableCost is false', () => {
+    appState.setEnableCost(false);
+    const wrapper = createEntryTable();
+    const headers = wrapper.querySelectorAll('[role="columnheader"]');
+    const headerTexts = Array.from(headers).map((h) => h.textContent);
+    expect(headerTexts).not.toContain('Hourly Cost');
+  });
+
+  test('creates rows for fibonacci mode data', () => {
+    appState.setEstimationMode('fibonacci');
+    const data = [
+      {
+        Task: 'Task 1', Fibonacci: 5, Confidence: 0.9, Cost: 100,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    const rows = wrapper.querySelectorAll('.data-row');
+    expect(rows).toHaveLength(1);
+    const fibInput = rows[0].querySelector('input[name="Fibonacci"]');
+    expect(fibInput).not.toBeNull();
+    expect(fibInput.value).toBe('5');
+  });
+
+  test('creates rows for tshirt mode data', () => {
+    appState.setEstimationMode('tshirt');
+    const data = [
+      {
+        Task: 'Task 1', TShirt: 'M', Confidence: 0.9, Cost: 100,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    const rows = wrapper.querySelectorAll('.data-row');
+    expect(rows).toHaveLength(1);
+    const tshirtInput = rows[0].querySelector('input[name="T-Shirt"]');
+    expect(tshirtInput).not.toBeNull();
+    expect(tshirtInput.value).toBe('M');
+  });
+
+  test('scales confidence when already >= 1 in data rows', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 1, Max: 5, Confidence: 90, Cost: 0,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    const confInput = wrapper.querySelector('input[name="Confidence"]');
+    expect(confInput.value).toBe('90');
+  });
+});
+
+describe('addTaskClickHandler', () => {
+  beforeEach(() => {
+    appState.reset();
+    document.body.innerHTML = '';
+  });
+
+  test('adds a new row when Add Task button is clicked', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const addBtn = document.querySelector('#addTaskBtn');
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rows).toHaveLength(2);
+  });
+
+  test('increments currentMaxRow after adding task', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const table = document.querySelector('#DataEntryTable');
+    expect(table.dataset.currentMaxRow).toBe('1');
+
+    const addBtn = document.querySelector('#addTaskBtn');
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(table.dataset.currentMaxRow).toBe('2');
+  });
+
+  test('multiple clicks add multiple rows', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const addBtn = document.querySelector('#addTaskBtn');
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rows).toHaveLength(3);
+  });
+});
+
+describe('rowClearClickHandler', () => {
+  beforeEach(() => {
+    appState.reset();
+    document.body.innerHTML = '';
+  });
+
+  test('clears row fields when it is the only/last row', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const row = document.querySelector('.data-row');
+    const taskInput = row.querySelector('input[type="text"]');
+    taskInput.value = 'Task Name';
+
+    const clearBtn = row.querySelector('input[type="button"]');
+    clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(taskInput.value).toBe('');
+  });
+
+  test('removes middle row when it is between two other rows', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 1, Max: 5, Confidence: 0.9, Cost: 0,
+      },
+      {
+        Task: 'Task 2', Min: 2, Max: 6, Confidence: 0.9, Cost: 0,
+      },
+      {
+        Task: 'Task 3', Min: 3, Max: 7, Confidence: 0.9, Cost: 0,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    document.body.appendChild(wrapper);
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rows).toHaveLength(3);
+
+    const middleRowId = rows[1].dataset.rowId;
+    const clearBtn = document.querySelector(`input[data-row-id="${middleRowId}"][type="button"]`);
+    clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rowsAfter = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rowsAfter).toHaveLength(2);
+  });
+
+  test('removes row when another empty row already exists', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 1, Max: 5, Confidence: 0.9, Cost: 0,
+      },
+      {
+        Task: 'Task 2', Min: 2, Max: 6, Confidence: 0.9, Cost: 0,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    document.body.appendChild(wrapper);
+
+    // Add a genuinely empty row via the button (all fields truly blank)
+    const addBtn = document.querySelector('#addTaskBtn');
+    addBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rows).toHaveLength(3);
+
+    // Click clear on the first row — there's already an empty row (row 3)
+    const firstRowId = rows[0].dataset.rowId;
+    const clearBtn = document.querySelector(`input[data-row-id="${firstRowId}"][type="button"]`);
+    clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const rowsAfter = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rowsAfter).toHaveLength(2);
+  });
+
+  test('does not remove row when only 2 rows remain', () => {
+    const data = [
+      {
+        Task: 'Task 1', Min: 1, Max: 5, Confidence: 0.9, Cost: 0,
+      },
+      {
+        Task: 'Task 2', Min: 2, Max: 6, Confidence: 0.9, Cost: 0,
+      },
+    ];
+    const wrapper = createEntryTable(data);
+    document.body.appendChild(wrapper);
+
+    const rows = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    const firstRowId = rows[0].dataset.rowId;
+    const taskInput = rows[0].querySelector('input[type="text"]');
+    const clearBtn = document.querySelector(`input[data-row-id="${firstRowId}"][type="button"]`);
+    clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    // Should clear, not remove (only 2 rows, no isBetweenRows, no empty row)
+    const rowsAfter = document.querySelectorAll('#DataEntryTable .tr.data-row');
+    expect(rowsAfter).toHaveLength(2);
+    expect(taskInput.value).toBe('');
+  });
+
+  test('clears fields via Enter keydown on clear button', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const row = document.querySelector('.data-row');
+    const taskInput = row.querySelector('input[type="text"]');
+    taskInput.value = 'Something';
+
+    const clearBtn = row.querySelector('input[type="button"]');
+    clearBtn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    expect(taskInput.value).toBe('');
+  });
+
+  test('clears fields via Space keydown on clear button', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const row = document.querySelector('.data-row');
+    const taskInput = row.querySelector('input[type="text"]');
+    taskInput.value = 'Something';
+
+    const clearBtn = row.querySelector('input[type="button"]');
+    clearBtn.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+
+    expect(taskInput.value).toBe('');
+  });
+
+  test('does not trigger clear on other keydown keys', () => {
+    const wrapper = createEntryTable();
+    document.body.appendChild(wrapper);
+
+    const row = document.querySelector('.data-row');
+    const taskInput = row.querySelector('input[type="text"]');
+    taskInput.value = 'Something';
+
+    const clearBtn = row.querySelector('input[type="button"]');
+    clearBtn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+
+    expect(taskInput.value).toBe('Something');
+  });
+});
+
+describe('gatherRawTaskData', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('reads standard-mode fields from a DOM row', () => {
+    document.body.innerHTML = `
+      <div id="DataEntryTable">
+        <div class="tr data-row" data-row-id="1">
+          <input name="Task" value="Build feature" />
+          <input name="Min Time" value="4" />
+          <input name="Max Time" value="8" />
+          <input name="Confidence" value="90" />
+          <input name="Cost" value="100" />
+          <input type="button" name="Clear Row" value="Clear Row" />
+        </div>
+      </div>
+    `;
+    const tasks = gatherRawTaskData();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].Name).toBe('Build feature');
+    expect(tasks[0].Min).toBe(4);
+    expect(tasks[0].Max).toBe(8);
+    expect(tasks[0].Confidence).toBeCloseTo(0.9);
+    expect(tasks[0].Cost).toBe(100);
+    expect(tasks[0].RowId).toBe('1');
+  });
+
+  test('reads fibonacci-mode fields from a DOM row', () => {
+    document.body.innerHTML = `
+      <div id="DataEntryTable">
+        <div class="tr data-row" data-row-id="2">
+          <input name="Task" value="Sprint task" />
+          <input name="Fibonacci" value="8" />
+          <input name="Confidence" value="80" />
+          <input type="button" name="Clear Row" value="Clear Row" />
+        </div>
+      </div>
+    `;
+    const tasks = gatherRawTaskData();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].Name).toBe('Sprint task');
+    expect(tasks[0].Fibonacci).toBe(8);
+    expect(tasks[0].Confidence).toBeCloseTo(0.8);
+    expect(tasks[0].RowId).toBe('2');
+  });
+
+  test('reads multiple rows', () => {
+    document.body.innerHTML = `
+      <div id="DataEntryTable">
+        <div class="tr data-row" data-row-id="1">
+          <input name="Task" value="Task A" />
+          <input name="Min Time" value="2" />
+          <input name="Max Time" value="6" />
+          <input name="Confidence" value="90" />
+          <input name="Cost" value="50" />
+        </div>
+        <div class="tr data-row" data-row-id="2">
+          <input name="Task" value="Task B" />
+          <input name="Min Time" value="4" />
+          <input name="Max Time" value="10" />
+          <input name="Confidence" value="80" />
+          <input name="Cost" value="75" />
+        </div>
+      </div>
+    `;
+    const tasks = gatherRawTaskData();
+    expect(tasks).toHaveLength(2);
+    expect(tasks[0].Name).toBe('Task A');
+    expect(tasks[1].Name).toBe('Task B');
+  });
+
+  test('returns empty array when no rows present', () => {
+    document.body.innerHTML = '<div id="DataEntryTable"></div>';
+    const tasks = gatherRawTaskData();
+    expect(tasks).toHaveLength(0);
+  });
+
+  test('reads T-Shirt field as raw string value', () => {
+    document.body.innerHTML = `
+      <div id="DataEntryTable">
+        <div class="tr data-row" data-row-id="3">
+          <input name="Task" value="Shirt task" />
+          <input name="T-Shirt" value="M" />
+          <input name="Confidence" value="90" />
+        </div>
+      </div>
+    `;
+    const tasks = gatherRawTaskData();
+    expect(tasks[0].TShirt).toBe('M');
+  });
+});
+
+describe('normalizeTaskData', () => {
+  let mockFibToCalendar;
+  let mockFibToVelocity;
+
+  beforeEach(() => {
+    mockFibToCalendar = jest.fn();
+    mockFibToVelocity = jest.fn();
+  });
+
+  test('passes hours mode tasks through without conversion', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task A', Min: 4, Max: 8, Confidence: 0.9, Cost: 100, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].Min).toBe(4);
+    expect(result[0].Max).toBe(8);
+    expect(mockFibToCalendar).not.toHaveBeenCalled();
+  });
+
+  test('converts fibonacci to min/max using calendar-days mapping', () => {
+    const mockState = {
+      estimationMode: 'fibonacci',
+      enableCost: true,
+      getFibonacciMode: () => 'calendar-days',
+      getVelocityConfig: () => ({ pointsPerSprint: 25, sprintLengthDays: 10 }),
+    };
+    const fibMappings = { 5: { min: 3, max: 7 } };
+    const tasks = [{
+      Name: 'Fib task', Fibonacci: 5, Confidence: 0.9, Cost: 50, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      fibMappings,
+      {},
+      (fib, m) => m[fib],
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].Min).toBe(3);
+    expect(result[0].Max).toBe(7);
+  });
+
+  test('converts fibonacci to min/max using velocity-based calculation', () => {
+    const mockState = {
+      estimationMode: 'fibonacci',
+      enableCost: true,
+      getFibonacciMode: () => 'velocity-based',
+      getVelocityConfig: () => ({ pointsPerSprint: 25, sprintLengthDays: 10 }),
+    };
+    const tasks = [{
+      Name: 'Velocity task', Fibonacci: 5, Confidence: 0.9, Cost: 50, RowId: '1',
+    }];
+    const mockVelocity = jest.fn(() => ({ min: 2, max: 4 }));
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockVelocity,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].Min).toBe(2);
+    expect(result[0].Max).toBe(4);
+    expect(mockVelocity).toHaveBeenCalledWith(5, 25, 10);
+  });
+
+  test('converts t-shirt size to min/max via fibonacci calendar days', () => {
+    const mockState = {
+      estimationMode: 'tshirt',
+      enableCost: true,
+    };
+    const tshirtMap = { M: 5 };
+    const fibMap = { 5: { min: 3, max: 7 } };
+    const tasks = [{
+      Name: 'Shirt task', TShirt: 'm', Confidence: 0.9, Cost: 50, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      fibMap,
+      tshirtMap,
+      (fib, m) => m[fib],
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].Min).toBe(3);
+    expect(result[0].Max).toBe(7);
+  });
+
+  test('defaults Cost to 0 when enableCost is false', () => {
+    const mockState = { estimationMode: 'hours', enableCost: false };
+    const tasks = [{
+      Name: 'Task A', Min: 2, Max: 5, Confidence: 0.9, Cost: 100, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result[0].Cost).toBe(0);
+  });
+
+  test('defaults Cost to 0 when value is NaN', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task A', Min: 2, Max: 5, Confidence: 0.9, Cost: NaN, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result[0].Cost).toBe(0);
+  });
+
+  test('filters out tasks with missing name', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: '', Min: 2, Max: 5, Confidence: 0.9, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  test('filters out tasks with min < 0', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task', Min: -1, Max: 5, Confidence: 0.9, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  test('filters out tasks where max < min', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task', Min: 10, Max: 5, Confidence: 0.9, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  test('filters out tasks where confidence is above 1', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task', Min: 2, Max: 5, Confidence: 1.5, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+
+  test('filters out tasks where confidence is below 0', () => {
+    const mockState = { estimationMode: 'hours', enableCost: true };
+    const tasks = [{
+      Name: 'Task', Min: 2, Max: 5, Confidence: -0.1, Cost: 0, RowId: '1',
+    }];
+    const result = normalizeTaskData(
+      tasks,
+      mockState,
+      {},
+      {},
+      mockFibToCalendar,
+      mockFibToVelocity,
+    );
+    expect(result).toHaveLength(0);
+  });
+});
