@@ -5,7 +5,7 @@
  * @module utils/dom-helpers
  */
 /**
- * Create a text element with it's internal text node.
+ * Create a text element with its internal text node.
  * @param {string} wrapperTag Tag name
  * @param {string} text Tag content
  * @param {array} classList List of classes.

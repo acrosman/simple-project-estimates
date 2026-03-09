@@ -312,7 +312,7 @@ src/
 ├── index.html        # HTML template
 ├── core/
 │   ├── simulation.js # Simulation engine (runSimulation, runSimulationProgressive,
-│   │                 #   Fibonacci utilities) + re-exports from stats and charts
+│   │                 #   Fibonacci utilities), uses stats helpers internally
 │   ├── stats.js      # Pure math and statistics (getMedian, getStandardDeviation,
 │   │                 #   calculateKDE, taskUpperBound, taskLowerBound, generateEstimate)
 │   └── state.js      # Application state management (AppState class)
@@ -321,7 +321,7 @@ src/
 │   ├── fibonacci-config.js       # Fibonacci/velocity configuration UI panel
 │   ├── graph-settings.js         # Graph settings UI and configuration helpers
 │   ├── layout.js                 # Page layout construction
-│   ├── simulation-results-view.js # Simulation results display
+│   ├── simulation-handler.js      # Simulation results display
 │   ├── task-table.js             # Task data-entry table and row lifecycle
 │   └── tshirt-config.js          # T-shirt size mapping configuration UI
 ├── utils/
