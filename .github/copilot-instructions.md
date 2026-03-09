@@ -261,17 +261,17 @@ Not
 
 | Task                        | Files to Modify                                                          |
 | --------------------------- | ------------------------------------------------------------------------ |
-| Math / statistics functions | `src/stats.js`, `src/tests/stats.test.js`                                |
-| Simulation engine           | `src/simulation.js`, `src/tests/simulation.test.js`                      |
-| D3 charts / graph config    | `src/charts.js`, `src/tests/charts.test.js`                              |
+| Math / statistics functions | `src/core/stats.js`, `src/tests/stats.test.js`                                |
+| Simulation engine           | `src/core/simulation.js`, `src/tests/simulation.test.js`                      |
+| D3 charts / graph config    | `src/visualization/charts.js`, `src/tests/charts.test.js`                              |
 | UI orchestration            | `src/index.js`, `src/style.css`, `src/index.html`                        |
-| Form / data entry           | `src/data-input.js`, `src/tests/data-input.test.js`                      |
-| Task input table            | `src/task-table.js`, `src/tests/task-table.test.js`                      |
-| DOM element helpers         | `src/dom-helpers.js`, `src/tests/dom-helpers.test.js`                    |
+| Form / data entry           | `src/ui/data-input.js`, `src/tests/data-input.test.js`                      |
+| Task input table            | `src/ui/task-table.js`, `src/tests/task-table.test.js`                      |
+| DOM element helpers         | `src/utils/dom-helpers.js`, `src/tests/dom-helpers.test.js`                    |
 | Fibonacci config UI         | `src/fibonacci-config.js`, `src/tests/fibonacci-config.test.js`          |
-| T-shirt config UI           | `src/tshirt-config.js`, `src/tests/tshirt-config.test.js`                |
-| Application state           | `src/state.js`, `src/tests/state.test.js`                                |
-| Data format / CSV           | `src/data-input.js` (parsing), `src/data/sample.csv`                     |
+| T-shirt config UI           | `src/ui/tshirt-config.js`, `src/tests/tshirt-config.test.js`                |
+| Application state           | `src/core/state.js`, `src/tests/state.test.js`                                |
+| Data format / CSV           | `src/ui/data-input.js` (parsing), `src/data/sample.csv`                     |
 | Build config                | `webpack.config.js`                                                      |
 | Code style                  | `.eslintrc.js`                                                           |
 
